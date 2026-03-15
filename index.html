@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BP Tracker" />
+  <title>BP Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f2f2f7;
+      --card-bg:     #ffffff;
+      --text:        #1c1c1e;
+      --text-sub:    #6c6c70;
+      --border:      #e5e5ea;
+      --accent:      #007aff;
+      --accent-dark: #0062cc;
+      --normal:   #34c759;
+      --elevated: #ff9f0a;
+      --high1:    #ff6b35;
+      --high2:    #ff3b30;
+      --crisis:   #8e0000;
+      --sys-color: #ff6b6b;
+      --dia-color: #4ecdc4;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(242,242,247,.88);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+    }
+    .app-title { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 6px; color: var(--accent); border-radius: 50%;
+      display: flex; align-items: center; transition: background .15s;
+    }
+    .icon-btn svg { width: 22px; height: 22px; }
+    .icon-btn:active { background: rgba(0,122,255,.12); }
+
+    /* ── Views ── */
+    .view { display: none; padding: 16px 16px 40px; animation: fadeIn .2s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card-bg); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px;
+    }
+    .card-heading {
+      font-size: 13px; font-weight: 600; color: var(--text-sub);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px;
+    }
+
+    /* ── API key banner ── */
+    .apikey-banner {
+      background: #fff9e6; border: 1.5px solid #ffd60a;
+      border-radius: var(--radius-md); padding: 14px 16px;
+      margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .apikey-banner p { font-size: 13px; color: #664d00; line-height: 1.4; }
+    .apikey-row { display: flex; gap: 8px; }
+    .apikey-input {
+      flex: 1; background: #fff; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-size: 13px; font-family: monospace; color: var(--text);
+    }
+    .apikey-input:focus { outline: none; border-color: var(--accent); }
+    .btn-sm {
+      padding: 10px 14px; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius-sm); font-size: 13px;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .btn-sm:active { background: var(--accent-dark); }
+    .apikey-saved { font-size: 12px; color: #34c759; font-weight: 600; display: none; }
+
+    /* ── Status card ── */
+    .status-card { text-align: center; }
+    .status-date { font-size: 13px; color: var(--text-sub); margin-bottom: 14px; font-weight: 500; }
+    .no-reading { padding: 20px 0 8px; color: var(--text-sub); }
+    .no-reading-icon { font-size: 44px; margin-bottom: 8px; }
+    .no-reading p { font-size: 15px; }
+    .has-reading.hidden, .hidden { display: none !important; }
+    .reading-display {
+      display: flex; align-items: baseline;
+      justify-content: center; gap: 6px; margin-bottom: 10px;
+    }
+    .bp-number {
+      font-size: 58px; font-weight: 300; letter-spacing: -2px;
+      line-height: 1; display: flex; align-items: baseline; gap: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .bp-slash { color: var(--border); font-weight: 200; font-size: 48px; }
+    .bp-unit  { font-size: 13px; color: var(--text-sub); font-weight: 500; align-self: flex-end; padding-bottom: 6px; }
+    .reading-meta { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .pulse-chip, .category-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 13px; font-weight: 600;
+    }
+    .pulse-chip { background: #f0f0f5; color: var(--text-sub); }
+    .category-chip { color: #fff; }
+    .cat-normal   { background: var(--normal); }
+    .cat-elevated { background: var(--elevated); }
+    .cat-high1    { background: var(--high1); }
+    .cat-high2    { background: var(--high2); }
+    .cat-crisis   { background: var(--crisis); }
+    .cat-low      { background: #5856d6; }
+
+    /* ── Insight ── */
+    .insight-box {
+      background: #f7f7fb; border-radius: var(--radius-md);
+      padding: 14px 16px; text-align: left; min-height: 48px;
+    }
+    .insight-loading {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text-sub); font-size: 13px;
+    }
+    .insight-text { font-size: 14px; line-height: 1.5; color: var(--text); }
+    .dot-pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      display: inline-block; animation: dotPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes dotPulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:.4; transform:scale(.7); }
+    }
+
+    /* ── Form ── */
+    .form-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; }
+    .input-row { display: flex; align-items: flex-end; margin-bottom: 14px; }
+    .input-divider { font-size: 32px; font-weight: 200; color: var(--border); padding: 0 6px 6px; line-height: 1; }
+    .input-group { flex: 1; }
+    .input-group.full-width { width: 100%; margin-bottom: 14px; }
+    .input-group label {
+      display: block; font-size: 12px; font-weight: 600; color: var(--text-sub);
+      text-transform: uppercase; letter-spacing: .3px; margin-bottom: 6px;
+    }
+    .optional { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 12px; }
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    .input-wrap input {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 44px 12px 14px;
+      font-size: 20px; font-weight: 500; color: var(--text);
+      font-variant-numeric: tabular-nums;
+      transition: border-color .15s, box-shadow .15s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .input-wrap input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+    }
+    .input-unit {
+      position: absolute; right: 12px; font-size: 11px;
+      font-weight: 600; color: var(--text-sub); pointer-events: none;
+    }
+    textarea {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      font-size: 15px; color: var(--text); font-family: inherit; resize: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,122,255,.15); }
+    .btn-primary {
+      width: 100%; padding: 16px; background: var(--accent);
+      color: #fff; border: none; border-radius: var(--radius-md);
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: background .15s, transform .1s; margin-top: 4px;
+    }
+    .btn-primary:active { background: var(--accent-dark); transform: scale(.98); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .error-msg { color: var(--high2); font-size: 13px; text-align: center; margin-top: 10px; }
+
+    /* ── Chart ── */
+    .chart-wrap { position: relative; }
+    .chart-empty { text-align: center; color: var(--text-sub); font-size: 14px; padding: 24px 0; }
+    .chart-legend { display: flex; gap: 16px; justify-content: center; font-size: 12px; color: var(--text-sub); margin-top: 10px; }
+    .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+    .legend-dot.sys { background: var(--sys-color); }
+    .legend-dot.dia { background: var(--dia-color); }
+
+    /* ── Reference ── */
+    .ref-table { display: flex; flex-direction: column; gap: 8px; }
+    .ref-row { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .ref-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .ref-row.normal   .ref-dot { background: var(--normal); }
+    .ref-row.elevated .ref-dot { background: var(--elevated); }
+    .ref-row.high1    .ref-dot { background: var(--high1); }
+    .ref-row.high2    .ref-dot { background: var(--high2); }
+    .ref-row.crisis   .ref-dot { background: var(--crisis); }
+    .ref-label { flex: 1; font-weight: 500; }
+    .ref-range { color: var(--text-sub); font-variant-numeric: tabular-nums; font-size: 13px; }
+    .disclaimer { margin-top: 14px; font-size: 11px; color: var(--text-sub); text-align: center; font-style: italic; }
+
+    /* ── History ── */
+    .history-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px 16px; }
+    .history-header h2 { font-size: 17px; font-weight: 600; }
+    .back-btn { display: flex; align-items: center; gap: 2px; background: none; border: none; color: var(--accent); font-size: 15px; font-weight: 500; cursor: pointer; padding: 4px; }
+    .back-btn svg { width: 18px; height: 18px; }
+    .text-btn { background: none; border: none; font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px 8px; }
+    .text-btn.danger { color: var(--high2); }
+    .history-list { display: flex; flex-direction: column; gap: 10px; }
+    .history-item {
+      background: var(--card-bg); border-radius: var(--radius-md);
+      padding: 14px 16px; box-shadow: var(--shadow);
+      display: flex; align-items: center; gap: 14px; animation: fadeIn .2s ease;
+    }
+    .history-cat-bar { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
+    .history-main { flex: 1; }
+    .history-date { font-size: 12px; color: var(--text-sub); font-weight: 500; margin-bottom: 4px; }
+    .history-bp { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+    .history-bp .sep { color: var(--border); font-weight: 300; }
+    .history-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+    .history-notes { font-size: 12px; color: var(--text-sub); margin-top: 4px; font-style: italic; }
+    .history-category { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 100px; color: #fff; white-space: nowrap; }
+    .history-empty { text-align: center; color: var(--text-sub); font-size: 15px; padding: 48px 0; }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header class="header">
+    <div class="header-inner">
+      <h1 class="app-title">❤️ BP Tracker</h1>
+      <button class="icon-btn" id="historyToggle" aria-label="View history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main view -->
+  <main id="mainView" class="view active">
+
+    <!-- API key setup -->
+    <div class="apikey-banner" id="apikeyBanner">
+      <p>🔑 Enter your Anthropic API key to enable AI insights. Stored only in your browser.</p>
+      <div class="apikey-row">
+        <input type="password" class="apikey-input" id="apikeyInput" placeholder="sk-ant-..." />
+        <button class="btn-sm" id="apikeyBtn">Save</button>
+      </div>
+      <span class="apikey-saved" id="apikeySaved">✓ Key saved</span>
+    </div>
+
+    <!-- Today's status -->
+    <div class="card status-card">
+      <div class="status-date" id="statusDate"></div>
+      <div id="noReading" class="no-reading">
+        <div class="no-reading-icon">🩺</div>
+        <p>No reading yet today</p>
+      </div>
+      <div id="hasReading" class="has-reading hidden">
+        <div class="reading-display">
+          <div class="bp-number">
+            <span id="displaySys">--</span>
+            <span class="bp-slash">/</span>
+            <span id="displayDia">--</span>
+          </div>
+          <div class="bp-unit">mmHg</div>
+        </div>
+        <div class="reading-meta">
+          <span class="pulse-chip" id="displayPulse"></span>
+          <span class="category-chip" id="displayCat"></span>
+        </div>
+        <div class="insight-box" id="insightBox">
+          <div class="insight-loading hidden" id="insightLoading">
+            <span class="dot-pulse"></span> Getting AI insight…
+          </div>
+          <p class="insight-text" id="insightText"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Entry form -->
+    <div class="card">
+      <h2 class="form-title" id="formTitle">Log Today's Reading</h2>
+      <div class="input-row">
+        <div class="input-group">
+          <label>Systolic</label>
+          <div class="input-wrap">
+            <input type="number" id="sys" inputmode="numeric" min="60" max="250" placeholder="120" />
+            <span class="input-unit">mmHg</span>
+          </div>
+        </div>
+        <div class="input-divider">/</div>
+        <div class="input-group">
+          <label>Diastolic</label>
+          <div class="input-wrap">
+            <input type="number" id="dia" inputmode="numeric" min="40" max="150" placeholder="80" />
+            <span class="input-unit">mmHg</span>
+          </div>
+        </div>
+      </div>
+      <div class="input-group full-width">
+        <label>Pulse <span class="optional">(optional)</span></label>
+        <div class="input-wrap">
+          <input type="number" id="pulse" inputmode="numeric" min="30" max="220" placeholder="72" />
+          <span class="input-unit">bpm</span>
+        </div>
+      </div>
+      <div class="input-group full-width">
+        <label>Notes <span class="optional">(optional)</span></label>
+        <textarea id="notes" rows="2" placeholder="How are you feeling?"></textarea>
+      </div>
+      <button class="btn-primary" id="saveBtn">Save Reading</button>
+      <p class="error-msg hidden" id="errorMsg"></p>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <h2 class="card-heading">Last 7 Days</h2>
+      <div class="chart-wrap">
+        <canvas id="chart" height="120"></canvas>
+        <div class="chart-empty hidden" id="chartEmpty">Add a few readings to see your trend</div>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-dot sys"></span> Systolic
+        <span class="legend-dot dia"></span> Diastolic
+      </div>
+    </div>
+
+    <!-- Reference -->
+    <div class="card">
+      <h2 class="card-heading">Blood Pressure Ranges</h2>
+      <div class="ref-table">
+        <div class="ref-row normal">  <span class="ref-dot"></span><span class="ref-label">Normal</span>      <span class="ref-range">&lt;120 / &lt;80</span></div>
+        <div class="ref-row elevated"><span class="ref-dot"></span><span class="ref-label">Elevated</span>     <span class="ref-range">120–129 / &lt;80</span></div>
+        <div class="ref-row high1">   <span class="ref-dot"></span><span class="ref-label">High Stage 1</span> <span class="ref-range">130–139 / 80–89</span></div>
+        <div class="ref-row high2">   <span class="ref-dot"></span><span class="ref-label">High Stage 2</span> <span class="ref-range">≥140 / ≥90</span></div>
+        <div class="ref-row crisis">  <span class="ref-dot"></span><span class="ref-label">Crisis</span>       <span class="ref-range">&gt;180 / &gt;120</span></div>
+      </div>
+      <p class="disclaimer">Always consult your physician for medical advice.</p>
+    </div>
+
+  </main>
+
+  <!-- History view -->
+  <div id="historyView" class="view">
+    <div class="history-header">
+      <button class="back-btn" id="backBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+      <h2>History</h2>
+      <button class="text-btn danger" id="clearBtn">Clear all</button>
+    </div>
+    <div id="historyList" class="history-list"></div>
+    <div class="history-empty hidden" id="historyEmpty">No readings recorded yet.</div>
+  </div>
+
+</div>
+<script>
+/* ── Storage ── */
+const STORE = 'bp_readings';
+const KEYSTORE = 'bp_apikey';
+const load  = () => { try { return JSON.parse(localStorage.getItem(STORE) || '[]'); } catch { return []; } };
+const save  = r  => localStorage.setItem(STORE, JSON.stringify(r));
+const today = () => new Date().toISOString().slice(0, 10);
+
+function fmtDate(iso) {
+  const [y,m,d] = iso.split('-').map(Number);
+  const date = new Date(y, m-1, d);
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const diff = Math.round((now - date) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+/* ── BP Classification ── */
+function classify(s, d) {
+  if (s < 90 || d < 60)     return { label:'Low',         cls:'cat-low',      bar:'#5856d6' };
+  if (s < 120 && d < 80)    return { label:'Normal',      cls:'cat-normal',   bar:'#34c759' };
+  if (s <= 129 && d < 80)   return { label:'Elevated',    cls:'cat-elevated', bar:'#ff9f0a' };
+  if (s <= 139 || d <= 89)  return { label:'High — St.1', cls:'cat-high1',    bar:'#ff6b35' };
+  if (s < 180 && d < 120)   return { label:'High — St.2', cls:'cat-high2',    bar:'#ff3b30' };
+  return                           { label:'Crisis',       cls:'cat-crisis',   bar:'#8e0000' };
+}
+
+/* ── DOM refs ── */
+const $ = id => document.getElementById(id);
+const mainView      = $('mainView');
+const historyView   = $('historyView');
+const apikeyBanner  = $('apikeyBanner');
+const apikeyInput   = $('apikeyInput');
+const apikeyBtn     = $('apikeyBtn');
+const apikeySaved   = $('apikeySaved');
+
+/* ── API Key ── */
+function getKey()   { return localStorage.getItem(KEYSTORE) || ''; }
+function hasKey()   { return !!getKey(); }
+
+function initKeyBanner() {
+  if (hasKey()) {
+    apikeyBanner.style.display = 'none';
+  } else {
+    apikeyBanner.style.display = '';
+  }
+}
+
+apikeyBtn.addEventListener('click', () => {
+  const val = apikeyInput.value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    apikeyInput.style.borderColor = '#ff3b30';
+    return;
+  }
+  localStorage.setItem(KEYSTORE, val);
+  apikeyInput.value = '';
+  apikeyInput.style.borderColor = '';
+  apikeySaved.style.display = 'inline';
+  setTimeout(() => {
+    apikeyBanner.style.display = 'none';
+    renderAll();
+  }, 800);
+});
+
+/* ── Navigation ── */
+$('historyToggle').addEventListener('click', () => {
+  mainView.classList.remove('active');
+  historyView.classList.add('active');
+  renderHistory();
+});
+$('backBtn').addEventListener('click', () => {
+  historyView.classList.remove('active');
+  mainView.classList.add('active');
+});
+$('clearBtn').addEventListener('click', () => {
+  if (confirm('Delete all readings? This cannot be undone.')) {
+    save([]);
+    historyView.classList.remove('active');
+    mainView.classList.add('active');
+    renderAll();
+  }
+});
+
+/* ── Main render ── */
+function renderAll() {
+  const readings  = load();
+  const todayEntry = readings.find(r => r.date === today());
+
+  $('statusDate').textContent = new Date().toLocaleDateString('en-US', {
+    weekday:'long', month:'long', day:'numeric'
+  });
+
+  if (todayEntry) {
+    $('noReading').classList.add('hidden');
+    $('hasReading').classList.remove('hidden');
+    $('formTitle').textContent = "Update Today's Reading";
+    $('saveBtn').textContent   = 'Update Reading';
+    $('sys').value   = todayEntry.systolic;
+    $('dia').value   = todayEntry.diastolic;
+    $('pulse').value = todayEntry.pulse || '';
+    $('notes').value = todayEntry.notes || '';
+
+    const cat = classify(todayEntry.systolic, todayEntry.diastolic);
+    $('displaySys').textContent = todayEntry.systolic;
+    $('displayDia').textContent = todayEntry.diastolic;
+
+    const pulseEl = $('displayPulse');
+    if (todayEntry.pulse) { pulseEl.textContent = `♥ ${todayEntry.pulse} bpm`; pulseEl.style.display = ''; }
+    else                  { pulseEl.style.display = 'none'; }
+
+    const catEl = $('displayCat');
+    catEl.textContent = cat.label;
+    catEl.className   = `category-chip ${cat.cls}`;
+  } else {
+    $('noReading').classList.remove('hidden');
+    $('hasReading').classList.add('hidden');
+    $('formTitle').textContent = "Log Today's Reading";
+    $('saveBtn').textContent   = 'Save Reading';
+    $('sys').value = $('dia').value = $('pulse').value = $('notes').value = '';
+  }
+
+  renderChart(readings);
+}
+
+/* ── Save ── */
+$('saveBtn').addEventListener('click', async () => {
+  const s = parseInt($('sys').value, 10);
+  const d = parseInt($('dia').value, 10);
+  const p = parseInt($('pulse').value, 10) || null;
+  const n = $('notes').value.trim();
+
+  if (!$('sys').value || !$('dia').value || isNaN(s) || isNaN(d)) {
+    showErr('Please enter both systolic and diastolic values.'); return;
+  }
+  if (s < 60 || s > 250)  { showErr('Systolic must be 60–250.');  return; }
+  if (d < 40 || d > 150)  { showErr('Diastolic must be 40–150.'); return; }
+  if (p !== null && (p < 30 || p > 220)) { showErr('Pulse must be 30–220.'); return; }
+
+  hideErr();
+  $('saveBtn').disabled = true;
+  $('saveBtn').textContent = 'Saving…';
+
+  const readings = load().filter(r => r.date !== today());
+  const entry = { date: today(), systolic: s, diastolic: d, pulse: p, notes: n };
+  readings.unshift(entry);
+  save(readings);
+
+  renderAll();
+  $('saveBtn').disabled = false;
+  $('saveBtn').textContent = 'Update Reading';
+
+  if (hasKey()) fetchInsight(entry, readings.slice(1, 8));
+  else {
+    $('insightText').textContent = 'Add an API key above to get AI-powered insights.';
+    $('insightLoading').classList.add('hidden');
+  }
+});
+
+/* ── AI Insight (direct to Anthropic API) ── */
+async function fetchInsight(entry, history) {
+  $('insightLoading').classList.remove('hidden');
+  $('insightText').textContent = '';
+
+  const historyText = history.length
+    ? '\nRecent readings (newest first):\n' +
+      history.slice(0, 7).map(r => `  ${r.date}: ${r.systolic}/${r.diastolic} mmHg${r.pulse ? `, pulse ${r.pulse} bpm` : ''}`).join('\n')
+    : '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         getKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model:      'claude-opus-4-6',
+        max_tokens: 300,
+        stream:     true,
+        system: `You are a calm, helpful health companion. Give brief, clear observations about blood pressure readings.
+You are NOT a doctor. Always remind users to consult their physician for medical advice.
+Keep responses to 2–3 short sentences. Be warm and reassuring for good readings; gently encouraging otherwise.`,
+        messages: [{
+          role: 'user',
+          content: `Today's reading: ${entry.systolic}/${entry.diastolic} mmHg, pulse ${entry.pulse ?? 'not recorded'} bpm.${historyText}\n\nGive a brief observation about this reading and any trend you notice.`
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    $('insightLoading').classList.add('hidden');
+
+    const reader = res.body.getReader();
+    const dec    = new TextDecoder();
+    let   buf    = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            $('insightText').textContent += evt.delta.text;
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    $('insightLoading').classList.add('hidden');
+    $('insightText').textContent = `⚠️ ${err.message}`;
+  }
+}
+
+/* ── History ── */
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderHistory() {
+  const readings = load();
+  $('historyList').innerHTML = '';
+  if (!readings.length) { $('historyEmpty').classList.remove('hidden'); return; }
+  $('historyEmpty').classList.add('hidden');
+  readings.forEach(r => {
+    const cat  = classify(r.systolic, r.diastolic);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="history-cat-bar" style="background:${cat.bar}"></div>
+      <div class="history-main">
+        <div class="history-date">${fmtDate(r.date)}</div>
+        <div class="history-bp">${r.systolic}<span class="sep"> / </span>${r.diastolic} <span style="font-size:14px;font-weight:400;color:#6c6c70">mmHg</span></div>
+        <div class="history-meta">${r.pulse ? `♥ ${r.pulse} bpm` : ''}</div>
+        ${r.notes ? `<div class="history-notes">${esc(r.notes)}</div>` : ''}
+      </div>
+      <span class="history-category ${cat.cls}">${cat.label}</span>`;
+    $('historyList').appendChild(item);
+  });
+}
+
+/* ── Chart ── */
+function renderChart(readings) {
+  const last7 = readings.slice(0, 7).reverse();
+  const canvas = $('chart');
+  const empty  = $('chartEmpty');
+  if (last7.length < 2) {
+    empty.classList.remove('hidden'); canvas.style.display = 'none'; return;
+  }
+  empty.classList.add('hidden'); canvas.style.display = '';
+
+  const dpr = window.devicePixelRatio || 1;
+  const w   = canvas.parentElement.clientWidth;
+  const h   = 120;
+  canvas.width  = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const pad = { top:12, right:12, bottom:28, left:32 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top  - pad.bottom;
+
+  const allV = last7.flatMap(r => [r.systolic, r.diastolic]);
+  const minV = Math.max(40,  Math.min(...allV) - 10);
+  const maxV = Math.min(200, Math.max(...allV) + 10);
+  const rng  = maxV - minV;
+
+  const xOf = i => pad.left + (i / (last7.length - 1)) * cw;
+  const yOf = v => pad.top  + (1 - (v - minV) / rng)   * ch;
+
+  // Gridlines
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  [80,120,140,180].forEach(t => {
+    if (t < minV || t > maxV) return;
+    const y = yOf(t);
+    ctx.strokeStyle = 'rgba(0,0,0,.07)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#aaa'; ctx.fillText(t, pad.left - 4, y + 3.5);
+  });
+
+  function line(key, color) {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    last7.forEach((r,i) => { const x=xOf(i), y=yOf(r[key]); i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+    ctx.stroke();
+    last7.forEach((r,i) => { ctx.beginPath(); ctx.arc(xOf(i), yOf(r[key]), 3.5, 0, Math.PI*2); ctx.fillStyle=color; ctx.fill(); });
+  }
+  line('diastolic', '#4ecdc4');
+  line('systolic',  '#ff6b6b');
+
+  // X-axis labels
+  ctx.textAlign = 'center'; ctx.fillStyle = '#aaa'; ctx.font = '10px -apple-system, sans-serif';
+  last7.forEach((r,i) => {
+    const [,m,d] = r.date.split('-');
+    ctx.fillText(`${+m}/${+d}`, xOf(i), h - 6);
+  });
+}
+
+function showErr(msg) { $('errorMsg').textContent = msg; $('errorMsg').classList.remove('hidden'); }
+function hideErr()    { $('errorMsg').classList.add('hidden'); }
+
+/* ── Init ── */
+initKeyBanner();
+renderAll();
+
+let rt;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => renderChart(load()), 100); });
+</script>
+</body>
+</html>

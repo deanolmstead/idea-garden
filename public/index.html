@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BP Tracker" />
+  <title>BP Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-inner">
+        <h1 class="app-title">❤️ BP Tracker</h1>
+        <button class="icon-btn" id="historyToggle" aria-label="View history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main view -->
+    <main id="mainView" class="view active">
+
+      <!-- Today's status card -->
+      <div class="card status-card" id="statusCard">
+        <div class="status-date" id="statusDate"></div>
+        <div id="noReading" class="no-reading">
+          <div class="no-reading-icon">🩺</div>
+          <p>No reading yet today</p>
+        </div>
+        <div id="hasReading" class="has-reading hidden">
+          <div class="reading-display">
+            <div class="bp-number">
+              <span id="displaySystolic">--</span>
+              <span class="bp-slash">/</span>
+              <span id="displayDiastolic">--</span>
+            </div>
+            <div class="bp-unit">mmHg</div>
+          </div>
+          <div class="reading-meta">
+            <span class="pulse-chip" id="displayPulse"></span>
+            <span class="category-chip" id="displayCategory"></span>
+          </div>
+          <div class="insight-box" id="insightBox">
+            <div class="insight-loading hidden" id="insightLoading">
+              <span class="dot-pulse"></span> Getting AI insight…
+            </div>
+            <p class="insight-text" id="insightText"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entry form -->
+      <div class="card form-card" id="formCard">
+        <h2 class="form-title" id="formTitle">Log Today's Reading</h2>
+
+        <div class="input-row">
+          <div class="input-group">
+            <label for="systolic">Systolic</label>
+            <div class="input-wrap">
+              <input type="number" id="systolic" inputmode="numeric" min="60" max="250" placeholder="120" />
+              <span class="input-unit">mmHg</span>
+            </div>
+          </div>
+          <div class="input-divider">/</div>
+          <div class="input-group">
+            <label for="diastolic">Diastolic</label>
+            <div class="input-wrap">
+              <input type="number" id="diastolic" inputmode="numeric" min="40" max="150" placeholder="80" />
+              <span class="input-unit">mmHg</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group full-width">
+          <label for="pulse">Pulse <span class="optional">(optional)</span></label>
+          <div class="input-wrap">
+            <input type="number" id="pulse" inputmode="numeric" min="30" max="220" placeholder="72" />
+            <span class="input-unit">bpm</span>
+          </div>
+        </div>
+
+        <div class="input-group full-width">
+          <label for="notes">Notes <span class="optional">(optional)</span></label>
+          <textarea id="notes" rows="2" placeholder="How are you feeling?"></textarea>
+        </div>
+
+        <button class="btn-primary" id="saveBtn">Save Reading</button>
+        <p class="error-msg hidden" id="errorMsg"></p>
+      </div>
+
+      <!-- Mini chart -->
+      <div class="card chart-card" id="chartCard">
+        <h2 class="card-heading">Last 7 Days</h2>
+        <div class="chart-wrap">
+          <canvas id="bpChart" height="120"></canvas>
+          <div class="chart-empty hidden" id="chartEmpty">Add a few readings to see your trend</div>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-dot systolic"></span> Systolic
+          <span class="legend-dot diastolic"></span> Diastolic
+        </div>
+      </div>
+
+      <!-- Reference card -->
+      <div class="card ref-card">
+        <h2 class="card-heading">Blood Pressure Ranges</h2>
+        <div class="ref-table">
+          <div class="ref-row normal"><span class="ref-dot"></span><span class="ref-label">Normal</span><span class="ref-range">&lt;120 / &lt;80</span></div>
+          <div class="ref-row elevated"><span class="ref-dot"></span><span class="ref-label">Elevated</span><span class="ref-range">120–129 / &lt;80</span></div>
+          <div class="ref-row high1"><span class="ref-dot"></span><span class="ref-label">High Stage 1</span><span class="ref-range">130–139 / 80–89</span></div>
+          <div class="ref-row high2"><span class="ref-dot"></span><span class="ref-label">High Stage 2</span><span class="ref-range">≥140 / ≥90</span></div>
+          <div class="ref-row crisis"><span class="ref-dot"></span><span class="ref-label">Crisis</span><span class="ref-range">&gt;180 / &gt;120</span></div>
+        </div>
+        <p class="disclaimer">Always consult your physician for medical advice.</p>
+      </div>
+
+    </main>
+
+    <!-- History view -->
+    <div id="historyView" class="view">
+      <div class="history-header">
+        <button class="back-btn" id="backBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          Back
+        </button>
+        <h2>History</h2>
+        <button class="text-btn danger" id="clearBtn">Clear all</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+      <div class="history-empty hidden" id="historyEmpty">No readings recorded yet.</div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

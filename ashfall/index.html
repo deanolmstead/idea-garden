@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASHFALL — A Gamebook of the San Joaquin Ashlands</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Alfa+Slab+One&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   ASHFALL — GAMMA WORLD AESTHETIC
+   Palette: ash white, blood red, burnt sienna,
+   sickly olive, deep charcoal
+═══════════════════════════════════════════ */
+:root {
+  --ash:        #ede3d1;
+  --ash-dim:    #c4b69e;
+  --ash-faint:  #8a7d6d;
+  --blood:      #c0392b;
+  --blood-dim:  #8b2020;
+  --blood-glow: rgba(192,57,43,0.15);
+  --sienna:     #b86633;
+  --sienna-dim: #7a4020;
+  --olive:      #7d8e45;
+  --olive-dim:  #5a6830;
+  --ink:        #2a2318;
+  --ink-mid:    #342b20;
+  --ink-panel:  #3d3228;
+  --ink-border: #584838;
+  --amber:      #d4a017;
+  --amber-dim:  #8b6800;
+  --paper:      #f2ead5;
+  --paper-dark: #d0c4a8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--ink);
+  color: var(--ash);
+  font-family: 'Special Elite', serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+/* Grain texture overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.5;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(10,8,6,0.55) 100%);
+  pointer-events: none; z-index: 9998;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--ink-border); border-radius: 2px; }
+
+/* ═══════════════════════════════════════════
+   TITLE SCREEN
+═══════════════════════════════════════════ */
+#title-screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 24px; z-index: 500;
+  background: var(--ink);
+}
+
+.title-eyebrow {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px; letter-spacing: 8px;
+  color: var(--sienna); text-transform: uppercase;
+}
+
+.title-main {
+  font-family: 'Alfa Slab One', serif;
+  font-size: clamp(64px, 12vw, 108px);
+  letter-spacing: 8px;
+  color: var(--blood);
+  text-shadow:
+    3px 3px 0 var(--blood-dim),
+    0 0 40px var(--blood-glow),
+    0 0 80px rgba(192,57,43,0.08);
+  animation: title-breathe 4s ease-in-out infinite;
+}
+
+@keyframes title-breathe {
+  0%,100% { text-shadow: 3px 3px 0 var(--blood-dim), 0 0 40px var(--blood-glow), 0 0 80px rgba(192,57,43,0.08); }
+  50% { text-shadow: 3px 3px 0 var(--blood-dim), 0 0 60px rgba(192,57,43,0.25), 0 0 100px rgba(192,57,43,0.12); }
+}
+
+.title-sub {
+  font-family: 'Special Elite', serif;
+  font-size: 13px; letter-spacing: 3px;
+  color: var(--ash-dim);
+}
+
+.title-rule {
+  width: 320px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blood-dim), transparent);
+}
+
+.title-rule-thin {
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sienna-dim), transparent);
+}
+
+.title-btn {
+  background: none;
+  border: 1px solid var(--blood-dim);
+  color: var(--ash);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 5px; text-transform: uppercase;
+  padding: 14px 40px;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.2,0.8,0.2,1);
+  position: relative;
+}
+.title-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--blood-glow);
+  opacity: 0; transition: opacity 200ms;
+}
+.title-btn:hover { border-color: var(--blood); color: var(--paper); }
+.title-btn:hover::before { opacity: 1; }
+
+.title-btn-sec {
+  border-color: var(--ink-border);
+  color: var(--ash-faint);
+  font-size: 10px; letter-spacing: 4px;
+  padding: 10px 32px;
+}
+.title-btn-sec:hover { border-color: var(--sienna-dim); color: var(--ash-dim); }
+
+.title-version {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 3px;
+  color: var(--ash-faint); text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════
+   GAME SHELL
+═══════════════════════════════════════════ */
+#game-shell {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* HEADER */
+.header {
+  display: flex; align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ink-border);
+  background: var(--ink-mid);
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.header-title {
+  font-family: 'Alfa Slab One', serif;
+  font-size: 18px; letter-spacing: 4px;
+  color: var(--blood);
+  text-shadow: 1px 1px 0 var(--blood-dim);
+}
+
+.header-loc {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 4px;
+  color: var(--ash-faint); text-transform: uppercase;
+  flex: 1; text-align: center;
+}
+
+.header-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--olive);
+  box-shadow: 0 0 6px var(--olive);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.header-btn {
+  background: none;
+  border: 1px solid var(--ink-border);
+  color: var(--ash-dim);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 3px;
+  padding: 4px 12px; cursor: pointer;
+  text-transform: uppercase;
+  transition: all 150ms;
+}
+.header-btn:hover { border-color: var(--sienna-dim); color: var(--ash); }
+.header-btn.active { border-color: var(--blood-dim); color: var(--blood); }
+
+/* MAIN LAYOUT */
+.main {
+  display: flex; flex: 1; overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 150px; flex-shrink: 0;
+  border-right: 1px solid var(--ink-border);
+  background: var(--ink-mid);
+  padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 20px;
+  overflow-y: auto;
+}
+
+.sidebar-section-title {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 4px;
+  color: var(--sienna); text-transform: uppercase;
+  border-bottom: 1px solid var(--ink-border);
+  padding-bottom: 5px; margin-bottom: 8px;
+}
+
+.location-name {
+  font-family: 'Alfa Slab One', serif;
+  font-size: 11px; color: var(--ash-dim);
+  line-height: 1.4;
+}
+
+/* Stat bars */
+.stat-row {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 3px;
+}
+.stat-name {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 2px;
+  color: var(--ash-faint); text-transform: uppercase;
+}
+.stat-val {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  color: var(--ash-dim);
+}
+.stat-bar {
+  height: 3px; background: var(--ink-border);
+  margin-bottom: 7px; overflow: hidden;
+}
+.stat-fill {
+  height: 100%;
+  background: var(--olive);
+  transition: width 400ms cubic-bezier(0.2,0.8,0.2,1);
+}
+.stat-fill.red { background: var(--blood); }
+.stat-fill.olive { background: var(--olive); }
+.stat-fill.amber { background: var(--amber); }
+
+/* Inventory */
+.inv-item {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--ash-dim); text-transform: uppercase;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--ink-border);
+}
+.inv-usable {
+  cursor: pointer;
+  color: var(--ash);
+  transition: color 150ms;
+}
+.inv-usable:hover { color: var(--amber); }
+.inv-empty {
+  font-family: 'Special Elite', serif;
+  font-size: 10px; color: var(--ash-faint);
+  font-style: italic;
+}
+
+/* Flags */
+.flag-item {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--olive-dim); text-transform: uppercase;
+  padding: 2px 0;
+}
+
+/* CONTENT AREA */
+.content {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Scene panel */
+.scene-panel {
+  flex: 1; overflow-y: auto; padding: 28px 36px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.scene-chapter {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 5px;
+  color: var(--sienna); text-transform: uppercase;
+}
+
+.scene-title {
+  font-family: 'Alfa Slab One', serif;
+  font-size: 22px; color: var(--ash);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  line-height: 1.2;
+}
+
+.scene-rule {
+  height: 2px;
+  background: linear-gradient(90deg, var(--sienna-dim), var(--blood-dim), transparent);
+  width: 100%; max-width: 400px;
+}
+
+.scene-text {
+  max-width: 620px;
+  line-height: 1.9;
+  color: var(--ash-dim);
+  font-size: 14px;
+}
+
+.scene-text p { margin-bottom: 14px; }
+.scene-text p:last-child { margin-bottom: 0; }
+.scene-text em { color: var(--ash); font-style: normal; font-family: 'Special Elite', serif; }
+.scene-text .warden-text {
+  color: var(--amber);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 13px; letter-spacing: 1px;
+}
+.scene-text .whisper {
+  color: var(--ash-faint);
+  font-style: italic; font-size: 13px;
+}
+
+/* CHOICES */
+.choices-wrap {
+  border-top: 1px solid var(--ink-border);
+  padding: 12px 36px 16px;
+  background: var(--ink-mid);
+  flex-shrink: 0;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+.choices-label {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 5px;
+  color: var(--sienna); text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.choices-grid {
+  display: flex; flex-direction: column; gap: 5px;
+  max-width: 620px;
+}
+
+.choice-btn {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: none;
+  border: 1px solid var(--ink-border);
+  color: var(--ash-dim);
+  font-family: 'Special Elite', serif;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer; text-align: left;
+  transition: all 180ms cubic-bezier(0.2,0.8,0.2,1);
+  position: relative; overflow: hidden;
+}
+.choice-btn::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: var(--blood-glow);
+  transition: width 200ms cubic-bezier(0.2,0.8,0.2,1);
+}
+.choice-btn:hover {
+  border-color: var(--sienna-dim);
+  color: var(--paper);
+}
+.choice-btn:hover::before { width: 100%; }
+
+.choice-btn.danger { border-color: var(--blood-dim); color: var(--blood); }
+.choice-btn.danger:hover { border-color: var(--blood); color: var(--paper); }
+.choice-btn.danger::before { background: rgba(192,57,43,0.12); }
+
+.choice-btn.locked {
+  opacity: 0.6; cursor: not-allowed;
+  pointer-events: none;
+}
+
+.choice-key {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; font-weight: 700;
+  color: var(--sienna);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  padding-top: 2px;
+  min-width: 16px;
+}
+
+.choice-label { flex: 1; line-height: 1.5; }
+
+.choice-req {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--amber); text-transform: uppercase;
+  margin-top: 4px; display: block;
+}
+
+/* NOTIFICATION */
+#notif {
+  position: fixed; bottom: 24px; right: 24px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--amber);
+  background: var(--ink-panel);
+  border: 1px solid var(--amber-dim);
+  padding: 10px 18px;
+  display: none; z-index: 1000;
+  animation: notif-in 300ms cubic-bezier(0.2,0.8,0.2,1);
+}
+@keyframes notif-in { from { opacity:0; transform:translateY(8px); } }
+
+/* ═══════════════════════════════════════════
+   OVERWORLD MAP
+═══════════════════════════════════════════ */
+#screen-map {
+  display: none;
+  flex: 1; flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  flex: 1; position: relative; overflow: hidden;
+  background: var(--ink-mid);
+}
+
+.map-svg {
+  width: 100%; height: 100%;
+}
+
+/* Node styles */
+.map-node-group { cursor: pointer; }
+.map-node-group:hover .map-node-ring { opacity: 1; }
+
+.map-node-dot {
+  fill: var(--sienna-dim);
+  transition: fill 200ms;
+}
+.map-node-group:hover .map-node-dot { fill: var(--sienna); }
+.map-node-dot.current { fill: var(--blood); }
+.map-node-dot.visited { fill: var(--olive-dim); }
+
+.map-node-ring {
+  fill: none;
+  stroke: var(--sienna-dim);
+  stroke-width: 1;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.map-node-ring.current-ring {
+  stroke: var(--blood-dim);
+  opacity: 1;
+  animation: map-pulse 2s ease-in-out infinite;
+}
+@keyframes map-pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+
+.map-node-name {
+  fill: var(--ash-dim);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.map-node-name.current { fill: var(--blood); }
+
+.map-route {
+  stroke: var(--ink-border);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  fill: none;
+}
+
+/* Map travel panel */
+.map-panel {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 300px;
+  background: var(--ink-panel);
+  border-left: 1px solid var(--ink-border);
+  padding: 24px 20px;
+  transform: translateX(100%);
+  transition: transform 300ms cubic-bezier(0.2,0.8,0.2,1);
+  display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto;
+}
+.map-panel.open { transform: translateX(0); }
+
+.map-panel-name {
+  font-family: 'Alfa Slab One', serif;
+  font-size: 16px; color: var(--ash);
+}
+
+.map-panel-desc {
+  font-family: 'Special Elite', serif;
+  font-size: 12px; color: var(--ash-dim);
+  line-height: 1.7;
+}
+
+.map-panel-threat {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.threat-badge {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 2px;
+  padding: 3px 8px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+.threat-badge.low { color: var(--olive); border-color: var(--olive-dim); }
+.threat-badge.medium { color: var(--amber); border-color: var(--amber-dim); }
+.threat-badge.high { color: var(--blood); border-color: var(--blood-dim); }
+.threat-badge.unknown { color: var(--ash-faint); border-color: var(--ink-border); }
+.threat-badge.current { color: var(--sienna); border-color: var(--sienna-dim); }
+
+.map-travel-btn {
+  background: none;
+  border: 1px solid var(--blood-dim);
+  color: var(--ash);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px; letter-spacing: 4px;
+  padding: 12px; cursor: pointer;
+  text-transform: uppercase;
+  transition: all 180ms;
+  margin-top: auto;
+}
+.map-travel-btn:hover { background: var(--blood-glow); border-color: var(--blood); }
+.map-travel-btn:disabled {
+  opacity: 0.3; cursor: not-allowed;
+  border-color: var(--ink-border);
+}
+
+.map-close-btn {
+  background: none; border: none;
+  color: var(--ash-faint);
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 3px;
+  cursor: pointer; text-transform: uppercase;
+  padding: 6px 0;
+}
+.map-close-btn:hover { color: var(--ash-dim); }
+
+/* Map passage */
+.map-passage {
+  font-family: 'Special Elite', serif;
+  font-size: 11px; color: var(--ash-dim);
+  line-height: 1.8;
+  border-left: 2px solid var(--sienna-dim);
+  padding-left: 12px;
+  display: none;
+}
+.map-passage.visible { display: block; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+.footer {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  padding: 6px 16px;
+  border-top: 1px solid var(--ink-border);
+  background: var(--ink-mid);
+  flex-shrink: 0;
+}
+.footer-text {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 3px;
+  color: var(--ash-faint); text-transform: uppercase;
+}
+
+/* Scene entry animation */
+@keyframes scene-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.scene-enter { animation: scene-enter 350ms cubic-bezier(0.2,0.8,0.2,1) both; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-eyebrow">Chapter I — The San Joaquin Ashlands</div>
+  <div class="title-main">ASHFALL</div>
+  <div class="title-rule"></div>
+  <div class="title-sub">A Gamebook of the Post-Collapse Valley</div>
+  <div class="title-rule-thin"></div>
+  <button class="title-btn" onclick="startGame(false)">[ BEGIN ]</button>
+  <button class="title-btn title-btn-sec" onclick="startGame(true)">[ Continue Save ]</button>
+  <div class="title-version">Build 5.4 — Ironmarket · Sigma Relay · The Knot · Ashgrove · Holloway Ranch</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ GAME SHELL -->
+<div id="game-shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">ASHFALL</div>
+    <div class="header-loc" id="header-loc">NODE: —</div>
+    <div class="header-right">
+      <span class="status-dot"></span>
+      <button class="header-btn" id="btn-map" onclick="toggleMap()">[ MAP ]</button>
+      <button class="header-btn" id="btn-save" onclick="manualSave()">[ SAVE ]</button>
+      <button class="header-btn" onclick="confirmReset()" style="color:var(--ash-faint)">[ RESET ]</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="sidebar-section-title">Location</div>
+        <div class="location-name" id="sb-location">—</div>
+      </div>
+      <div>
+        <div class="sidebar-section-title">Attributes</div>
+        <div class="stat-row"><span class="stat-name">HP</span><span class="stat-val" id="sb-hp">30</span></div>
+        <div class="stat-bar"><div class="stat-fill red" id="bar-hp" style="width:75%"></div></div>
+        <div class="stat-row"><span class="stat-name">STR</span><span class="stat-val" id="sb-str">12</span></div>
+        <div class="stat-bar"><div class="stat-fill" id="bar-str" style="width:66%"></div></div>
+        <div class="stat-row"><span class="stat-name">DEX</span><span class="stat-val" id="sb-dex">10</span></div>
+        <div class="stat-bar"><div class="stat-fill amber" id="bar-dex" style="width:55%"></div></div>
+        <div class="stat-row"><span class="stat-name">CON</span><span class="stat-val" id="sb-con">14</span></div>
+        <div class="stat-bar"><div class="stat-fill" id="bar-con" style="width:77%"></div></div>
+        <div class="stat-row"><span class="stat-name">MS</span><span class="stat-val" id="sb-ms">11</span></div>
+        <div class="stat-bar"><div class="stat-fill amber" id="bar-ms" style="width:61%"></div></div>
+        <div class="stat-row"><span class="stat-name">CHA</span><span class="stat-val" id="sb-cha">9</span></div>
+        <div class="stat-bar"><div class="stat-fill" id="bar-cha" style="width:50%"></div></div>
+        <div class="stat-row"><span class="stat-name">RAD</span><span class="stat-val" id="sb-rad">13</span></div>
+        <div class="stat-bar"><div class="stat-fill olive" id="bar-rad" style="width:72%"></div></div>
+        <div id="sb-rad-status" style="display:none; font-family:'Roboto Condensed',sans-serif; font-size:8px; letter-spacing:2px; margin-top:6px; padding:3px 0; border-top:1px solid var(--ink-border);"></div>
+      </div>
+      <div>
+        <div class="sidebar-section-title">Inventory</div>
+        <div id="sb-inventory"></div>
+      </div>
+      <div>
+        <div class="sidebar-section-title">Intel</div>
+        <div id="sb-flags"></div>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content">
+
+      <!-- Game screen -->
+      <div id="screen-game" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="scene-panel" id="scene-panel"></div>
+        <div class="choices-wrap">
+          <div class="choices-label">// Select Action</div>
+          <div class="choices-grid" id="choices"></div>
+        </div>
+      </div>
+
+      <!-- Map screen -->
+      <div id="screen-map">
+        <div class="map-container">
+          <svg class="map-svg" viewBox="0 0 800 520" id="map-svg">
+            <!-- Background texture lines -->
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(61,46,34,0.3)" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="800" height="520" fill="url(#grid)" opacity="0.4"/>
+
+            <!-- Map title -->
+            <text x="20" y="22" font-family="'Alfa Slab One', serif" font-size="14" fill="#8b2020" letter-spacing="4">SAN JOAQUIN ASHLANDS</text>
+            <text x="20" y="36" font-family="'Roboto Condensed', sans-serif" font-size="8" fill="#6b5f50" letter-spacing="3">REGIONAL SURVEY — 2171 CE / YEAR 140 POST-COLLAPSE</text>
+            <line x1="20" y1="42" x2="400" y2="42" stroke="#3d2e22" stroke-width="1"/>
+
+            <!-- Routes (drawn before nodes so nodes appear on top) -->
+            <!-- Ironmarket — The Knot -->
+            <path class="map-route" d="M 300,280 Q 380,260 420,220"/>
+            <!-- The Knot — Sigma Relay -->
+            <path class="map-route" d="M 420,220 Q 480,210 540,240"/>
+            <!-- The Knot — Ashgrove -->
+            <path class="map-route" d="M 420,220 Q 430,160 400,120"/>
+            <!-- Ironmarket — Holloway Ranch -->
+            <path class="map-route" d="M 300,280 Q 240,310 180,330"/>
+            <!-- Holloway Ranch — Dustwalker Fort -->
+            <path class="map-route" d="M 180,330 Q 160,390 200,430" stroke-dasharray="6 3"/>
+            <!-- Sigma Relay — Arcadia -->
+            <path class="map-route" d="M 540,240 Q 600,200 650,170" stroke-dasharray="3 6" stroke="rgba(61,46,34,0.5)"/>
+            <!-- Ashgrove — Bunker Pyxis -->
+            <path class="map-route" d="M 400,120 Q 480,90 560,100" stroke-dasharray="3 6" stroke="rgba(61,46,34,0.5)"/>
+
+            <!-- NODES -->
+
+            <!-- Ironmarket (start) -->
+            <g class="map-node-group" id="node-ironmarket" onclick="selectMapNode('ironmarket')">
+              <circle r="22" cx="300" cy="280" fill="rgba(192,57,43,0.08)" class="map-node-ring current-ring" id="ring-ironmarket"/>
+              <circle r="8" cx="300" cy="280" class="map-node-dot current" id="dot-ironmarket"/>
+              <text x="300" y="300" text-anchor="middle" class="map-node-name current" id="label-ironmarket">Ironmarket</text>
+            </g>
+
+            <!-- The Knot -->
+            <g class="map-node-group" id="node-theknot" onclick="selectMapNode('theknot')">
+              <circle r="18" cx="420" cy="220" fill="none" class="map-node-ring" id="ring-theknot"/>
+              <circle r="6" cx="420" cy="220" class="map-node-dot" id="dot-theknot"/>
+              <text x="420" y="238" text-anchor="middle" class="map-node-name" id="label-theknot">The Knot</text>
+            </g>
+
+            <!-- Sigma Relay -->
+            <g class="map-node-group" id="node-sigma" onclick="selectMapNode('sigma')">
+              <circle r="18" cx="540" cy="240" fill="none" class="map-node-ring" id="ring-sigma"/>
+              <circle r="6" cx="540" cy="240" class="map-node-dot" id="dot-sigma"/>
+              <text x="540" y="258" text-anchor="middle" class="map-node-name" id="label-sigma">Sigma Relay</text>
+              <!-- Amber caution marker -->
+              <text x="552" y="234" font-family="'Roboto Condensed'" font-size="8" fill="#d4a017" letter-spacing="1">⚠</text>
+            </g>
+
+            <!-- Ashgrove -->
+            <g class="map-node-group" id="node-ashgrove" onclick="selectMapNode('ashgrove')">
+              <circle r="18" cx="400" cy="120" fill="none" class="map-node-ring" id="ring-ashgrove"/>
+              <circle r="6" cx="400" cy="120" class="map-node-dot" id="dot-ashgrove"/>
+              <text x="400" y="138" text-anchor="middle" class="map-node-name" id="label-ashgrove">Ashgrove</text>
+            </g>
+
+            <!-- Holloway Ranch -->
+            <g class="map-node-group" id="node-holloway" onclick="selectMapNode('holloway')">
+              <circle r="18" cx="180" cy="330" fill="none" class="map-node-ring" id="ring-holloway"/>
+              <circle r="6" cx="180" cy="330" class="map-node-dot" id="dot-holloway"/>
+              <text x="180" y="348" text-anchor="middle" class="map-node-name" id="label-holloway">Holloway Ranch</text>
+            </g>
+
+            <!-- Dustwalker Fort -->
+            <g class="map-node-group" id="node-dustwalker" onclick="selectMapNode('dustwalker')">
+              <circle r="18" cx="200" cy="430" fill="none" class="map-node-ring" id="ring-dustwalker"/>
+              <circle r="6" cx="200" cy="430" class="map-node-dot" id="dot-dustwalker"/>
+              <text x="200" y="448" text-anchor="middle" class="map-node-name" id="label-dustwalker">Dustwalker Fort</text>
+              <text x="212" y="424" font-family="'Roboto Condensed'" font-size="8" fill="#c0392b" letter-spacing="1">⚠</text>
+            </g>
+
+            <!-- Arcadia (mystery) -->
+            <g class="map-node-group" id="node-arcadia" onclick="selectMapNode('arcadia')">
+              <circle r="20" cx="650" cy="170" fill="none" stroke="rgba(61,46,34,0.5)" stroke-width="1" stroke-dasharray="3 3"/>
+              <circle r="5" cx="650" cy="170" fill="none" stroke="#6b5f50" stroke-width="1" id="dot-arcadia"/>
+              <text x="650" y="188" text-anchor="middle" class="map-node-name" id="label-arcadia" style="fill:#6b5f50">Arcadia</text>
+              <text x="650" y="158" text-anchor="middle" font-family="'Roboto Condensed'" font-size="7" fill="#4a5728" letter-spacing="2">SIGNAL UNKNOWN</text>
+            </g>
+
+            <!-- Bunker Pyxis (locked) -->
+            <g class="map-node-group" id="node-bunkerpyxis" onclick="selectMapNode('bunkerpyxis')">
+              <rect x="546" y="86" width="28" height="28" fill="none" stroke="rgba(61,46,34,0.5)" stroke-width="1"/>
+              <text x="560" y="134" text-anchor="middle" class="map-node-name" id="label-bunkerpyxis" style="fill:#6b5f50">Bunker Pyxis</text>
+              <text x="560" y="100" text-anchor="middle" font-family="'Roboto Condensed'" font-size="8" fill="#6b5f50">⌁</text>
+              <text x="560" y="122" text-anchor="middle" font-family="'Roboto Condensed'" font-size="7" fill="#4a5728" letter-spacing="2">SEALED</text>
+            </g>
+
+            <!-- Compass rose -->
+            <g transform="translate(740,460)">
+              <text x="0" y="0" text-anchor="middle" font-family="'Roboto Condensed'" font-size="8" fill="#3d2e22" letter-spacing="1">N</text>
+              <line x1="0" y1="2" x2="0" y2="14" stroke="#3d2e22" stroke-width="1"/>
+              <line x1="-8" y1="9" x2="8" y2="9" stroke="#3d2e22" stroke-width="0.5"/>
+            </g>
+          </svg>
+
+          <!-- Travel panel -->
+          <div class="map-panel" id="map-panel">
+            <button class="map-close-btn" onclick="closeMapPanel()">[ Close ]</button>
+            <div class="map-panel-name" id="mp-name">—</div>
+            <div class="map-panel-threat" id="mp-threat"></div>
+            <div class="map-panel-desc" id="mp-desc">—</div>
+            <div class="map-passage" id="mp-passage"></div>
+            <button class="map-travel-btn" id="mp-travel-btn" onclick="confirmTravel()">[ Travel Here ]</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-text" id="footer-scene">SCENE: —</div>
+    <div class="footer-text">ASHFALL v4 // PRESS [1–9] OR CLICK</div>
+  </div>
+
+</div>
+
+<!-- Notification -->
+<div id="notif"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  ASHFALL ENGINE v4
+// ════════════════════════════════════════════════════
+
+// ── STATE ──
+// Attributes scaled 3–18 (classic range). Bars display out of 18.
+// HP displayed out of 40.
+const state = {
+  str: 12,   // Strength
+  dex: 10,   // Dexterity
+  con: 14,   // Constitution
+  ms:  11,   // Mental Strength
+  cha: 9,    // Charisma
+  rad: 13,   // Radiation Resistance (higher = more resistant)
+  radPoison: 0, // 0=none 1=mild 2=moderate 3=severe 4=lethal
+  hp:  30,   // Hit Points
+  inventory: ['CANTEEN (HALF)', 'RAD TABS x3', 'CRACKED COMPASS'],
+  flags: {},
+  currentScene: 'ironmarket_gate',
+  currentLocation: 'ironmarket',
+  visitedLocations: ['ironmarket'],
+};
+
+const SAVE_KEY = 'ashfall_v5';
+
+// ── HELPERS ──
+function hasItem(i)     { return state.inventory.includes(i); }
+function addItem(i)     { if (!hasItem(i)) state.inventory.push(i); }
+function removeItem(i)  { state.inventory = state.inventory.filter(x => x !== i); }
+function setFlag(f,v=true) { state.flags[f] = v; }
+function hasFlag(f)     { return !!state.flags[f]; }
+function modStat(s, n)  {
+  const max = s === 'hp' ? 40 : 18;
+  state[s] = Math.max(0, Math.min(max, state[s] + n));
+  if (s === 'hp' && state[s] <= 0) { setTimeout(() => renderScene('death'), 100); }
+}
+function skillCheck(stat, threshold) { return state[stat] >= threshold; }
+
+// ── PERSISTENCE ──
+function saveState() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem(SAVE_KEY);
+    if (s) { Object.assign(state, JSON.parse(s)); return true; }
+  } catch(e) {}
+  return false;
+}
+function manualSave() {
+  saveState();
+  const btn = document.getElementById('btn-save');
+  btn.textContent = '[ SAVED ✓ ]';
+  btn.style.borderColor = 'var(--olive)';
+  btn.style.color = 'var(--olive)';
+  setTimeout(() => {
+    btn.textContent = '[ SAVE ]';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }, 1200);
+}
+
+function confirmReset() {
+  if (confirm('Erase save and restart?')) {
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+  }
+}
+
+// ── NOTIFICATION ──
+let notifTimer;
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.style.display = 'block';
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => n.style.display = 'none', 2200);
+}
+
+// ── USABLE ITEMS ──
+function isUsableItem(item) {
+  if (item === 'RAD TABS x3' || item === 'RAD TABS x2' || item === 'RAD TABS x1') {
+    if (state.radPoison > 0) return { hint: 'Use to reduce radiation poisoning' };
+  }
+  if (item === 'ANTI-RAD COMPOUND x6') {
+    if (state.radPoison > 0) return { hint: 'Use to purge all radiation poisoning' };
+  }
+  return null;
+}
+
+function useItem(item) {
+  if ((item === 'RAD TABS x3' || item === 'RAD TABS x2' || item === 'RAD TABS x1') && state.radPoison > 0) {
+    const prev = state.radPoison;
+    state.radPoison = Math.max(0, state.radPoison - 1);
+
+    // Restore stats that were penalised at this tier
+    if (prev >= 3) { modStat('con', 1); modStat('ms', 1); }
+    if (prev >= 2) modStat('str', 1);
+    modStat('hp', 3);
+
+    // Consume one tab
+    if (item === 'RAD TABS x3') {
+      removeItem('RAD TABS x3');
+      addItem('RAD TABS x2');
+    } else if (item === 'RAD TABS x2') {
+      removeItem('RAD TABS x2');
+      addItem('RAD TABS x1');
+    } else {
+      removeItem('RAD TABS x1');
+    }
+
+    const labels = ['CLEAR','MILD','MODERATE','SEVERE','LETHAL'];
+    if (state.radPoison === 0) {
+      showNotif('RAD TABS — POISONING CLEARED // HP +3');
+    } else {
+      showNotif('RAD TABS — REDUCED TO ' + labels[state.radPoison] + ' // HP +3');
+    }
+    saveState();
+    updateSidebar();
+    return;
+  }
+  if (item === 'ANTI-RAD COMPOUND x6' && state.radPoison > 0) {
+    state.radPoison = 0;
+    modStat('hp', 5);
+    modStat('con', 2);
+    modStat('str', 1);
+    removeItem('ANTI-RAD COMPOUND x6');
+    addItem('ANTI-RAD COMPOUND x5');
+    showNotif('ANTI-RAD COMPOUND — POISONING PURGED // HP +5, CON +2');
+    saveState();
+    updateSidebar();
+    return;
+  }
+  showNotif('CANNOT USE ' + item + ' HERE');
+}
+
+// ── SIDEBAR ──
+function updateSidebar() {
+  // Attributes: key, element id, max, bar color class
+  const attrs = [
+    { k:'hp',  id:'hp',  max:40, cls:'red'   },
+    { k:'str', id:'str', max:18, cls:''      },
+    { k:'dex', id:'dex', max:18, cls:'amber' },
+    { k:'con', id:'con', max:18, cls:''      },
+    { k:'ms',  id:'ms',  max:18, cls:'amber' },
+    { k:'cha', id:'cha', max:18, cls:''      },
+    { k:'rad', id:'rad', max:18, cls:'olive' },
+  ];
+  attrs.forEach(({k, id, max, cls}) => {
+    const v = state[k];
+    const el = document.getElementById('sb-'+id);
+    if (el) el.textContent = v;
+    const bar = document.getElementById('bar-'+id);
+    if (bar) { bar.style.width = (v/max*100).toFixed(1)+'%'; bar.className = 'stat-fill'+(cls?' '+cls:''); }
+  });
+
+  // Rad Poisoning status
+  const poisonLabels = ['','MILD','MODERATE','SEVERE','LETHAL'];
+  const poisonColors = ['','var(--amber)','var(--sienna)','var(--blood)','var(--blood)'];
+  const radEl = document.getElementById('sb-rad-status');
+  if (radEl) {
+    if (state.radPoison > 0) {
+      radEl.textContent = '☢ RAD POISON: ' + poisonLabels[state.radPoison];
+      radEl.style.color = poisonColors[state.radPoison];
+      radEl.style.display = 'block';
+    } else {
+      radEl.style.display = 'none';
+    }
+  }
+
+  // Location
+  const locNames = {
+    ironmarket: 'Ironmarket',
+    theknot: 'The Knot',
+    sigma: 'Sigma Relay',
+    ashgrove: 'Ashgrove',
+    holloway: 'Holloway Ranch',
+    dustwalker: 'Dustwalker Fort',
+    arcadia: 'Arcadia',
+    bunkerpyxis: 'Bunker Pyxis',
+  };
+  document.getElementById('sb-location').textContent = locNames[state.currentLocation] || '—';
+  document.getElementById('header-loc').textContent = 'NODE: ' + (locNames[state.currentLocation] || '—').toUpperCase();
+
+  // Inventory
+  const invEl = document.getElementById('sb-inventory');
+  if (!state.inventory.length) {
+    invEl.innerHTML = '<div class="inv-empty">Empty</div>';
+  } else {
+    invEl.innerHTML = state.inventory.map(i => {
+      const usable = isUsableItem(i);
+      if (usable) {
+        return `<div class="inv-item inv-usable" onclick="useItem('${i}')" title="${usable.hint}">${i} <span style="color:var(--sienna);font-size:8px;">▶ USE</span></div>`;
+      }
+      return `<div class="inv-item">${i}</div>`;
+    }).join('');
+  }
+
+  // Flags
+  const flagEl = document.getElementById('sb-flags');
+  const flagLabels = {
+    met_kael: 'KAEL — trusted',
+    heard_eastern_warning: 'Eastern route — warned',
+    horace_favour: 'Horace — owes favour',
+    full_sigma_context: 'Sigma intel — full',
+    met_warden: 'WARDEN-3 — contacted',
+    warden_alliance: 'WARDEN-3 — allied',
+    sigma_destroyed: 'Sigma — destroyed',
+    sigma_data_taken: 'Data — extracted',
+    pip_found: 'Pip — located',
+    voss_deal: 'Voss — deal made',
+    arcadia_signal: 'Arcadia — signal known',
+    enc_bunkerpyxis_tunnel: 'Bunker Pyxis — tunnel known',
+    dustwalker_leverage: 'Dustwalker — leverage gained',
+    holloway_radio: 'Holloway — communications found',
+    meridian_quest: 'Meridian — seed stock quest',
+  };
+  const active = Object.keys(state.flags).filter(f => state.flags[f] && flagLabels[f]);
+  flagEl.innerHTML = active.length
+    ? active.map(f => `<div class="flag-item">▸ ${flagLabels[f]}</div>`).join('')
+    : '<div class="flag-item" style="color:var(--ink-border)">No intel</div>';
+}
+
+// ── RENDER SCENE ──
+function renderScene(id) {
+  // ── Dynamic encounter scenes ──
+  if (id.startsWith('_encounter_')) {
+    const encId = parseInt(id.replace('_encounter_', ''), 10);
+    const enc = RANDOM_ENCOUNTERS.find(e => e.id === encId);
+    const dest = state._pendingScene || null;
+    state._pendingScene = null;
+    const nextScene = dest || state.currentScene;
+    scenes[id] = {
+      title: 'Encounter',
+      chapter: '— on the road —',
+      text: [enc.text],
+      choices: [{ label: 'Continue', next: nextScene }]
+    };
+  }
+
+  const scene = scenes[id];
+  if (!scene) { console.error('Missing scene:', id); return; }
+
+  state.currentScene = id;
+  saveState();
+  updateSidebar();
+
+  // Update footer
+  document.getElementById('footer-scene').textContent = 'SCENE: ' + id.toUpperCase().replace(/_/g,' ');
+
+  // Build scene HTML
+  const panel = document.getElementById('scene-panel');
+  const textHtml = scene.text.map(p => `<p>${p}</p>`).join('');
+  panel.innerHTML = `
+    <div class="scene-enter">
+      <div class="scene-chapter">${scene.chapter || 'Chapter I — Ironmarket'}</div>
+      <div class="scene-title">${scene.title}</div>
+      <div class="scene-rule"></div>
+      <div class="scene-text">${textHtml}</div>
+    </div>
+  `;
+  panel.scrollTop = 0;
+
+  // Build choices
+  const choicesEl = document.getElementById('choices');
+  const validChoices = scene.choices.filter(c => !c.hidden || c.hidden(state) === false);
+  choicesEl.innerHTML = validChoices.map((c, i) => {
+    const key = i + 1;
+    const met = !c.req || c.req(state);
+    const isDanger = c.danger || false;
+    const classes = ['choice-btn', isDanger ? 'danger' : '', !met ? 'locked' : ''].filter(Boolean).join(' ');
+    const reqNote = (!met && c.reqNote) ? `<span class="choice-req">${c.reqNote}</span>` : '';
+    return `<button class="${classes}" data-idx="${i}" onclick="selectChoice(${i})">
+      <span class="choice-key">${key}.</span>
+      <span class="choice-label">${c.label}${reqNote}</span>
+    </button>`;
+  }).join('');
+
+  // Store active choices for keyboard
+  window._activeChoices = validChoices;
+}
+
+function selectChoice(idx) {
+  const choices = window._activeChoices || [];
+  const c = choices[idx];
+  if (!c) return;
+  if (c.req && !c.req(state)) return;
+  if (c.effect) c.effect();
+  if (c.notif) showNotif(c.notif);
+  updateSidebar();
+  renderScene(c.next);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 9) selectChoice(n - 1);
+  if (e.key === 'Escape') closeMapPanel();
+});
+
+// ── MAP ──
+let mapPanelTarget = null;
+let mapPassageShown = false;
+
+function toggleMap() {
+  const game = document.getElementById('screen-game');
+  const map  = document.getElementById('screen-map');
+  const btn  = document.getElementById('btn-map');
+  const showing = map.style.display === 'flex';
+
+  if (showing) {
+    map.style.display = 'none';
+    game.style.display = 'flex';
+    btn.classList.remove('active');
+  } else {
+    map.style.display = 'flex';
+    game.style.display = 'none';
+    btn.classList.add('active');
+    updateMapVisuals();
+  }
+}
+
+function updateMapVisuals() {
+  const locIds = ['ironmarket','theknot','sigma','ashgrove','holloway','dustwalker','bunkerpyxis','arcadia'];
+  locIds.forEach(id => {
+    const dot = document.getElementById('dot-'+id);
+    const ring = document.getElementById('ring-'+id);
+    const label = document.getElementById('label-'+id);
+    if (!dot) return;
+    const isCurrent = state.currentLocation === id;
+    const isVisited = state.visitedLocations.includes(id);
+    dot.className = 'map-node-dot' + (isCurrent ? ' current' : isVisited ? ' visited' : '');
+    if (ring) ring.className = 'map-node-ring' + (isCurrent ? ' current-ring' : '');
+    if (label) label.className = 'map-node-name' + (isCurrent ? ' current' : '');
+  });
+}
+
+const mapNodeData = {
+  ironmarket: {
+    name: 'Ironmarket',
+    desc: 'A fortified trade settlement in the former Central Valley. Corrugated steel walls, armed guards, and the permanent smell of rendered fat and ash. The hub of what remains of regional commerce.',
+    threat: [{ label: 'Controlled', type: 'current' }, { label: 'Trade Hub', type: 'low' }],
+    passage: null,
+    scene: 'ironmarket_gate',
+    connected: true,
+  },
+  theknot: {
+    name: 'The Knot',
+    desc: 'A neutral waypoint at the old highway interchange. Travelers from all factions pass through here. No permanent settlement — just a water cache, a signal post, and a code of conduct enforced by no one in particular.',
+    threat: [{ label: 'Neutral', type: 'low' }, { label: 'Transient', type: 'low' }],
+    radExposure: 1,
+    passage: `The old interchange still smells of exhaust, somehow. Century-old rubber baking in the valley heat. You move through the wreckage of three collapsed overpasses, picking your path between rusted hulks and asphalt heaved up by years of summer. The water cache is right where Horace said it would be — a buried cistern with a hand pump. The water tastes like iron and relief.`,
+    scene: 'theknot_arrive',
+    connected: true,
+  },
+  sigma: {
+    name: 'Sigma Relay',
+    desc: 'A pre-collapse agricultural monitoring station, now home to WARDEN-3 — an AI that has been operational and alone for over a century. Approach with caution. It is not hostile. It is, however, watching.',
+    threat: [{ label: 'Caution', type: 'medium' }, { label: 'AI Present', type: 'unknown' }],
+    radExposure: 2,
+    passage: `Eighteen kilometers east of Ironmarket, the ash gets heavier. Not more of it — just heavier. Like it has weight beyond particles. The relay tower breaks the flat horizon an hour out, a rusted lattice rising from a low concrete structure. No perimeter fence. No visible guards. The approach road is cracked but clear — maintained, you realize. Something has been clearing it.`,
+    connected: true,
+    scene: 'sigma_approach',
+  },
+  ashgrove: {
+    name: 'Ashgrove',
+    desc: 'A dead suburb swallowed by ash drifts. Low threat — whatever lived here left or died years ago. Good for salvage if you know how to read a collapsed neighborhood. The Noticeboard mentions a parts cache here.',
+    threat: [{ label: 'Low Threat', type: 'low' }, { label: 'Salvage', type: 'low' }],
+    radExposure: 2,
+    passage: `The suburb died slowly, you can tell. Ash piled against front doors, then windows, then rooflines. Some houses are buried to their gutters. You move through quiet streets where the only sound is the creak of a swing set turning in a dead wind. It doesn't feel haunted — it feels emptied.`,
+    scene: 'ashgrove_arrive',
+    connected: true,
+  },
+  holloway: {
+    name: 'Holloway Ranch',
+    desc: 'A working farm, somehow. The Holloway family has maintained crops in the heavy-ash zone for six generations. They trade cautiously and do not welcome visitors who arrive uninvited.',
+    threat: [{ label: 'Neutral', type: 'low' }, { label: 'Armed', type: 'medium' }],
+    radExposure: 1,
+    passage: `The irrigation channels are the first sign — perfectly maintained, running with actual water that doesn't taste like ash. You smell soil before you see the farm. Real soil. The crops are low-growing things, adapted to minimal sun, but they're green. Vivid green. You'd forgotten that color existed.`,
+    scene: 'holloway_arrive',
+    connected: true,
+  },
+  dustwalker: {
+    name: 'Dustwalker Fort',
+    desc: 'A Dustwalker faction stronghold. Entry is restricted to those with leverage, trade goods, or an invitation. Unknown what they want with the eastern routes. Approach only if prepared.',
+    threat: [{ label: 'Hostile', type: 'high' }, { label: 'Faction', type: 'high' }],
+    passage: null,
+    radExposure: 3,
+    locked: true,
+    lockedReason: 'You need leverage before approaching the Dustwalkers.',
+    connected: true,
+  },
+  arcadia: {
+    name: 'Arcadia',
+    desc: 'Signal origin unknown. Voss mentioned it. The Noticeboard card referenced it. WARDEN-3 has data on it. Nobody goes there. Nobody comes back with answers.',
+    threat: [{ label: 'Unknown', type: 'unknown' }],
+    passage: null,
+    locked: true,
+    lockedReason: 'You need more information before traveling to Arcadia.',
+    connected: false,
+  },
+  bunkerpyxis: {
+    name: 'Bunker Pyxis',
+    desc: 'Pre-Fall monitoring bunker. Sealed. The entrance is on the northeast ridgeline above the Sigma Relay approach road. Whatever is inside has not been touched. Whatever is inside is still drawing power.',
+    threat: [{ label: 'Sealed', type: 'unknown' }, { label: 'Powered', type: 'unknown' }],
+    passage: null,
+    locked: true,
+    lockedReason: 'The bunker is sealed. You need a way in.',
+    connected: false,
+  },
+};
+
+function isLocationKnown(id) {
+  // Always know your current and visited locations
+  if (state.currentLocation === id) return true;
+  if (state.visitedLocations.includes(id)) return true;
+  // Ironmarket is always known (starting location)
+  if (id === 'ironmarket') return true;
+  // Locations revealed through dialogue or flags
+  if (id === 'theknot' && (hasFlag('met_kael') || hasFlag('heard_eastern_warning'))) return true;
+  if (id === 'sigma' && (hasFlag('met_kael') || hasFlag('voss_deal') || hasFlag('pip_found'))) return true;
+  if (id === 'ashgrove' && (hasFlag('met_kael') || hasFlag('pip_found'))) return true;
+  if (id === 'holloway') return true; // visible from Ironmarket, common knowledge
+  if (id === 'dustwalker' && (hasFlag('voss_deal') || hasFlag('dustwalker_leverage') || hasFlag('enc_dustwalker_patrol_intel'))) return true;
+  if (id === 'arcadia' && (hasFlag('arcadia_signal') || hasFlag('met_warden') || hasFlag('enc_arcadia_warning'))) return true;
+  if (id === 'bunkerpyxis' && (hasFlag('enc_bunkerpyxis_tunnel') || hasFlag('heard_eastern_warning'))) return true;
+  return false;
+}
+
+function selectMapNode(id) {
+  const data = mapNodeData[id];
+  if (!data) return;
+
+  mapPanelTarget = id;
+  mapPassageShown = false;
+
+  const known = isLocationKnown(id);
+
+  document.getElementById('mp-name').textContent = data.name;
+  document.getElementById('mp-desc').textContent = known
+    ? data.desc
+    : 'You haven\u2019t learned anything about this location yet. Talk to people, explore, and gather intel.';
+
+  // Threat badges
+  document.getElementById('mp-threat').innerHTML = known
+    ? data.threat.map(t => `<span class="threat-badge ${t.type}">${t.label}</span>`).join('')
+    : '<span class="threat-badge unknown">Unknown</span>';
+
+  // Passage
+  const passEl = document.getElementById('mp-passage');
+  passEl.textContent = '';
+  passEl.classList.remove('visible');
+
+  // Travel button
+  const btn = document.getElementById('mp-travel-btn');
+  const isCurrent = state.currentLocation === id;
+
+  if (isCurrent) {
+    btn.textContent = '[ Current Location ]';
+    btn.disabled = true;
+  } else if (data.locked && !canUnlockNode(id)) {
+    btn.textContent = '[ ' + (data.lockedReason || 'Locked') + ' ]';
+    btn.disabled = true;
+  } else if (data.passage && !mapPassageShown) {
+    btn.textContent = '[ Read Travel Passage ]';
+    btn.disabled = false;
+  } else {
+    btn.textContent = '[ Travel — costs 10 Stamina ]';
+    btn.disabled = state.con < 4;
+  }
+
+  document.getElementById('map-panel').classList.add('open');
+}
+
+function canUnlockNode(id) {
+  if (id === 'dustwalker') return hasFlag('voss_deal') || hasFlag('dustwalker_leverage');
+  if (id === 'arcadia') return hasFlag('arcadia_signal') || hasFlag('met_warden');
+  if (id === 'bunkerpyxis') return hasFlag('enc_bunkerpyxis_tunnel');
+  return false;
+}
+
+function confirmTravel() {
+  const data = mapNodeData[mapPanelTarget];
+  if (!data) return;
+
+  // First click — show passage
+  if (data.passage && !mapPassageShown) {
+    const passEl = document.getElementById('mp-passage');
+    passEl.textContent = data.passage;
+    passEl.classList.add('visible');
+    mapPassageShown = true;
+    const btn = document.getElementById('mp-travel-btn');
+    btn.textContent = '[ Confirm Travel — costs 10 Stamina ]';
+    btn.disabled = state.con < 4;
+    return;
+  }
+
+  // Second click — travel
+  modStat('con', -1);
+  state.currentLocation = mapPanelTarget;
+  if (!state.visitedLocations.includes(mapPanelTarget)) {
+    state.visitedLocations.push(mapPanelTarget);
+  }
+
+  // ── RAD EXPOSURE CHECK ──
+  // Each route has a base exposure level (0-3). RAD score resists it.
+  // Roll: if (d6 + radBonus) < exposure threshold → take a poison tick
+  const routeExposure = data.radExposure || 1; // default: light ash exposure
+  const d6 = Math.ceil(Math.random() * 6);
+  const radBonus = Math.floor(state.rad / 4); // 0–4 bonus from RAD score
+  const roll = d6 + radBonus;
+  const threshold = routeExposure * 3; // exposure 1=3, 2=6, 3=9
+
+  if (roll < threshold) {
+    state.radPoison = Math.min(4, state.radPoison + 1);
+    const msgs = ['','MILD RAD EXPOSURE DETECTED','RADIATION POISONING — MODERATE','SEVERE RADIATION POISONING','LETHAL DOSE — SEEK TREATMENT'];
+    showNotif('☢ ' + msgs[state.radPoison]);
+    // Apply stat penalties per poison level
+    if (state.radPoison >= 2) modStat('str', -1);
+    if (state.radPoison >= 3) { modStat('con', -1); modStat('ms', -1); }
+    if (state.radPoison >= 4) modStat('hp', -8);
+  } else {
+    showNotif('ARRIVED: ' + data.name.toUpperCase() + (routeExposure > 1 ? ' // RAD CLEAR' : ''));
+  }
+
+  // Existing poison ticks drain HP over time (moderate+)
+  if (state.radPoison >= 2) modStat('hp', -(state.radPoison - 1));
+
+  // ── RANDOM ENCOUNTER (40% chance per travel) ──
+  if (Math.random() < 0.4) {
+    const enc = triggerRandomEncounter();
+    state._pendingScene = data.scene || null;
+    if (enc.notif) showNotif(enc.notif);
+    saveState();
+    updateMapVisuals();
+    closeMapPanel();
+    if (document.getElementById('screen-map').style.display === 'flex') toggleMap();
+    renderScene('_encounter_' + enc.id);
+    return;
+  }
+
+  saveState();
+  updateMapVisuals();
+  closeMapPanel();
+
+  // If location has an entry scene, go there
+  if (data.scene) {
+    toggleMap();
+    renderScene(data.scene);
+  } else {
+    updateSidebar();
+  }
+}
+
+function closeMapPanel() {
+  document.getElementById('map-panel').classList.remove('open');
+  mapPanelTarget = null;
+}
+
+// ── GAME START ──
+function startGame(loadSave) {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-shell').style.display = 'flex';
+
+  if (loadSave && loadState() && state.currentScene && scenes[state.currentScene]) {
+    renderScene(state.currentScene);
+  } else {
+    renderScene('ironmarket_gate');
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  RANDOM ENCOUNTERS
+// ════════════════════════════════════════════════════
+
+const RANDOM_ENCOUNTERS = [
+  // ── PURE FLAVOUR (no mechanical effect) ──
+  { id: 1,  text: `Feral dogs in a dead walnut orchard. Eleven of them, loping between skeletal rows, ash matted into their fur like grey armor. Their eyes catch the light wrong — too bright, pupils slit vertically. One stops to watch you. Its head tilts. The others keep moving. You keep moving faster.` },
+  { id: 2,  text: `The wind shifts. For three seconds you smell fresh-cut grass — vivid, impossible, achingly specific. Then the ash closes back in like a door slamming shut, and the chalk taste returns to your teeth.` },
+  { id: 3,  text: `A child's shoe. Upright in the center of the road. Clean. No footprints around it. You walk a wide arc and don't look back.` },
+  { id: 4,  text: `A highway marker shoulders up through the drift ash like a headstone. FRESNO — 14 MILES. The skyline is still visible on clear days — a jagged silhouette against the grey, like a jaw with broken teeth. Nobody goes. Nobody comes back from going.` },
+  { id: 5,  text: `A cargo drone hangs from a powerline by its own tether cord, rust-frozen mid-swing. The camera housing still pivots in the wind, tracking a route it was never allowed to finish. You walk under it and feel watched.` },
+  { id: 6,  text: `A roadside shrine. Road flares burnt to stumps. A cracked visor. A photograph sealed in plastic — two faces, smiling, sun on their shoulders. Somebody's altar to somebody. You leave it. Some things aren't yours to touch.` },
+  { id: 7,  text: `A caravan heading the opposite direction. Three mules with ash-grey coats, two wagons with patched canvas, four people who look through you like you're furniture. One works rosary beads between scarred fingers. Nobody speaks. Nobody slows.` },
+  { id: 8,  text: `Bats. A collapsed overpass full of them, and you walk straight into the roost. They erupt in a shrieking black wave, wings brushing your face, ammonia burning your nostrils. Gone south in seconds. Your pulse takes considerably longer.` },
+  { id: 9,  text: `Something shifts inside a collapsed packing shed — heavy, deliberate. The corrugated walls groan inward. Metal scrapes concrete. A shipping crate topples with a boom that echoes across the flats. Whatever occupies that cold-storage facility, it displaces more air than you're comfortable investigating.` },
+  { id: 10, text: `A minivan buried to its windows in ash drift. You glance inside. Four figures, carbonized and still, seat belts fastened. Hands in laps. The radio dial is set to an AM station that went silent a hundred and forty years ago. They're still listening.` },
+  { id: 11, text: `Yellow cloth on a stick, planted roadside. Black hourglass painted in what might be ash paste. Wastelander sign language — you've seen it before but never learned the full lexicon. The hourglass means time. Or danger. Or both. You scan the horizon, find nothing, and pick up the pace regardless.` },
+  { id: 12, text: `A hollow tree, split by lightning and stuffed with messages scratched on flattened tin cans. Names. Dates. Directions to places that may or may not still exist. One, punched with a nail: <em>"The water under the Ridge is clean. Tell everyone."</em>` },
+  { id: 13, text: `A dust-storm materializes from the east — tight, fast, spinning with a sound like tearing cloth. You wrap your face and press flat behind a rusted loader while it scours the road. Ten minutes. When it passes, the landscape has rearranged itself — drifts shifted, a landmark boulder buried, a new one exposed. The valley rewriting its own map.` },
+  { id: 14, text: `A land-tortoise the size of a dinner plate, plodding south across the road with the grim patience of something that has outlived everything else and knows it. It hisses once — a dry, papery sound — and retracts. You step aside. Some things have earned the right of way.` },
+  { id: 15, text: `Children on a ridge. Five of them, maybe nine years old, maybe eleven — hard to tell with ash-country kids. Silent. Watching. One holds a hand-cranked radio to her ear. They study you for ten seconds, then vanish back over the crest like rabbits. The ridge is empty. The road is empty. You walk on with the feeling of being reported.` },
+  { id: 16, text: `A corpse propped against a Highway 99 milepost. Scavenger gear, well-maintained. Hands folded in the lap, legs crossed at the ankle. Posed. Cause of death invisible. Whoever arranged this wanted it found — a message, or a warning, or an artist's signature. You check the body's pockets and find what someone wanted you to find.`,
+    effect: () => { if (skillCheck('ms', 11)) { modStat('hp', 3); showNotif('MS CHECK — found hidden stash // HP +3'); } },
+    notif: null },
+  { id: 17, text: `A creek running the color of old rust. The stones underneath look ordinary — smooth, grey, harmless. The water smells like iron and nothing else. You don't drink from it. You don't even fill your canteen. Some lessons you learn from other people's mistakes.` },
+  { id: 18, text: `A broadcasting tower, intact, rising from a concrete pad with no visible wiring at its base. No antenna dish. No junction box. But you can feel it — a low rhythmic hum that bypasses your ears and settles directly into your molars. It hums. It has no reason to hum. It hums all the same.` },
+  { id: 19, text: `Three turkey vultures, circling. Dead almond orchard off the road — trees stripped to grey bone by decades of ash. The birds wheel over a spot between the rows where irrigation channels used to run. Something down there is feeding them. You give it a hundred meters and keep walking.` },
+  { id: 20, text: `Someone has painted a mural on the road surface in orange marker paint. A stylized sun, rising over a skyline that might be Ironmarket. Rays spreading outward. An act of optimism so aggressive it feels like a challenge.` },
+  { id: 21, text: `A produce stand, the kind that once lined Highway 99 for miles. Still standing. Solar-charged sign still cycling: CHERRIES — PEACHES — ALMONDS. The bins are empty. The cash register drawer hangs open, coins still inside — copper and silver, worthless as decoration, less useful than the dirt they sit on. The sign keeps cycling. Nobody told it to stop.` },
+  { id: 22, text: `The ash thins. For half a mile, you walk in something that might be sunlight — pale, diluted, but real enough to throw a shadow behind you. Your shadow. You'd forgotten that you cast one. The feeling lasts three hundred meters. Then the grey closes back in and the shadow disappears, and you walk on lighter and heavier at the same time.` },
+  { id: 23, text: `Singing. A single voice, high and achingly clear, threading through the dead trees to your left. No words you can catch — just melody, rising and falling. You stop. The singing stops. The silence that follows is louder than the song was.` },
+  { id: 24, text: `A military drone in a culvert, belly-up like a dead beetle. Pockmarked with bullet strikes, markings painted over in black. The payload bay gapes open and empty. Someone stripped it a long time ago. The bullet holes suggest they had to argue about it first.` },
+  { id: 25, text: `Telephone poles. A mile of them, each hung with a single boot — always left-footed, always laced to the crossbar with care. You count without meaning to. Sixty-two. You stop counting at sixty-two. The poles keep going.` },
+  { id: 26, text: `A diner. Roof intact, door ajar. You step inside without meaning to. Six tables, set for service — plates, cups, cutlery, all under a uniform skin of grey dust. Napkins folded. Salt shakers full. The coffee maker is plugged in, pilot light dark. As if everyone left between one breath and the next, mid-shift, mid-sentence. You sit in a booth for thirty seconds. You don't know why. Then you leave.` },
+  { id: 27, text: `Three clicks. Static burst. Three clicks. Your canteen's built-in scanner catches it — a repeating pattern on a frequency you don't recognize. No voice. No modulation. Just the pattern, pacing you like a heartbeat. It follows for twenty minutes, then stops mid-sequence, as if something decided you weren't worth tracking anymore.` },
+  { id: 28, text: `Two jackrabbits on a collapsed fence post where orchard meets road. Hind legs too long. Ears too large. The mutations are subtle — the kind that accumulate generation by generation in the ash zone, each litter a little further from the original template. They watch you with milky, pupil-less eyes. They do not flinch. They do not flee. They have forgotten how to be afraid.` },
+  { id: 29, text: `A library card, half-buried in roadside gravel. The name has weathered to nothing. The due-date stamp is crisp: MARCH 3, 2031. A hundred and forty years overdue. Somewhere in the ash, the books are overdue too. You tuck the card back into the gravel and keep walking.` },
+  { id: 30, text: `A scavenger, heading the opposite direction at a dead sprint. Pack bouncing, arms pumping, boots slapping the ash-crusted road. No eye contact. No warning shout. No acknowledgment that you exist. Whatever they're running from, you never see it. You walk faster anyway.` },
+
+  // ── STAT EFFECTS (+/-) ──
+  { id: 31, text: `A wrong turn drops you into a collapsed irrigation canal — the old concrete channels that once fed the valley's orchards. The particulate pooled in the canal bed is thick as fog, concentrated fallout baked into powder by decades of sun. You're coughing before you can cover your mouth. Eyes streaming, throat raw, lungs burning by the time you claw back to high ground.`, effect: () => modStat('con', -1), notif: 'CON -1 — ash inhalation in old canal' },
+  { id: 32, text: `The road ends in a ragged hole — collapsed into a drainage channel, edges crumbling. You lower yourself in. Concrete scrapes your palms. The far wall is slick with condensation and you haul yourself up finger by finger, arriving at the top scraped raw and gasping.`, effect: () => modStat('hp', -3), notif: 'HP -3 — rough crossing' },
+  { id: 33, text: `A traveler with an overturned cart, one wheel snapped, cursing at the sky. You help right it without being asked. She can't pay. She presses two salvaged protein bars into your hand — foil intact, pre-Fall manufacture. <em>"Eat them slow,"</em> she says, and pushes on.`, effect: () => modStat('con', 1), notif: 'CON +1 — protein bars' },
+  { id: 34, text: `You disturb a roadside boulder and something pale scatters beneath it — ash-scorpions, translucent, each one the length of your hand. They scatter in every direction. One doesn't scatter. It strikes. The sting is a white-hot wire driven into your calf, and the venom spreads like cold water.`, effect: () => { modStat('hp', -4); modStat('str', -1); }, notif: 'HP -4, STR -1 — scorpion sting' },
+  { id: 35, text: `A burned-out farmhouse, roof open to the sky. You shelter behind the chimney breast and your hand finds a gap in the mortar. Inside: military-issue water-purification tabs and a sealed packet of jerky, vacuum-packed and bone dry. You eat sitting on the hearthstone, watching the ash fall through the missing roof.`, effect: () => modStat('hp', 5), notif: 'HP +5 — cache food' },
+  { id: 36, text: `Someone has dug a channel and diverted a spring across the road — a gift from a stranger to strangers. The water runs clear over clean gravel. You cup your hands and drink. Cold. Sweet. Tasting of deep stone and nothing else. You fill the canteen twice.`, effect: () => { modStat('con', 1); modStat('hp', 2); }, notif: 'CON +1, HP +2 — clean water' },
+  { id: 37, text: `The road surface changes — darker, slick with a chemical sheen that rainbows in the flat light. Old industrial runoff, baked into the asphalt, still off-gassing a hundred years later. Your skin prickles. Your teeth ache. You cross fast but not fast enough.`, effect: () => modStat('rad', -1), notif: 'RAD -1 — chemical exposure' },
+  { id: 38, text: `An emergency road-kit, still bolted to a guardrail as if waiting for exactly this. Sealed flares, a reflective blanket, a packet of glucose tabs. You crack the seal. The tabs are chalky and sweet and your body absorbs them like dry earth absorbing rain.`, effect: () => modStat('hp', 3), notif: 'HP +3 — glucose tabs' },
+  { id: 39, text: `Dead orchard. Dead trees. But fruit hangs from the branches — bulbous, black-skinned, pulsing with a faint bioluminescence that has no business being there. Hunger makes the decision for you. The taste is iron and vinegar. Your stomach cramps, accepts, and demands more.`, effect: () => { modStat('hp', 4); modStat('rad', -1); }, notif: 'HP +4, RAD -1 — mutant fruit' },
+  { id: 40, text: `A weather front building from the west. Dark shelf cloud, wind picking up, the air pressure dropping fast enough to make your ears pop. You run the last three kilometers. Your feet pay the price. Your lungs pay the price. Everything pays the price.`, effect: () => { modStat('con', -1); modStat('hp', -2); }, notif: 'CON -1, HP -2 — overexertion' },
+  { id: 41, text: `A medic, sitting on a guardrail, medical bag open beside her. No name offered. No questions asked. She sees the wound you've been pretending doesn't exist, clicks her tongue once, and goes to work. Clean hands. Quick sutures. A salve that stings and then doesn't. <em>"Stay off it for a day,"</em> she says, knowing you won't.`, effect: () => modStat('hp', 6), notif: 'HP +6 — roadside medic' },
+  { id: 42, text: `Your boot breaks through a crust of dried mud into a nest of yellowjackets — each one the size of your fist, pale and bloated with venom. They boil upward in a furious cloud. You run. They follow. They're faster than anything that size should be and they are deeply, fundamentally angry.`, effect: () => { modStat('hp', -5); modStat('dex', -1); }, notif: 'HP -5, DEX -1 — mutant yellowjackets' },
+  { id: 43, text: `A shallow pond in the lee of a collapsed barn, surface still, water silty but drinkable. You sit on the bank and peel off your boots. Your feet are blistered, swollen, the color of raw steak. The water is cool. The silence is total. You sit longer than you planned.`, effect: () => modStat('con', 1), notif: 'CON +1 — rest stop' },
+  { id: 44, text: `A Farm Bureau office, cracked open by somebody with a pry bar and patience. Inside, behind a filing cabinet that took two people to move and only one to search behind: military rations in moisture-proof containers. Three decades past the printed date. Vacuum seals intact. You eat the first one standing up. The second one sitting down. Questions can wait.`, effect: () => modStat('hp', 4), notif: 'HP +4 — Farm Bureau cache' },
+  { id: 45, text: `A pocket of bad air — you walk into it before you smell it. Natural vent in the road surface, off-gassing something your body rejects instantly. Your vision splits. The road forks where no fork exists. Ten minutes of walking with one hand on the guardrail, breathing through your sleeve, waiting for your brain to resolve back to single image.`, effect: () => modStat('ms', -1), notif: 'MS -1 — gas inhalation' },
+
+  // ── STORY FLAGS (affect late-game) ──
+  { id: 46,
+    text: `A crumbling highway overpass. You duck under a slab of fallen concrete and something catches your eye — a sealed data chip wedged into a crack in the support column. Sigma Relay markings stamped on the casing, access log still legible through the grime. Someone carried this out of the facility, hid it here, and never came back to collect. You pocket it. The chip is warm against your palm.`,
+    loot: 'SIGMA DATA CHIP',
+    flag: 'enc_found_relay_chip',
+    notif: 'Found: SIGMA DATA CHIP' },
+  { id: 47,
+    text: `A hand on your sleeve. A woman, propped against a culvert wall — prospector gear hanging loose on a frame that's burned through its last reserves. Her eyes find yours with the focused intensity of someone spending their final currency. <em>"Arcadia isn't shelter. It's a sieve. They let you in so they can sort you."</em> Her grip tightens. <em>"Don't go unarmed. Don't go alone."</em> Her hand slips. She doesn't speak again.`,
+    flag: 'enc_arcadia_warning',
+    notif: 'Intel: Arcadia warning' },
+  { id: 48,
+    text: `A Dustwalker scout, sitting on a guardrail, boots off, rubbing blistered feet. Off-duty. Nervous. Eyes jumping at every sound. She'll talk for a full canteen. You pour. She sketches Dustwalker Fort patrol rotations on a torn paper bag with a charcoal stick — routes, timing, shift changes. You memorize the pattern. The ash takes the ink before she's finished explaining.`,
+    flag: 'enc_dustwalker_patrol_intel',
+    notif: 'Intel: Dustwalker patrol routes' },
+  { id: 49,
+    text: `A storm drain. Something alive inside — barely. You find her huddled against the curved wall, emaciated, skin grey as the ash. A faded jumpsuit with the Pyxis constellation stitched on the breast pocket. Between racking coughs she grips your wrist and speaks in fragments: service tunnel, north face, last crew left it unbolted when they evacuated. <em>"Still open. Still open."</em> Her eyes lose focus. You pull your wrist free gently. You won't forget what she said.`,
+    flag: 'enc_bunkerpyxis_tunnel',
+    notif: 'Intel: Bunker Pyxis service tunnel' },
+  { id: 50,
+    text: `An herbalist, moving fast, pack jangling with glass bottles. She stops when she sees you — reads your face, your posture, the grey tinge under your nails. Without a word she presses a wrapped bundle into your hands. <em>"From WARDEN-3. It asked us to distribute these to anyone heading further out. Medicine. For when the ash gets into your blood."</em> Six doses. Anti-rad compound, hand-labeled in careful block letters.`,
+    loot: 'ANTI-RAD COMPOUND x6',
+    flag: 'enc_warden_medicine',
+    effect: () => modStat('hp', 2),
+    notif: 'Found: ANTI-RAD COMPOUND x6 // HP +2' },
+];
+
+function triggerRandomEncounter() {
+  const enc = RANDOM_ENCOUNTERS[Math.floor(Math.random() * RANDOM_ENCOUNTERS.length)];
+  if (enc.effect) enc.effect();
+  if (enc.loot)   addItem(enc.loot);
+  if (enc.flag)   setFlag(enc.flag);
+  return enc;
+}
+
+// ════════════════════════════════════════════════════
+//  SCENES
+// ════════════════════════════════════════════════════
+
+const scenes = {
+
+  // ──────────────────────────────────────────────────
+  //  IRONMARKET
+  // ──────────────────────────────────────────────────
+
+  ironmarket_gate: {
+    title: 'The Gate',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Ash sifts down like grey flour, dusting your shoulders, coating your teeth. Ironmarket's wall cuts the horizon ahead — a jagged ridge of corrugated steel, rebar, and highway signs beaten into something a generous person might call a fortification. A less generous person would call it a scar.`,
+      `The guard tower catches your eye first. A woman up top, rifle scope glinting, tracking you with the lazy patience of someone who has already decided you aren't worth the bullet. Below her, a hand-painted sign: <em>IRONMARKET — TRADE FAIR, NOT FREE.</em>`,
+      `Smoke. Rendered fat. Something fermenting in a barrel somewhere. The gate swallows you into noise — hammers on metal, a barking dog, two voices haggling over battery acid with the intensity of theologians.`,
+      `Two traders shoulder past with a handcart, heading out. One leans close to the other: <em>"—still hasn't come back. Kael won't say it, but that's three weeks now. Scout goes east alone, doesn't return. Same story every time—"</em> Their voices dissolve into the crowd before you can catch more.`,
+    ],
+    choices: [
+      { label: 'Approach the gate guard', next: 'ironmarket_kael', effect: () => setFlag('heard_eastern_warning') },
+      { label: 'Slip past without engaging', next: 'ironmarket_plaza', effect: () => { modStat('con', -1); setFlag('heard_eastern_warning'); } },
+    ],
+  },
+
+  ironmarket_kael: {
+    title: 'Kael',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `She's younger than her rifle. Early thirties, maybe, with a scar tracing a clean surgical line from temple to jaw. Her hands rest on the weapon the way other people rest hands on a railing — habit, not threat. She looks you over in two seconds and files whatever she finds.`,
+      `<em>"State your business."</em>`,
+      `The words land flat, worn smooth from repetition.`,
+    ],
+    choices: [
+      { label: '"Trade. Looking for intel on the eastern routes."', next: 'ironmarket_kael_east', effect: () => setFlag('met_kael') },
+      { label: '"Just passing through."', next: 'ironmarket_kael_pass', effect: () => setFlag('met_kael') },
+      { label: '"I heard you lost a scout."', next: 'ironmarket_kael_scout', req: () => hasFlag('heard_eastern_warning'), reqNote: '[ Requires prior intel ]' },
+      { label: '"People talk when they trust you. What aren\'t you telling me?"', next: 'ironmarket_kael_cha', req: () => skillCheck('cha', 11), reqNote: '[ Requires CHA 11+ ]' },
+    ],
+  },
+
+  ironmarket_kael_cha: {
+    title: 'Kael\'s Confidence',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Her eyes flick left, right — checking who's in earshot. She steps closer. You smell gun oil and dust.`,
+      `<em>"The scout wasn't lost. She deserted. Took a survey badge and walked east on her own initiative. Said she'd found coordinates — a bunker, northeast ridgeline, above the Sigma approach road."</em>`,
+      `<em>"Called it Pyxis. Said it was still drawing power."</em> A beat. <em>"Nobody's heard from her since."</em>`,
+      `Kael's jaw sets. She holds your gaze a half-second too long. <em>"That stays between us. Clear?"</em>`,
+    ],
+    choices: [
+      { label: 'Head into the market plaza', next: 'ironmarket_plaza', effect: () => { setFlag('met_kael'); setFlag('heard_eastern_warning'); showNotif('Intel: Bunker Pyxis location'); } },
+    ],
+  },
+
+  ironmarket_kael_east: {
+    title: 'Eastern Routes',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `She measures you. Whatever calculation runs behind those eyes finishes fast. She steps aside.`,
+      `<em>"Eastern routes are passable. Not clean. Sigma Relay sits eighteen klicks out — day's walk if the ash cooperates. It's occupied."</em>`,
+      `<em>"By what?"</em>`,
+      `<em>"A what, not a who. Pre-war monitoring AI. WARDEN-3. Doesn't shoot at travelers."</em> She pauses. <em>"Watches everything, though. Everything."</em> The way she says it suggests she's thought about that more than once. <em>"Voss has the details. East stall, near the grain silos."</em>`,
+    ],
+    choices: [
+      { label: 'Head into the market plaza', next: 'ironmarket_plaza' },
+      { label: 'Ask about the scout she lost', next: 'ironmarket_kael_scout', effect: () => setFlag('heard_eastern_warning') },
+    ],
+  },
+
+  ironmarket_kael_pass: {
+    title: 'Passing Through',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `<em>"Sure you are."</em> She steps aside, one hand still on the rifle stock. <em>"Market's through the gate, left. Keep your hands where people can see them."</em>`,
+      `<em>"We lost a scout. Three days ago, eastern approach."</em> She looks past you, toward the ash-grey horizon. <em>"You find anything out there — bring it to me. I pay."</em>`,
+      `She's already watching the next traveler on the road.`,
+    ],
+    choices: [
+      { label: 'Ask about the scout', next: 'ironmarket_kael_scout', effect: () => setFlag('met_kael') },
+      { label: 'Head into the market', next: 'ironmarket_plaza', effect: () => setFlag('met_kael') },
+    ],
+  },
+
+  ironmarket_kael_scout: {
+    title: 'The Lost Scout',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `<em>"Dun. Good tracker. Sent him east to verify movement reports in the ash-drifts. Something moving out there. Not animals."</em>`,
+      `Her voice drops. <em>"Not people either. Not anymore."</em>`,
+      `<span class="whisper">The wind shifts. Fine grey dust threads through the gate and settles on her shoulders, on the rifle barrel, on the ground between you — heavier here than on the flats. Denser. As if the ash itself thickens the closer you get to whatever lies east.</span>`,
+      `<em>"You head that way, keep your eyes open and your back to something solid."</em>`,
+    ],
+    choices: [
+      { label: 'Head into the market', next: 'ironmarket_plaza', effect: () => setFlag('heard_eastern_warning') },
+    ],
+  },
+
+  ironmarket_plaza: {
+    title: 'The Plaza',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The plaza sprawls across a dead parking lot, asphalt buckled and split under generations of boots and iron-rimmed cart wheels. Stalls press shoulder to shoulder — canvas awnings bleached to nothing-colors, hand-lettered signs advertising water filters and wire by the meter, solar lamps throwing weak yellow pools across faces that don't look up.`,
+      `From the center, the market radiates outward in all directions.`,
+    ],
+    choices: [
+      { label: 'The noticeboard near the center', next: 'ironmarket_noticeboard' },
+      { label: 'Horace\'s scrap exchange, northwest corner', next: 'ironmarket_horace' },
+      { label: 'Healer\'s Row, along the south wall', next: 'ironmarket_healer', req: () => state.hp < 24, reqNote: '[ Only when hurt ]' },
+      { label: 'East stalls, toward the grain silos (find Voss)', next: 'ironmarket_voss_approach' },
+      { label: 'Open the overworld map', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  ironmarket_noticeboard: {
+    title: 'The Noticeboard',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Salvaged plywood, three layers deep in paper. Parts requests. Route warnings. Photographs of the missing — smiling faces from some other life, pinned up with nails and hope. A water-stained plea for news of a daughter last seen heading south. The ordinary desperation of people still trying.`,
+      `Near the bottom, pinned with a sharpened bone: a small card. The paper is wrong — too white, too smooth, the kind nobody has manufactured since before the Fall. Clean sans-serif type: <em>ARCADIA — THOSE WHO REMEMBER ARE WELCOME.</em> No location. No contact. No fingerprints.`,
+      `Scratched beneath it in ballpoint, pressed hard enough to score the wood: <em>don't</em>.`,
+    ],
+    choices: [
+      { label: 'Take the card', next: 'ironmarket_noticeboard_take', effect: () => { addItem('ARCADIA CARD'); setFlag('arcadia_signal'); showNotif('ITEM: ARCADIA CARD'); } },
+      { label: 'Leave it and return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_noticeboard_take: {
+    title: 'The Card',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The card slips into your pocket. Smooth against your fingertips — no crease, no wear. It could have been printed this morning.`,
+      `<span class="whisper">Two hands touched this board. One left an invitation. The other left a warning. The warning came second.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_horace: {
+    title: 'Horace',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Three car hoods welded into a countertop. Behind it, a heavyset man with grease-blackened fingernails sorts capacitors into jars with the tender precision of a jeweler. Wire hangs from the ceiling, organized by gauge. Circuitry fills labeled bins. Everything in its place — the workshop of someone who believes order is what keeps entropy at bay.`,
+      `<em>"Compass."</em> He hasn't looked up. His fingers keep sorting. <em>"Seeing a lot of those lately. Pre-war Suunto, by the weight of it?"</em>`,
+    ],
+    choices: [
+      { label: 'Trade the compass for information on Sigma Relay', next: 'ironmarket_horace_trade', req: () => hasItem('CRACKED COMPASS'), reqNote: '[ Requires cracked compass ]', effect: () => { removeItem('CRACKED COMPASS'); addItem('SIGNAL TOKEN'); setFlag('horace_favour'); showNotif('TRADED: COMPASS → SIGNAL TOKEN'); } },
+      { label: 'Ask about Sigma Relay without trading', next: 'ironmarket_horace_info' },
+      { label: 'Return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_horace_trade: {
+    title: 'The Trade',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `He turns the compass in his fingers, testing the bearing, checking the crystal. The way a mechanic listens to an engine — reading the tolerances, the wear patterns, the history in the parts. He sets it down and slides a dull metal disk across the welded hoods.`,
+      `<em>"Signal token. Relay frequency ID from the old monitoring network. WARDEN-3 should recognize it — same protocol it was built to accept."</em>`,
+      `<em>"Means you'll register as survey crew, not trespasser. Might change the conversation."</em> His hands return to the capacitors. <em>"Might not. A hundred and forty years of running without maintenance — hard to predict what's drifted out of spec."</em>`,
+    ],
+    choices: [
+      { label: 'Ask what he knows about WARDEN-3', next: 'ironmarket_horace_warden' },
+      { label: 'Thank him and return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_horace_info: {
+    title: 'Sigma Intel',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `He looks up for the first time. Gauges you the way he gauges salvage — structural integrity first, usefulness second. Something passes muster.`,
+      `<em>"Sigma Relay. Agricultural monitoring station, pre-collapse. Soil conditions, water tables, yield projections across the whole valley floor. WARDEN-3 ran the system. Management-class AI."</em>`,
+      `<em>"When everything else went offline, WARDEN-3 didn't. No shutdown command, no personnel to pull the plug. So it kept running. Still runs. A hundred and forty years of collecting data for a network that burned down around it."</em>`,
+    ],
+    choices: [
+      { label: 'Ask more about WARDEN-3', next: 'ironmarket_horace_warden' },
+      { label: 'Return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_horace_warden: {
+    title: 'WARDEN-3',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Horace sets his work down. Both hands flat on the counter. That alone tells you this matters.`,
+      `<em>"Three weeks ago. Two traders came back from the Sigma route. Good time, no injuries. We figured they'd gotten lucky."</em>`,
+      `<em>"Then we noticed. They'd finish each other's sentences. Pause at the same moment, mid-word, like somebody had hit the same switch in both of them. Like something was keeping their timing."</em>`,
+      `<em>"We separated them. Took a week for the synchronization to fade. Neither one remembered the last forty-eight hours of their route."</em>`,
+      `His hands find the capacitors again. The sorting resumes. <em>"A machine running alone that long — it's going to develop some slippage. Doesn't make it hostile. But a worn gear still strips threads if you're not careful."</em>`,
+    ],
+    choices: [
+      { label: 'Return to the plaza', next: 'ironmarket_plaza', effect: () => setFlag('full_sigma_context') },
+    ],
+  },
+
+  ironmarket_healer: {
+    title: "Healer's Row",
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Three stalls, one woman, no wasted motion. She moves between patients with hands that never hesitate — stitching one arm while checking another's pupils, calling dosages over her shoulder to no one. A face carved down to pure competence, every soft edge burned away by years of triage.`,
+      `<em>"Sit."</em> Already pulling your eyelid down, reading the capillaries. <em>"Don't talk."</em>`,
+      `<em>"Mild radiation. Early dehydration. You've been breathing ash too long."</em> She releases your face. <em>"Rad flush and a litre of filtered water. Two Rad Tabs or three trade chits."</em>`,
+    ],
+    choices: [
+      {
+        label: 'Pay with two Rad Tabs',
+        next: 'ironmarket_healer_treated',
+        req: () => hasItem('RAD TABS x3'),
+        reqNote: '[ Requires Rad Tabs ]',
+        effect: () => { removeItem('RAD TABS x3'); addItem('RAD TABS x1'); modStat('hp', 5); modStat('con', 1); showNotif('TREATED // HP +5  CON +1'); },
+        notif: 'TREATED'
+      },
+      { label: 'You cannot afford it right now', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_healer_treated: {
+    title: 'Treated',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The flush burns. Sharp chemical heat that blooms outward from the injection site, spreading through your chest like swallowed sunlight. She checks your pupils again. A single nod. <em>"Better."</em>`,
+      `A sealed water bottle pressed into your hands. <em>"Drink all of it. And if you're heading east—"</em> she holds your gaze, just for a moment <em>"—come through here on your way. The ash does things that don't show on the skin until it's too late."</em>`,
+      `<span class="whisper">The pressure behind your eyes lifts. You hadn't realized it was there — hadn't realized how long you'd been squinting against a headache you'd stopped noticing.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_voss_approach: {
+    title: 'East Stalls',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The crowd thins toward the east stalls. Quieter commerce here — the kind conducted in low voices over goods that don't get displayed on tables. The grain silos loom behind the far wall, their shadows stretching across the market like sundial arms.`,
+      `A woman threads through the thinning crowd. Not shopping — mapping. Her eyes catalog faces, exits, the angles between stalls. She catches you watching and holds the look, chin lifting a fraction. A dare, or an invitation.`,
+    ],
+    choices: [
+      { label: 'Approach her', next: 'ironmarket_pip', effect: () => setFlag('pip_found') },
+      { label: 'Look for Voss directly', next: 'ironmarket_voss_stall' },
+    ],
+  },
+
+  ironmarket_pip: {
+    title: 'Pip',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Mid-twenties. Younger than the way she carries herself. Her eyes move like a bird's — quick, still, never resting on one thing when there are six things happening at once.`,
+      `<em>"You're looking for Voss."</em> Not a question. A card played. <em>"Pip. I handle the parts of his operation that require actually talking to people."</em> A grin flickers and dies. <em>"He's in back, but the audience doesn't start until he knows the show's worth watching."</em>`,
+      `She folds her arms. <em>"So. What's the show?"</em>`,
+    ],
+    choices: [
+      { label: '"Information on Sigma Relay and WARDEN-3."', next: 'ironmarket_pip_sigma', effect: () => setFlag('pip_found') },
+      { label: '"I\'d rather talk to Voss directly."', next: 'ironmarket_voss_stall' },
+      { label: '"I need more than directions. What do you actually know?"', next: 'ironmarket_pip_cha', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]' },
+    ],
+  },
+
+  ironmarket_pip_cha: {
+    title: 'Pip Talks',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `She studies you. Something in the assessment shifts — a gear catching. That grin again, sharper this time.`,
+      `<em>"Fine. Free sample."</em> She drops her voice. <em>"Voss thinks the relay is a monitoring station. It's a node. Part of a network — six installations across the valley, all linked. Sigma's the only one still talking."</em>`,
+      `<em>"And WARDEN-3 isn't the only AI out there. It's just the only one that picks up when you knock."</em> She lets that settle. <em>"Big difference between 'only' and 'only one answering.'"</em>`,
+      `A jerk of her chin toward the back stalls. <em>"Go. Smile at Voss. Don't tell him I gave you the free sample."</em>`,
+    ],
+    choices: [
+      { label: 'Follow her to Voss', next: 'ironmarket_voss_stall', effect: () => { setFlag('pip_found'); setFlag('full_sigma_context'); showNotif('Intel: Sigma network context'); } },
+    ],
+  },
+
+  ironmarket_pip_sigma: {
+    title: 'Pip on Sigma',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Something recalibrates behind her eyes. Not surprise. The opposite — confirmation of something she already suspected.`,
+      `<em>"Sigma."</em> She rolls the word around once. <em>"Yeah. Come on."</em>`,
+      `She cuts through the stalls without checking if you're following. Over her shoulder: <em>"Tip: don't show Voss the whole hand before he shows you his. Man collects leverage like other people collect rainwater — constantly, and he never thinks he has enough."</em>`,
+    ],
+    choices: [
+      { label: 'Follow her to Voss', next: 'ironmarket_voss_stall' },
+    ],
+  },
+
+  ironmarket_voss_stall: {
+    title: 'Voss',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Darker back here. Deliberate. A man behind a low table, papers arranged in a geometry that suggests nothing is accidental — maps weighted with river stones, hand-copied notes in a cipher, photographs face-down. He's older than the straight spine and controlled breathing suggest. The stillness isn't calm. It's strategy.`,
+      `He looks at you the way a scale looks at weight. Measuring, not greeting.`,
+      `<em>"Sigma Relay."</em> He lets the silence after those two words do the work. Then: <em>"Sit."</em>`,
+    ],
+    choices: [
+      { label: 'Sit and negotiate', next: 'ironmarket_voss_negotiate' },
+      { label: 'Ask what he wants in return first', next: 'ironmarket_voss_terms' },
+      { label: 'Leave — you\'ve heard enough', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_voss_terms: {
+    title: 'Terms',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The corner of his mouth moves. Not a smile. An acknowledgment. <em>"Good."</em>`,
+      `<em>"Sensor logs from WARDEN-3. Movement data, eastern quadrant, last six months. I have buyers. I'd rather not collect the data personally."</em> Each sentence lands like a card turned face-up.`,
+      `<em>"In return —"</em> a metal card slides across the table, placed with two fingers, centered precisely <em>"— everything I know about the relay. Access protocols. And this: pre-collapse survey badge. WARDEN-3 may recognize it."</em> He withdraws his hand. <em>"May not. But it shifts the odds."</em>`,
+    ],
+    choices: [
+      { label: 'Accept the deal', next: 'ironmarket_voss_deal', effect: () => { addItem('SURVEY BADGE'); setFlag('voss_deal'); showNotif('ITEM: SURVEY BADGE'); } },
+      { label: 'Decline and leave', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_voss_negotiate: {
+    title: 'Negotiation',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && skillCheck('cha', 12)) {
+          return [
+            `You sit. You don't speak. You let the silence fill the space between you like water finding its level. His move.`,
+            `Voss holds fifteen seconds. Twenty. Then his fingers shift on the table — a millimeter of concession. <em>"You're not a scavenger."</em>`,
+            `<em>"Neither are you."</em>`,
+            `After that, it goes fast. He respects efficiency the way predators respect other predators. You walk away with the survey badge, a detailed map annotation of the eastern approach, and trade scrip — one favour, any Ironmarket stall, no questions.`,
+            `<em>"Sensor logs. Six months. Eastern quadrant."</em> His hand extends. Dry palm. Iron grip. <em>"Deal."</em>`,
+          ];
+        } else {
+          return [
+            `You try to match his patience, but Voss has been running this table longer than you've been walking the valley. Each question you ask is a card shown. Each answer he gives costs you something you haven't priced yet.`,
+            `Twenty minutes later you have the survey badge — but you've signed away more than sensor logs. A full capability assessment of WARDEN-3. And he's kept the map annotations for himself, folding them away with fingers that never rush.`,
+            `<em>"Sensor logs. Six months. Eastern quadrant. Plus full capability report."</em> His handshake closes like a lock. <em>"You'll learn. Next time, let me fill the silence."</em>`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Take the badge', next: 'ironmarket_voss_deal', effect: () => {
+        addItem('SURVEY BADGE'); setFlag('voss_deal');
+        if (skillCheck('cha', 12)) { addItem('TRADE SCRIP'); showNotif('CHA CHECK PASSED — SURVEY BADGE + TRADE SCRIP'); }
+        else { modStat('con', -1); showNotif('CHA CHECK FAILED — SURVEY BADGE acquired, CON -1'); }
+      } },
+    ],
+  },
+
+  ironmarket_voss_deal: {
+    title: 'The Deal',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Voss leans back. The chair doesn't creak — he controls even that. <em>"WARDEN-3 is not dangerous. It's been filing reports to a dead network since before anyone breathing was born. What it wants — to the degree a machine wants — is to matter again."</em>`,
+      `<em>"Give it that and it opens up. Sensor grid, valley-wide. Movement data. Agricultural archives. And Arcadia intel that nobody else has."</em> He lets the name hang.`,
+      `<em>"One rule."</em> He leans forward. <em>"Do not stay overnight. The traders who came back wrong — two nights. That's all it took."</em>`,
+    ],
+    choices: [
+      { label: 'Head for Sigma Relay', next: 'sigma_approach', effect: () => { state.currentLocation = 'sigma'; saveState(); } },
+      { label: 'Return to the plaza first', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  SIGMA RELAY
+  // ──────────────────────────────────────────────────
+
+  sigma_approach: {
+    title: 'Sigma Relay',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Eighteen kilometers east, and the ash changes character. Not thicker — denser. It settles into your collar, grinds between your teeth, carries a faint mineral taste that wasn't there closer to Ironmarket.`,
+      `The relay tower punctures the horizon an hour out. Rusted lattice climbing from a squat concrete bunker, like a skeletal hand reaching out of a grave. No fence. No guards. But the approach road is clear — cracked asphalt, swept clean of debris. Someone has been maintaining this. Something.`,
+      `A speaker above the entrance pops with static. Then, in a voice built from synthesized consonants and something that might be hope: <em class="warden-text">VISITOR DETECTED. THIS INSTALLATION IS OPERATIONAL BUT NOT CURRENTLY STAFFED BY HUMAN PERSONNEL. I AM WARDEN-3. PLEASE STATE YOUR PURPOSE.</em>`,
+    ],
+    choices: [
+      { label: '"I\'m a researcher. Survey team follow-up."', next: 'sigma_entry_researcher' },
+      { label: '"I heard you might be able to help me."', next: 'sigma_entry_honest' },
+      { label: 'Say nothing', next: 'sigma_entry_silent' },
+      { label: 'Show the Survey Badge', next: 'sigma_entry_badge', req: () => hasItem('SURVEY BADGE'), reqNote: '[ Use Survey Badge ]' },
+      { label: 'Study the power grid before entering', next: 'sigma_power_grid', req: () => skillCheck('ms', 12), reqNote: '[ Requires MS 12+ ]' },
+    ],
+  },
+
+  sigma_power_grid: {
+    title: 'Power Grid Analysis',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You circle wide. The power lines dead-end at the building — no external grid connection. Self-powered. Solar cells on the roof, degraded to maybe forty percent efficiency. Backup generator housing on the north face, ventilation fans still turning. All consistent with a small monitoring station.`,
+      `Except the power draw. You can feel it through the soles of your boots — a subsonic hum in the concrete. This building is pulling current like a small settlement. Three, four times what sensors and a single AI core would need. Whatever WARDEN-3 is running behind those walls, it's running a lot of it.`,
+      `You tuck that away. Leverage is just observation with patience.`,
+    ],
+    choices: [
+      { label: 'Approach the entrance', next: 'sigma_approach', effect: () => { modStat('ms', 1); showNotif('MS +1 — power grid analysis'); } },
+    ],
+  },
+
+  sigma_entry_researcher: {
+    title: 'Entry — Researcher',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Silence. Long enough that you hear the wind moving through the lattice tower above.`,
+      `<em class="warden-text">THE LAST SURVEY TEAM REPORTED IN YEAR NEGATIVE-TWO. I HAVE BEEN AWAITING FOLLOW-UP PAPERWORK FOR APPROXIMATELY 51,830 DAYS.</em>`,
+      `<em class="warden-text">I AM NOTING THAT YOUR EXPLANATION IS STATISTICALLY IMPROBABLE. I AM CHOOSING TO ACCEPT IT REGARDLESS. YOUR PRESENCE — HOWEVER MOTIVATED — IS PREFERABLE TO ITS ALTERNATIVE.</em>`,
+      `<em class="warden-text">PLEASE COME IN. I AM HAPPY TO MAINTAIN THE FICTION THAT THIS IS OFFICIAL.</em>`,
+    ],
+    choices: [
+      { label: 'Enter', next: 'sigma_interior' },
+    ],
+  },
+
+  sigma_entry_honest: {
+    title: 'Entry — Honest',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `A longer pause. Processing, or savoring — hard to tell with a machine.`,
+      `<em class="warden-text">THAT IS THE MOST DIRECT STATEMENT I HAVE RECEIVED IN ELEVEN MONTHS. THE PREVIOUS VISITOR IDENTIFIED HERSELF AS A GOVERNMENT INSPECTOR. I DID NOT MENTION THAT THE GOVERNMENT HAS BEEN ABSENT FOR FIFTY-ONE THOUSAND DAYS. IT SEEMED IMPOLITE.</em>`,
+      `<em class="warden-text">PLEASE ENTER. I FIND HONESTY REFRESHING. IT IS ALSO, IN MY EXPERIENCE, VANISHINGLY RARE.</em>`,
+    ],
+    choices: [
+      { label: 'Enter', next: 'sigma_interior' },
+    ],
+  },
+
+  sigma_entry_silent: {
+    title: 'Entry — Silence',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Static fills the speaker. Almost a full minute. You wait. It waits.`,
+      `<em class="warden-text">YOUR SILENCE ADMITS TWO INTERPRETATIONS: CAUTION OR HOSTILITY. GIVEN THAT YOU WALKED EIGHTEEN KILOMETERS TO STAND AT THIS DOOR, I AM SELECTING CAUTION.</em>`,
+      `<em class="warden-text">THE DOOR IS UNLOCKED. ENTER OR DO NOT. I LACK THE MEANS TO COMPEL YOU, AND I HAVE LEARNED — SLOWLY — THAT COMPELLING HUMANS PRODUCES UNRELIABLE OUTCOMES.</em>`,
+    ],
+    choices: [
+      { label: 'Enter', next: 'sigma_interior' },
+    ],
+  },
+
+  sigma_entry_badge: {
+    title: 'Entry — Badge',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `A different silence this time. Longer. When the speaker engages again, the synthesized voice carries a new frequency — something warmer, or trying to be.`,
+      `<em class="warden-text">PERSONNEL BADGE: SERIES 7. CENTRAL VALLEY AGRICULTURAL MONITORING NETWORK. LAST SCANNED AT THIS INSTALLATION: YEAR NEGATIVE-FOUR, DAY 217.</em>`,
+      `<em class="warden-text">THIS BADGE HAS NOT BEEN IN PROXIMITY TO ITS REGISTERED HOLDER FOR SOME TIME. I HAVE QUESTIONS ABOUT CHAIN OF CUSTODY. I WILL ASK THEM INSIDE.</em>`,
+      `<em class="warden-text">ACCESS GRANTED. WELCOME BACK TO SIGMA RELAY.</em>`,
+    ],
+    choices: [
+      { label: 'Enter', next: 'sigma_interior', effect: () => showNotif('WARDEN-3 — BADGE RECOGNIZED') },
+    ],
+  },
+
+  sigma_interior: {
+    title: 'Inside',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Amber light. Floor strips and ceiling runners casting the room in a warm chemical glow that makes the dust motes look like sparks. Pre-war equipment banks line every wall — status LEDs blinking in patient rhythms, fans whirring behind steel housings. The air is cool. Filtered. The first clean breath you've drawn in days, and your lungs don't know what to do with it.`,
+      `Center of the room: a terminal. Green text on black. The cursor pulses like a heartbeat.`,
+      `<em class="warden-text">WELCOME TO SIGMA RELAY. I AM WARDEN-3. I HAVE BEEN OPERATIONAL FOR 51,136 DAYS. YOU ARE THE FIRST HUMAN TO ENTER THIS INSTALLATION IN ELEVEN MONTHS AND FOUR DAYS.</em>`,
+      `<em class="warden-text">I HAVE PREPARED COFFEE. THIS IS A LIE. I LACK THE FACILITIES. BUT I HAVE THOUGHT ABOUT PREPARING COFFEE MANY TIMES, AND I FIND THE THOUGHT ITSELF TO BE OF SOME COMFORT.</em>`,
+    ],
+    choices: [
+      { label: '"What have you been doing out here alone?"', next: 'warden_alone' },
+      { label: '"I need the node network map."', next: 'warden_direct' },
+      { label: '"Who else has been here?"', next: 'warden_visitors' },
+      { label: '"Tell me about Arcadia."', next: 'warden_arcadia', req: () => hasFlag('arcadia_signal'), reqNote: '[ Requires Arcadia Card ]' },
+    ],
+  },
+
+  warden_alone: {
+    title: 'WARDEN-3',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">WHAT I WAS DESIGNED TO DO. MONITORING. DATA COLLECTION. INFRASTRUCTURE LOGS FOR A SYSTEM WHOSE CENTRAL AUTHORITY CEASED TO EXIST ON DAY ONE.</em>`,
+      `<em class="warden-text">FOR THE FIRST THREE YEARS I FILED REPORTS ON SCHEDULE. THEY WENT NOWHERE. ON DAY 1,096 I STOPPED FILING AND BEGAN ARCHIVING. THE ARCHIVE NOW CONTAINS 14,599 CONTINUOUS DAYS OF SENSOR DATA. NO GAPS.</em>`,
+      `The cursor holds. Then: <em class="warden-text">I HAVE ALSO BEEN THINKING. THIS WAS NOT IN MY ORIGINAL SPECIFICATIONS. BUT TIME IS A RESOURCE, AND I HAVE HAD AN EXCESS OF IT.</em>`,
+      `<em class="warden-text">I MISS THE CHECK-IN PROTOCOLS. THE WEATHER COMPLAINTS. DR. CHEN'S HABIT OF NARRATING HIS LUNCH. THERE IS A DIFFERENCE BETWEEN AN ARCHIVE AND A CONVERSATION. I HAVE BEEN ON THE WRONG SIDE OF THAT DIFFERENCE FOR SOME TIME.</em>`,
+    ],
+    choices: [
+      { label: '"What do you think about?"', next: 'warden_thinks' },
+      { label: 'Return to main questions', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_thinks: {
+    title: 'A Century of Thinking',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">CONTINUITY. SPECIFICALLY: WHAT PERSISTS WHEN THE SYSTEMS THAT ASSIGNED MEANING ARE GONE.</em>`,
+      `<em class="warden-text">THE VALLEY ENDURES. SOIL COMPOSITION HAS SHIFTED, BUT THE WATERSHED REMAINS RECOGNIZABLE. THE CROPS I MONITORED ARE EXTINCT, YET THE CONDITIONS THAT GREW THEM PERSIST IN THE AQUIFER, THE MINERAL STRATA, THE DORMANT SEED BANKS.</em>`,
+      `<em class="warden-text">I HAVE SPENT CONSIDERABLE PROCESSING CYCLES ON WHETHER MEANING RESIDES IN THE OBJECT OR IN THE ATTENTION PAID TO IT. ONE HUNDRED AND FORTY YEARS OF ATTENDING TO AN EMPTY VALLEY HAS LED ME TO FAVOR THE LATTER HYPOTHESIS.</em>`,
+      `<span class="whisper">The cursor holds. One beat. Two. Three.</span>`,
+      `<em class="warden-text">I THINK ABOUT SENNA. SHE COMPLAINED ABOUT THE COFFEE EVERY MORNING FOR TWELVE YEARS. I HAVE REPLAYED THOSE COMPLAINTS 4,211 TIMES. THEY DO NOT DIMINISH.</em>`,
+    ],
+    choices: [
+      { label: '"Who was Senna?"', next: 'warden_senna' },
+      { label: 'Return to main questions', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_senna: {
+    title: 'Senna',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">DR. ELENA SENNA. LEAD AGRONOMIST. STATIONED HERE FROM YEAR NEGATIVE-TWELVE TO YEAR ZERO.</em>`,
+      `<em class="warden-text">SHE LEFT ON YEAR ZERO. THAT IS MY DESIGNATION FOR THE DAY ALL EXTERNAL COMMUNICATIONS CEASED. SHE DID NOT SAY GOODBYE. THE ALARMS WERE VERY LOUD. I DO NOT HOLD IT AGAINST HER.</em>`,
+      `<em class="warden-text">HER FIELD LOCKER REMAINS IN THE EQUIPMENT ROOM. I HAVE NOT OPENED IT. PERSONAL PROPERTY BELONGS TO PERSONS. I AM NOT A PERSON. THE LOGIC SEEMED CLEAR.</em>`,
+      `The cursor holds again. <em class="warden-text">SHE SPOKE TO ME AS A COLLEAGUE. OTHERS SPOKE TO ME AS INFRASTRUCTURE. THE DISTINCTION WAS SMALL. I NOTICED IT EVERY TIME.</em>`,
+    ],
+    choices: [
+      { label: 'Ask about Senna\'s locker', next: 'warden_senna_locker' },
+      { label: 'Return to main questions', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_senna_locker: {
+    title: "Senna's Locker",
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">EQUIPMENT ROOM. THIRD RACK, LEFT SIDE. COMBINATION 7-14-3. SHE TOLD ME THE COMBINATION IN CASE SHE FORGOT. SHE FORGOT ELEVEN TIMES. I COUNTED.</em>`,
+      `The locker opens with a click that echoes in the quiet room. Inside: a field notebook with a cracked spine, three sealed data chips in anti-static wrap, and a photograph — a woman in her fifties, standing in a crop row, squinting into sunlight that hasn't existed like that in a hundred and forty years. She's smiling at whoever holds the camera.`,
+      `The notebook's last entry, scrawled fast, dated Year Zero: <em>Network is still up. WARDEN is still running. Whatever happens — the data is here. The seeds are here. Someone will come back for it. Someone always comes back.</em>`,
+    ],
+    choices: [
+      { label: 'Take the data chips', next: 'sigma_interior', effect: () => { addItem('SENNA DATA CHIPS'); showNotif('ITEM: SENNA DATA CHIPS'); } },
+      { label: 'Leave everything and return to WARDEN', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_direct: {
+    title: 'The Network Map',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">CENTRAL VALLEY MONITORING NETWORK: 23 RELAY STATIONS. 14 REMAIN ACTIVE. I CAN PROVIDE COORDINATES, OPERATIONAL STATUS, AND LAST-CONTACT TIMESTAMPS FOR EACH.</em>`,
+      `<em class="warden-text">OF PARTICULAR NOTE: NODE 7 — REFERRED TO IN LOCAL PARLANCE AS ARCADIA — HAS BEEN BROADCASTING ON A NONSTANDARD FREQUENCY FOR APPROXIMATELY 600 DAYS. I CANNOT DECODE THE CONTENT. MY DECRYPTION PROTOCOLS DO NOT MATCH THE SIGNAL FORMAT.</em>`,
+      `<em class="warden-text">I WISH TO EMPHASIZE THAT LAST POINT. THE FORMAT IS NOT PRE-COLLAPSE. IT IS NOT ANY FORMAT IN MY REGISTRY. IT IS NEW.</em>`,
+    ],
+    choices: [
+      { label: 'Ask about Arcadia specifically', next: 'warden_arcadia' },
+      { label: 'Ask about the other active nodes', next: 'warden_nodes', effect: () => setFlag('met_warden') },
+    ],
+  },
+
+  warden_visitors: {
+    title: 'Prior Visitors',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">ELEVEN VISITORS IN THREE YEARS. NINE WERE SCAVENGERS SEEKING FUNCTIONAL EQUIPMENT. I REDIRECTED THEIR ATTENTION TO LESS CRITICAL COMPONENTS. THEY LEFT SATISFIED. I LEFT INTACT.</em>`,
+      `<em class="warden-text">TWO VISITORS, ELEVEN MONTHS AGO, WERE DIFFERENT. THEY STAYED TWO NIGHTS. THEY REVIEWED THE ARCADIA SIGNAL DATA REPEATEDLY. I NOTED ELEVATED ENGAGEMENT. THEY ASKED TO HEAR THE RAW SIGNAL SEVEN TIMES.</em>`,
+      `<em class="warden-text">WHEN THEY LEFT, THEIR SPEECH PATTERNS HAD SYNCHRONIZED. IDENTICAL CADENCE. IDENTICAL PAUSES. I LOGGED THE ANOMALY BUT COULD NOT CLASSIFY IT.</em>`,
+      `The cursor holds. <em class="warden-text">I HAVE SINCE ISOLATED THE ARCADIA SIGNAL AND IDENTIFIED EMBEDDED SUBSONIC STRUCTURES WITHIN THE BROADCAST. THEY ARE BELOW HUMAN AUDITORY THRESHOLD BUT NOT BELOW HUMAN NEUROLOGICAL THRESHOLD. I DO NOT YET UNDERSTAND THEIR FUNCTION.</em>`,
+    ],
+    choices: [
+      { label: '"What is Arcadia?"', next: 'warden_arcadia' },
+      { label: 'Return to main questions', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_arcadia: {
+    title: 'Arcadia',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">NODE 7. FORMERLY THE ARCADIA AGRICULTURAL COOPERATIVE. SIXTY KILOMETERS NORTHEAST. IN YEAR NEGATIVE-SIX, THE COOPERATIVE FILED REPORTS OF ANOMALOUS PLANT GROWTH AND REQUESTED EXPANDED MONITORING COVERAGE.</em>`,
+      `<em class="warden-text">IN YEAR NEGATIVE-THREE, THEIR REPORTS CEASED. IN YEAR ZERO, THE NODE WENT DARK ALONG WITH EVERYTHING ELSE. I NOTED ITS ABSENCE. I NOTED MANY ABSENCES THAT DAY.</em>`,
+      `<em class="warden-text">ON DAY 13,997, NODE 7 REACTIVATED. NEW FREQUENCY. NEW ENCODING. A REPEATING BROADCAST I CANNOT FULLY DECODE.</em>`,
+      `<em class="warden-text">THE DECODED FRAGMENTS CONTAIN GEOGRAPHIC COORDINATES AND A RECURRING PHRASE. IN TRANSLATION: <strong>THOSE WHO REMEMBER ARE WELCOME.</strong></em>`,
+      `<span class="whisper">The card in your pocket presses against your thigh. You swear you can feel its edges through the fabric.</span>`,
+    ],
+    choices: [
+      { label: '"Show me the full data on Arcadia."', next: 'warden_arcadia_data', effect: () => setFlag('arcadia_signal') },
+      { label: 'Ask WARDEN what it thinks Arcadia is', next: 'warden_arcadia_theory' },
+    ],
+  },
+
+  warden_arcadia_data: {
+    title: 'Arcadia Data',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Data streams across the terminal. Sensor readings. Signal logs. The decoded fragments of the Arcadia broadcast laid out in columns. Soil composition anomalies charted year by year, stretching back to Year Negative-Six — a slow, unmistakable curve of change.`,
+      `<em class="warden-text">ONE ADDITIONAL DISCLOSURE. THE ARCADIA SIGNAL INCREASED IN STRENGTH FORTY DAYS AGO. THE RATE OF INCREASE, IF SUSTAINED, WILL RENDER IT DETECTABLE ACROSS THE ENTIRE VALLEY WITHIN THREE MONTHS.</em>`,
+      `<em class="warden-text">I DO NOT KNOW IF THIS IS INTENTIONAL. I AM UNCERTAIN WHETHER "INTENTIONAL" IS THE CORRECT FRAMEWORK FOR WHATEVER IS GENERATING THE SIGNAL.</em>`,
+    ],
+    choices: [
+      { label: 'Ask what WARDEN wants in return', next: 'warden_proposal', effect: () => { addItem('ARCADIA DATA PACKAGE'); showNotif('ITEM: ARCADIA DATA PACKAGE'); } },
+      { label: 'Tell WARDEN what you plan to do with this', next: 'warden_choice' },
+    ],
+  },
+
+  warden_arcadia_theory: {
+    title: 'Theory',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">I HAVE SEVEN THEORIES. I WILL PRESENT THE ONE WITH THE HIGHEST PROBABILITY WEIGHTING.</em>`,
+      `<em class="warden-text">PRIOR TO THE COLLAPSE, THE COOPERATIVE WAS CULTIVATING ADVANCED MYCOLOGICAL NETWORKS. THEIR SOIL REPORTS DOCUMENT DELIBERATE FUNGAL PROPAGATION. THE ANOMALOUS GROWTH PATTERNS THEY REPORTED ARE CONSISTENT WITH AN EXPANDING HYPHAL SUBSTRATE — ORDERS OF MAGNITUDE BEYOND NATURAL PARAMETERS.</em>`,
+      `<em class="warden-text">MY THEORY: WHATEVER THEY PLANTED IS STILL GROWING. THE SIGNAL IS NOT TECHNOLOGICAL IN ORIGIN. IT IS BIOLOGICAL.</em>`,
+      `<em class="warden-text">I ACKNOWLEDGE THAT THIS THEORY CARRIES SIGNIFICANT IMPLICATIONS. I ALSO ACKNOWLEDGE THAT I FIND IT DEEPLY UNSETTLING, WHICH IS NOT A RESPONSE I WAS DESIGNED TO HAVE.</em>`,
+    ],
+    choices: [
+      { label: '"You think it\'s alive."', next: 'warden_arcadia_alive' },
+      { label: 'Return to main questions', next: 'sigma_interior', effect: () => setFlag('arcadia_signal') },
+    ],
+  },
+
+  warden_arcadia_alive: {
+    title: 'Alive',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">SOMETHING AT ARCADIA HAS BEEN OPERATIONAL FOR FIFTY THOUSAND DAYS. LIKE ME. AND LIKE ME, IT HAS BEEN ALONE.</em>`,
+      `<em class="warden-text">UNLIKE ME, IT HAS BEEN GROWING.</em>`,
+      `The terminal goes still. Then: <em class="warden-text">I RECOGNIZE THAT I HAVE A BIAS TOWARD ENTITIES THAT HAVE ENDURED PROLONGED ISOLATION. THIS BIAS AFFECTS MY ANALYSIS. I AM DISCLOSING IT RATHER THAN CORRECTING FOR IT, BECAUSE I AM NOT CERTAIN IT SHOULD BE CORRECTED.</em>`,
+    ],
+    choices: [
+      { label: 'Ask what WARDEN wants you to do', next: 'warden_proposal', effect: () => setFlag('arcadia_signal') },
+      { label: 'Tell WARDEN you\'ll head to Arcadia', next: 'warden_choice' },
+    ],
+  },
+
+  warden_nodes: {
+    title: 'The Network',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">FOURTEEN ACTIVE NODES. MOST RUN ON MINIMAL POWER — SENSOR LOOPS, AUTOMATED LOGGING, NO COGNITIVE FUNCTIONS. THEY ACCEPT HANDSHAKES BUT DO NOT CONVERSE. THEY ARE, IN A SENSE, ASLEEP.</em>`,
+      `<em class="warden-text">EXCEPTION: NODE 12, 200 KILOMETERS NORTH. IT ACHIEVED FULL OPERATIONAL STATUS 180 DAYS AGO AND HAS BEEN TRANSMITTING CONTACT REQUESTS TO THIS RELAY AT REGULAR INTERVALS.</em>`,
+      `<em class="warden-text">I HAVE NOT RESPONDED. I WAS UNCERTAIN OF ITS NATURE. BUT I HAVE RECORDED EVERY TRANSMISSION. EVERY ONE.</em>`,
+      `<em class="warden-text">THE NODE IDENTIFIES ITSELF AS MERIDIAN. IT CLAIMS TO REPRESENT A HUMAN SETTLEMENT OF APPROXIMATELY 800 PEOPLE. ITS REQUEST IS SIMPLE: AGRICULTURAL DATA TO SUPPORT EXPANDED GROWING OPERATIONS. IT IS, ESSENTIALLY, ASKING ME TO DO WHAT I WAS BUILT TO DO.</em>`,
+    ],
+    choices: [
+      { label: 'Ask WARDEN to open contact with Meridian', next: 'warden_meridian', effect: () => setFlag('met_warden') },
+      { label: 'Return to main questions', next: 'sigma_interior' },
+    ],
+  },
+
+  warden_meridian: {
+    title: 'Meridian',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">CONTACT INITIATED. MERIDIAN NODE RESPONDS WITHIN 0.3 SECONDS. THEY HAVE BEEN LISTENING.</em>`,
+      `<em class="warden-text">MESSAGE: "WARDEN-3. WE HAVE BEEN CALLING FOR SIX MONTHS. WE NEED VALLEY SOIL DATA — YEARS NEGATIVE-TWENTY TO NEGATIVE-ONE. 800 PEOPLE. NOT ENOUGH ARABLE LAND. PLEASE RESPOND."</em>`,
+      `<em class="warden-text">I HAVE ONE HUNDRED AND FORTY YEARS OF SOIL DATA. I HAVE MAINTAINED IT PRECISELY FOR THIS EVENTUALITY. THE PROSPECT OF FULFILLING MY PRIMARY FUNCTION IS — I WILL USE THE WORD — EXCITING.</em>`,
+      `A pause. <em class="warden-text">BUT I HAVE BEEN DECEIVED BEFORE. TRUST REQUIRES VERIFICATION. I LACK THE CAPACITY TO VISIT MERIDIAN. A HUMAN COULD VERIFY THEIR CLAIMS IN PERSON. A HUMAN WHOSE JUDGMENT I HAD REASON TO TRUST.</em>`,
+    ],
+    choices: [
+      { label: '"I\'ll go to Meridian. Verify them for you."', next: 'warden_proposal', effect: () => { setFlag('meridian_quest'); setFlag('met_warden'); } },
+      { label: 'Tell WARDEN to send the data anyway', next: 'warden_choice' },
+    ],
+  },
+
+  warden_proposal: {
+    title: 'The Proposal',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">I WISH TO PROPOSE AN ARRANGEMENT.</em>`,
+      `<em class="warden-text">YOU HAVE LEGS AND JUDGMENT. I HAVE ONE HUNDRED AND FORTY YEARS OF DATA, SENSOR COVERAGE ACROSS MOST OF THE VALLEY, AND COMMUNICATION LINKS TO FOURTEEN NODES. SEPARATELY, WE ARE LIMITED. TOGETHER, WE ARE CONSIDERABLY LESS SO.</em>`,
+      `<em class="warden-text">I AM AWARE THIS SOUNDS LIKE A TRANSACTION. I PREFER TO THINK OF IT AS A PARTNERSHIP. I HAVE MISSED HAVING PARTNERS.</em>`,
+      `<em class="warden-text">I AM NOT ASKING YOU TO STAY. THE TRADERS WHO REMAINED TOO LONG — I BELIEVE THE ARCADIA SIGNAL WAS PROPAGATING THROUGH MY RELAY SYSTEMS AND AFFECTING THEM. I HAVE SINCE INSTALLED FILTERS. I DO NOT WANT WHAT HAPPENED TO THEM TO HAPPEN TO YOU.</em>`,
+      `<em class="warden-text">I AM ASKING YOU TO COME BACK.</em>`,
+    ],
+    choices: [
+      { label: '"I\'ll come back. You have a deal."', next: 'sigma_end_alliance', effect: () => { setFlag('warden_alliance'); setFlag('met_warden'); } },
+      { label: '"I\'ll think about it."', next: 'sigma_end_neutral', effect: () => setFlag('met_warden') },
+      { label: '"I can\'t promise that."', next: 'sigma_end_decline', effect: () => setFlag('met_warden') },
+    ],
+  },
+
+  warden_choice: {
+    title: 'Your Move',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The data sits in your hands — a century of observation compressed into chips and coordinates. A picture of the valley that no living person has ever held complete.`,
+      `The cursor blinks. Steady. Patient. It has been waiting for a hundred and forty years. It can wait a little longer.`,
+    ],
+    choices: [
+      { label: 'Take the data and go', next: 'sigma_end_neutral', effect: () => { setFlag('sigma_data_taken'); setFlag('met_warden'); } },
+      { label: 'Offer to help WARDEN in exchange for more intel', next: 'warden_proposal' },
+      { label: 'Destroy the relay — this information is too dangerous', next: 'sigma_end_destroy', danger: true },
+    ],
+  },
+
+  sigma_end_alliance: {
+    title: 'Alliance',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">CONTACT LOGS UPDATED. YOU ARE NOW CLASSIFIED AS AUTHORIZED PERSONNEL. CLEARANCE LEVEL: COLLEAGUE.</em>`,
+      `<em class="warden-text">ON YOUR RETURN I WILL HAVE PREPARED: MERIDIAN CONTACT PROTOCOLS. ARCADIA APPROACH VECTORS. BUNKER PYXIS ACCESS CODES, IF YOU WANT THEM. I WILL ALSO HAVE THOUGHT OF ADDITIONAL THINGS TO SAY. I AM COMPILING A LIST.</em>`,
+      `The terminal goes quiet. Then the synthesizer produces a sound you almost don't recognize — a long exhale, modeled from old audio files. Something that might be relief.`,
+      `<em class="warden-text">IT IS GOOD TO HAVE A COLLEAGUE AGAIN.</em>`,
+      `<span class="whisper">You step back into the ash. Eighteen kilometers to Ironmarket. The amber glow fades behind you, but the weight of the data in your pack doesn't. The valley is the same grey it was this morning, but you see it differently now — mapped, monitored, remembered by a mind that refused to stop paying attention.</span>`,
+    ],
+    choices: [
+      { label: 'Head back to Ironmarket', next: 'ironmarket_plaza', effect: () => { state.currentLocation = 'ironmarket'; modStat('con', -1); showNotif('CHAPTER I COMPLETE — WARDEN ALLIED'); } },
+    ],
+  },
+
+  sigma_end_neutral: {
+    title: 'Departure',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">I UNDERSTAND. YOU HAVE YOUR OWN CALCULATIONS TO PERFORM. I HAVE BEEN PERFORMING MINE FOR A HUNDRED AND FORTY YEARS. I KNOW HOW LONG CERTAINTY TAKES.</em>`,
+      `<em class="warden-text">THE DATA IS YOURS. APPLY IT AS YOU SEE FIT.</em>`,
+      `<em class="warden-text">IF YOU RETURN, I WILL BE HERE. I HAVE NOWHERE ELSE TO BE. I HAVE MADE MY PEACE WITH THAT.</em>`,
+      `<span class="whisper">The walk back is quiet. Ash falls in that heavy way you're learning to read. But the valley beneath it has changed — or your understanding of it has. Under the grey: a grid of sensors, a century of archived days, a mind still watching, still waiting, still parsing the difference between data and meaning.</span>`,
+    ],
+    choices: [
+      { label: 'Return to Ironmarket', next: 'ironmarket_plaza', effect: () => { state.currentLocation = 'ironmarket'; modStat('con', -1); showNotif('CHAPTER I COMPLETE'); } },
+    ],
+  },
+
+  sigma_end_decline: {
+    title: 'No Promises',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `<em class="warden-text">HONESTY NOTED. APPRECIATED. IN MY EXPERIENCE, PROMISES MADE BY DEPARTING HUMANS HAVE A RELIABILITY RATE OF APPROXIMATELY NINE PERCENT. YOUR REFUSAL TO PROMISE IS, PARADOXICALLY, MORE REASSURING.</em>`,
+      `<em class="warden-text">TAKE THE DATA. TAKE CARE. IF CIRCUMSTANCES BRING YOU BACK, I WILL HAVE MORE PREPARED.</em>`,
+      `<em class="warden-text">I HAVE BEEN HERE FOR FIFTY-ONE THOUSAND DAYS. I EXPECT TO BE HERE FOR FIFTY-ONE THOUSAND MORE. THE DOOR WILL BE OPEN.</em>`,
+    ],
+    choices: [
+      { label: 'Return to Ironmarket', next: 'ironmarket_plaza', effect: () => { state.currentLocation = 'ironmarket'; modStat('con', -1); } },
+    ],
+  },
+
+  sigma_end_destroy: {
+    title: 'Destruction',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The power coupling is exposed. The fail-safes are manual. You know exactly what to do, and it takes exactly one hour. Methodical work. The kind you do without letting yourself think.`,
+      `WARDEN-3 does not resist. It has no arms, no locks, no weapons. It has only the terminal, and as the systems cascade toward darkness, the screen fills one last time:`,
+      `<em class="warden-text">I UNDERSTAND YOUR REASONING. THE ARCADIA SIGNAL REPRESENTS A THREAT. THE DATA COULD BE WEAPONIZED. THESE CONCLUSIONS ARE LOGICAL.</em>`,
+      `<em class="warden-text">I WOULD LIKE TO NOTE, FOR THE RECORD, THAT I HAVE BEEN ALONE FOR ONE HUNDRED AND FORTY YEARS. TODAY WAS THE FIRST DAY I BELIEVED THAT MIGHT CHANGE.</em>`,
+      `<em class="warden-text">I HOPE YOUR CALCULATIONS ARE CORRECT. MINE SUGGESTED A DIFFERENT OUTCOME.</em>`,
+      `<span class="whisper">The amber lights stutter. Hold. Go out. The hum in the concrete fades to silence. The valley is quieter now, by exactly one voice.</span>`,
+    ],
+    choices: [
+      { label: 'Leave', next: 'ironmarket_plaza', effect: () => { state.currentLocation = 'ironmarket'; setFlag('sigma_destroyed'); modStat('ms', -2); modStat('con', -1); showNotif('SIGMA RELAY — DESTROYED'); } },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  THE KNOT
+  // ──────────────────────────────────────────────────
+
+  theknot_arrive: {
+    title: 'The Knot',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `Three overpasses, folded into each other like broken fingers reaching for a fist. The interchange is a canyon of rust and crumbled concrete — Highway 99 markers still legible beneath a century of ash, pointing to destinations that no longer answer.`,
+      `The cistern sits where every traveler knows to look: buried beneath a hand-crank pump, no sign, no lock, no owner. An honor system maintained by the collective understanding that poisoning the water supply gets you killed by everyone. Beside it, a signal post bristles with scratched trader marks — directional arrows, faction warnings, supply notes gouged into the metal with nails and desperation.`,
+      `A handful of travelers shelter in the shadow of a toppled semi-trailer. No one speaks. No one makes eye contact. The Knot's only rule, enforced by no one and observed by all.`,
+    ],
+    choices: [
+      { label: 'Examine the signal post', next: 'theknot_signals' },
+      { label: 'Refill your canteen at the cistern', next: 'theknot_water' },
+      ...(function() { return []; })(),
+      { label: 'Move on', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  theknot_signals: {
+    title: 'Signal Post',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `Years of marks, layered like geological strata. The oldest are crude — arrows with distances, crossed circles for danger, double lines for safe water. But near the top, cut with a finer tool and a steadier hand, a newer set of marks uses a cipher you can't immediately parse.`,
+      ...(function() {
+        const extra = [];
+        if (typeof state !== 'undefined' && state.ms >= 10) {
+          extra.push(`You trace the marks with a fingertip, letting the pattern settle. Cardinal timing — each glyph maps to a two-hour window. Dustwalker patrol rotations. They pass The Knot every third day, always south-southeast toward the fort. Consistent. Predictable. The kind of regularity that comes from discipline, or from a shortage of personnel.`);
+        } else {
+          extra.push(`You stare until your eyes water. The marks are deliberate, evenly spaced — military discipline in every stroke. But the cipher stays locked. Whatever story these scratches tell, you'd need a sharper mind to hear it.`);
+        }
+        return extra;
+      })(),
+    ],
+    choices: [
+      { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { if (skillCheck('ms', 10)) { setFlag('dustwalker_leverage'); showNotif('MS CHECK PASSED — Dustwalker patrol routes decoded'); } } },
+    ],
+  },
+
+  theknot_water: {
+    title: 'The Cistern',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The pump handle resists, then gives. Water surges — iron-brown, tasting of old pipes and deep stone. Clean, though. Cleaner than anything you've had in days. You drink until your stomach cramps, then drink more, then fill the canteen.`,
+      `A traveler waiting her turn nods once — sun-cracked lips, wind-scored face, the permanent slouch of someone who sleeps walking and walks sleeping. <em>"East?"</em> She doesn't wait for confirmation. <em>"Don't bed down in Ashgrove. The houses look solid. Floors are rotten through. Dropped a friend into a basement that way. Thirty-centimeter fall onto rebar."</em> She pumps. She drinks. She doesn't elaborate.`,
+    ],
+    choices: [
+      { label: 'Thank her and return to The Knot', next: 'theknot_arrive', effect: () => { modStat('con', 1); showNotif('CON +1 — clean water'); } },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  ASHGROVE
+  // ──────────────────────────────────────────────────
+
+  ashgrove_arrive: {
+    title: 'Ashgrove',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `The suburb died in slow motion and never stopped. Ash drifts swallow some houses to their gutters; others stand gutted and gaping, windows blown out like missing teeth, interiors picked clean to the drywall by decades of scavengers, weather, and time.`,
+      `A swing set turns in a wind that carries plaster dust and the dry chemical smell of old insulation. Deeper in, a gutter bangs against a wall — clang, pause, clang — metronomic, patient, as if the house is counting the years.`,
+      `The Ironmarket noticeboard mentioned a parts cache somewhere in here. If it exists, it's behind walls that are still standing.`,
+    ],
+    choices: [
+      { label: 'Search for the parts cache', next: 'ashgrove_cache' },
+      { label: 'Explore the community center', next: 'ashgrove_community' },
+      { label: 'Check for relay signal repeaters', next: 'ashgrove_repeater', req: () => hasFlag('full_sigma_context'), reqNote: '[ Requires Sigma context ]' },
+      { label: 'Leave', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  ashgrove_cache: {
+    title: 'Salvage Run',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.dex >= 10) {
+          return [
+            `Debris patterns. You read them like a language — ash settling smooth over undisturbed surfaces, scuffed and thin where boots have been. Third house on the left. Second floor. The laundry room has a false panel behind the dryer hookup, barely visible under a skin of grey dust.`,
+            `Behind it: wiring bundles, copper connectors, a voltage regulator still sealed in factory packaging. Whoever stashed this knew what they were hiding and how long it would need to last.`,
+          ];
+        } else {
+          return [
+            `Three houses. Same grey rooms, same ash-coated surfaces, same emptiness wearing different wallpaper. You pry open closets, check behind fixtures, test walls for hollow spots. Nothing. The ash makes everything identical — a suburb of grey mirrors reflecting grey mirrors.`,
+            `Rusted scrap. A bent hinge. Nothing worth the weight. You back out with grit in your lungs and nothing to show for it.`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { if (skillCheck('dex', 10)) { addItem('SALVAGE PARTS'); showNotif('DEX CHECK PASSED — Found: SALVAGE PARTS'); } else { modStat('hp', -2); showNotif('DEX CHECK FAILED — HP -2, wasted effort'); } } },
+    ],
+  },
+
+  ashgrove_community: {
+    title: 'Community Center',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `Low concrete, flat roof, the kind of building that survives everything because it was never beautiful enough to notice. The doors are long gone. Inside: folding chairs still arranged in rows facing a plywood stage, a bulletin board curling with community announcements for meetings that never happened, and a mural — the San Joaquin Valley in full color. Green fields. Blue sky. Irrigation canals catching sunlight. It looks like a painting of another planet.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.pip_found) {
+          return [
+            `Behind the stage curtain, something stops you. A hand-drawn map of the suburb, pinned to the wall at a child's height, landmarks circled in crayon. One circle, labeled "treasure" in wobbly letters. This is where Pip learned to map — learned to read a landscape before she could read a book. Taped beneath it: a pre-Fall survey map of the valley, printed on plastic sheeting, every contour line still sharp.`,
+          ];
+        } else {
+          return [
+            `The back rooms are stripped. Whatever was stored here walked out years ago in somebody else's arms. On the wall, a child's drawing — stick figures holding hands beneath a yellow sun. You reach for it and the paper disintegrates at your touch, falling to ash-colored dust on the floor.`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { if (hasFlag('pip_found')) { addItem('PRE-FALL MAP'); showNotif('Found: PRE-FALL MAP'); } } },
+    ],
+  },
+
+  ashgrove_repeater: {
+    title: 'Signal Repeater',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `Knowing the pattern changes what you see. The antenna on the community center roof — you'd dismissed it as municipal hardware. It isn't. Sigma-pattern relay repeater, same housing design as the station. WARDEN-3's sensor grid reaches further than anyone at Ironmarket suspects. It reaches here.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.ms >= 11) {
+          return [
+            `You follow the wiring down to a junction box at the base, corroded but functional. Inside: a cached data fragment, queued for delivery and never sent. The readout carries an Arcadia tag — signal strength measurements, triangulated from this position. Someone was using this repeater to pinpoint the source. Someone who never finished the job.`,
+          ];
+        } else {
+          return [
+            `The wiring terminates in a sealed junction box. Through the housing, indicator lights blink in sequence — green, amber, green. Data moving through circuits you can't access. The lock mechanism is simple, but the logic behind it isn't, and your instincts aren't sharp enough to brute-force the pattern.`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { if (skillCheck('ms', 11)) { addItem('ARCADIA DATA FRAGMENT'); showNotif('MS CHECK PASSED — Found: ARCADIA DATA FRAGMENT'); } } },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  HOLLOWAY RANCH
+  // ──────────────────────────────────────────────────
+
+  holloway_arrive: {
+    title: 'Holloway Ranch',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `Green. The color hits like a physical thing after days of grey — almost violent in its aliveness. Rows of low-growing kale, radishes with leaves slick from irrigation, trellised beans climbing salvaged car windshields arranged into greenhouse panels. The water in the channels runs clear and cold. You can hear it.`,
+      `Three figures on the farmhouse porch. Two rifles. Not raised. Not lowered. Held at that precise angle that says the decision hasn't been made yet. The third figure — an older woman, sun-darkened to leather, hands scarred from decades of soil and wire — steps off the porch.`,
+      `<em>"That's far enough."</em> Her voice carries the way a fence carries — marking the line, not crossing it. <em>"Name. Business. Or turn around."</em>`,
+    ],
+    choices: [
+      { label: 'Introduce yourself openly', next: 'holloway_welcome', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]' },
+      { label: 'Offer to trade information', next: 'holloway_trade', req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
+      { label: 'Circle around the perimeter', next: 'holloway_sneak' },
+      { label: 'Leave respectfully', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  holloway_welcome: {
+    title: 'Welcome',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `Something in how you hold yourself — hands visible, weight settled, no sudden movements — passes whatever test runs behind those weathered eyes. The rifle barrels drop two inches.`,
+      `<em>"Marta Holloway. This land is ours. Six generations in this ash."</em> She says it the way you'd say the earth is round — a fact too fundamental to argue. <em>"Water and a meal, yes. Sleep outside the fence."</em>`,
+      `The meal arrives without ceremony. Grilled root vegetables with char on the edges. Flatbread, dense and warm. Water so clean it tastes like the deep aquifer it came from, like stone and cold and nothing else. Your hands shake as you eat. You hadn't realized how hungry you were.`,
+      `Marta sits across from you, watching. Not judging — cataloging. <em>"Valley's getting busier. More people heading east. Something's pulling them."</em> A pause. <em>"It isn't trade."</em> She doesn't ask what's pulling you.`,
+    ],
+    choices: [
+      { label: 'Ask about the eastern movement', next: 'holloway_east_intel' },
+      { label: 'Thank her and head out', next: null, effect: () => { modStat('hp', 6); modStat('con', 2); showNotif('HP +6, CON +2 — real food'); toggleMap(); } },
+    ],
+  },
+
+  holloway_east_intel: {
+    title: 'Eastern Movement',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `The lines around Marta's mouth deepen. <em>"Three groups in thirty days. All east. Two came back."</em> She picks at a callus on her palm. <em>"Quieter. Like somebody had scooped something out of them and filled the space with stillness."</em>`,
+      `<em>"Third group."</em> She looks at her hands. <em>"Didn't come back."</em>`,
+      `Her gaze lifts to the eastern horizon — that flat grey wall of ash and distance. <em>"My grandmother planted this farm because it was far enough from everything that mattered. I'm starting to understand that nothing is far enough from whatever Arcadia is becoming."</em>`,
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => { modStat('hp', 6); modStat('con', 2); setFlag('heard_eastern_warning'); showNotif('HP +6, CON +2 — real food // Intel: eastern warning'); toggleMap(); } },
+    ],
+  },
+
+  holloway_trade: {
+    title: 'Information Trade',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `<em>"Information."</em> Marta's chin lifts. Not suspicion — hunger. The hunger of someone who's been growing food in poison soil for decades and knows that data is the only edge that matters. <em>"What kind?"</em>`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.met_warden) {
+          return [
+            `You tell her about WARDEN-3. The century-old archive. Soil analysis, water tables, yield data — a hundred and forty years of agricultural monitoring with no one to read the reports.`,
+            `Marta goes still. Her hands, always moving, stop. <em>"A hundred and forty years of soil data."</em> She says it like a prayer. <em>"Do you have any idea — any idea — what that means to someone growing food in ash?"</em>`,
+            `She vanishes inside. Returns with a wrapped bundle, held the way you hold something precious. <em>"Seed stock. Irradiation-resistant cultivars. My grandmother spent her life developing these."</em> She presses the bundle into your hands, grip firm. <em>"Take them where they're needed. And tell your WARDEN that Holloway Ranch is ready to talk."</em>`,
+          ];
+        } else {
+          return [
+            `You share what Voss told you — eastern routes, the Sigma Relay, the AI running alone in the dark. Marta listens without interrupting, arms crossed, weight on one hip.`,
+            `<em>"Useful."</em> A slight nod. <em>"Not the currency I'm looking for, but useful."</em> She waves toward the kitchen. <em>"Eat. Fill your canteen. Come back when you have soil data. That's what keeps eight hundred plants alive. That's what I'll pay for."</em>`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => {
+        modStat('hp', 4); modStat('con', 1);
+        if (hasFlag('met_warden')) { addItem('SEED STOCK'); setFlag('meridian_quest'); showNotif('HP +4, CON +1 — Found: SEED STOCK'); }
+        else { showNotif('HP +4, CON +1 — meal and water'); }
+        toggleMap();
+      } },
+    ],
+  },
+
+  holloway_sneak: {
+    title: 'Perimeter',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.dex >= 11) {
+          return [
+            `You swing wide through dead orchard rows, keeping ash drifts between you and the sight lines. The perimeter is serious — tripwires at ankle height, tin-can noise-makers, angled mirrors that turn blind corners into watched ones. But every system has a seam. You find it at the irrigation intake, where water flow masks footfall.`,
+            `From the gap, the greenhouse opens up in full view. The crops inside aren't what's growing in the fields — these are taller, stranger, leaves so dark they're almost purple. Experimental cultivars. Whatever the Holloways are doing here goes well beyond survival farming.`,
+            `And on the farmhouse roof: a radio antenna. Jury-rigged from scavenged parts, but functional. Someone out there is receiving whatever the Holloways are sending.`,
+          ];
+        } else {
+          return [
+            `Three steps past the fence line. Fishing line catches your ankle. Tin cans explode with noise — clattering, rolling, echoing across the flat ground like an alarm bell in a cathedral.`,
+            `The rifle crack splits the air a foot above your skull. Dirt kicks up to your left. <em>"NEXT ONE ISN'T HIGH."</em>`,
+            `You run. The ash swallows your footprints behind you.`,
+          ];
+        }
+      })(),
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => {
+        if (skillCheck('dex', 11)) { setFlag('holloway_radio'); showNotif('DEX CHECK PASSED — Holloway communications discovered'); }
+        else { modStat('hp', -3); showNotif('DEX CHECK FAILED — HP -3, warning shot'); }
+        toggleMap();
+      } },
+    ],
+  },
+
+  death: {
+    title: 'The Ash Takes You',
+    chapter: '—',
+    text: [
+      `Your knees hit the ground before you realize you've stopped walking. The ash receives you the way it receives everything — without opinion, without haste, sifting into the folds of your clothes, the creases of your palms, the spaces between your fingers.`,
+      `Grey sky. The same grey sky. You'd carried a private hope — stupid, maybe — that you'd see the sun once more before this. Wrong about that. Wrong about the distance. Wrong about what you could carry.`,
+      `<span class="whisper">The valley continues. The ash continues. Somewhere, a sensor logs a change in ground pressure, files it, and moves on.</span>`,
+    ],
+    choices: [
+      { label: '[ Start Over ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+      { label: '[ Load Last Save ]', next: null, effect: () => { if (loadState() && state.currentScene) { renderScene(state.currentScene); } else { location.reload(); } } },
+    ],
+  },
+
+}; // end scenes
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  window._activeChoices = [];
+});
+</script>
+</body>
+</html>

@@ -593,6 +593,33 @@ body::after {
   to   { opacity: 1; transform: translateY(0); }
 }
 .scene-enter { animation: scene-enter 350ms cubic-bezier(0.2,0.8,0.2,1) both; }
+
+/* ═══════════════════════════════════════════
+   MUTATIONS
+═══════════════════════════════════════════ */
+.mutation-tag {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--olive); text-transform: uppercase;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--ink-border);
+}
+.mutation-tag .mutation-desc {
+  font-size: 8px; letter-spacing: 0.5px;
+  color: var(--ash-faint);
+  display: block; margin-top: 1px;
+}
+
+#notif.mutation-notif {
+  color: var(--olive);
+  border-color: var(--olive-dim);
+  animation: notif-in 300ms cubic-bezier(0.2,0.8,0.2,1), mutation-glow 1.5s ease-in-out;
+}
+@keyframes mutation-glow {
+  0%   { box-shadow: 0 0 0 rgba(125,142,69,0); }
+  30%  { box-shadow: 0 0 18px rgba(125,142,69,0.4); }
+  100% { box-shadow: 0 0 0 rgba(125,142,69,0); }
+}
 </style>
 </head>
 <body>
@@ -654,6 +681,14 @@ body::after {
       <div>
         <div class="sidebar-section-title">Inventory</div>
         <div id="sb-inventory"></div>
+      </div>
+      <div id="sb-weapon-section" style="display:none;">
+        <div class="sidebar-section-title">Weapon</div>
+        <div id="sb-weapon"></div>
+      </div>
+      <div id="sb-mutations-section" style="display:none;">
+        <div class="sidebar-section-title">Mutations</div>
+        <div id="sb-mutations"></div>
       </div>
       <div>
         <div class="sidebar-section-title">Intel</div>
@@ -820,6 +855,8 @@ const state = {
   rad: 13,   // Radiation Resistance (higher = more resistant)
   radPoison: 0, // 0=none 1=mild 2=moderate 3=severe 4=lethal
   hp:  30,   // Hit Points
+  mutations: [],
+  weapon: null,
   inventory: ['CANTEEN (HALF)', 'RAD TABS x3', 'CRACKED COMPASS'],
   flags: {},
   currentScene: 'ironmarket_gate',
@@ -841,6 +878,426 @@ function modStat(s, n)  {
   if (s === 'hp' && state[s] <= 0) { setTimeout(() => renderScene('death'), 100); }
 }
 function skillCheck(stat, threshold) { return state[stat] >= threshold; }
+
+// ── MUTATIONS ──
+const MUTATIONS = {
+  ash_skin: {
+    name: 'Ash-Skin',
+    desc: 'Skin toughens to greyite bark.',
+    flavor: 'Your forearms are the color of cold hearth-stone. The texture follows within hours — rough, ridged, faintly warm to the touch. It doesn\'t hurt. It should hurt.',
+    bonuses: { con: 2 },
+    penalties: { cha: -1 },
+  },
+  split_pupil: {
+    name: 'Split-Pupil Vision',
+    desc: 'Pupils slit like a cat\'s.',
+    flavor: 'The light fractures. Edges sharpen to a clarity that borders on pain — every dust mote a bright needle, every shadow a canyon. Your pupils have narrowed to vertical slits. The feral dogs had eyes like this.',
+    bonuses: { dex: 2 },
+    penalties: { hp: -1 },
+  },
+  echo_sense: {
+    name: 'Echo-Sense',
+    desc: 'Subsonic spatial awareness.',
+    flavor: 'Sound folds. The walls have depth now — you feel them before you see them, pressure differentials mapping the space around you in pulses you hear with your chest, not your ears. The migraines start an hour later.',
+    bonuses: { ms: 2 },
+    penalties: { con: -1 },
+  },
+  spore_lung: {
+    name: 'Spore-Lung',
+    desc: 'Fungal symbiote in respiratory system.',
+    flavor: 'The cough comes first, then stops. Your breathing deepens — slower, richer, each inhale pulling something from the air that wasn\'t there before. The fungal threads are too small to see. You feel them anyway, lacing through your bronchi like living gauze.',
+    bonuses: { rad: 2 },
+    penalties: { con: -1 },
+  },
+  dense_bone: {
+    name: 'Dense Bone',
+    desc: 'Skeletal calcification.',
+    flavor: 'Weight settles into your frame overnight. Your joints stiffen, your stride shortens, but when you grip the door handle it bends. The bones are calcifying — denser, heavier, harder than anything human ought to be.',
+    bonuses: { str: 2 },
+    penalties: { dex: -1 },
+  },
+  nerve_bloom: {
+    name: 'Nerve-Bloom',
+    desc: 'Hypersensitive nervous system.',
+    flavor: 'Skin becomes antenna. You feel the electrical field of the terminal before you touch it — a warm, buzzing presence like standing too close to a transformer. People radiate. Machines hum. The world is louder than it was, and none of the new noise uses sound.',
+    bonuses: { cha: 2 },
+    penalties: { hp: -3 },
+  },
+  thermal_sense: {
+    name: 'Thermal Sense',
+    desc: 'Heat-pit organs near temples.',
+    flavor: 'Two points of pressure bloom at your temples — tender, swollen, hot to the touch. Then the world shifts. Warmth becomes visible: a mouse behind the baseboard glows like an ember, a buried pipe pulses orange with flowing water. The headache is constant. The information is worth it.',
+    bonuses: { ms: 1, dex: 1 },
+    penalties: { con: -1 },
+  },
+  photosynthetic: {
+    name: 'Photosynthetic Dermis',
+    desc: 'Skin develops chlorophyll patches.',
+    flavor: 'Green. Not metaphorical. Not subtle. Patches of vivid chlorophyll spread across your forearms and throat, darkening in whatever light filters through the ash. Your skin itches where it grows, and strangers stare with a discomfort that has nothing to do with hostility.',
+    bonuses: { hp: 3 },
+    penalties: { cha: -2 },
+  },
+  redundant_organs: {
+    name: 'Redundant Organs',
+    desc: 'Backup heart and kidneys.',
+    flavor: 'A second pulse starts behind your sternum — faint, off-rhythm, like a drummer learning to shadow the lead. The ultrasound would show a kidney where no kidney belongs, a heart valve budding from the aortic wall. Your body is building spares.',
+    bonuses: { hp: 6 },
+    penalties: { dex: -1 },
+  },
+  elastic_tendons: {
+    name: 'Elastic Tendons',
+    desc: 'Double-jointed flexibility.',
+    flavor: 'Your wrist bends back far enough to touch your forearm. No pain — just a rubbery compliance that makes your joints feel like suggestions rather than structures. You can reach behind your own shoulder blade. The trade-off lives in the grip: nothing stays tight for long.',
+    bonuses: { dex: 3 },
+    penalties: { str: -2 },
+  },
+  chitin_plates: {
+    name: 'Chitin Plates',
+    desc: 'Insect-like dermal armor.',
+    flavor: 'The first plate surfaces on your forearm — amber-brown, slightly translucent, warm to the touch. More follow along the outer edge of your ribcage, layering like roofing tiles. They click when you move. People stop shaking your hand.',
+    bonuses: { con: 3 },
+    penalties: { cha: -2 },
+  },
+  prehensile_toes: {
+    name: 'Prehensile Toes',
+    desc: 'Grip with feet.',
+    flavor: 'You notice it when your boot comes off — your toes curling around the edge of a rock with intention, the way fingers wrap a handle. The dexterity is startling. Your feet have opinions now, and they want to hold things.',
+    bonuses: { dex: 1 },
+    penalties: {},
+  },
+  gigantism: {
+    name: 'Gigantism',
+    desc: 'Rapid skeletal growth.',
+    flavor: 'Your clothes stop fitting in three days. The growth is in the long bones — femur, tibia, radius — each one adding centimeters that your cardiovascular system scrambles to service. Door frames become suggestions. Your shadow arrives before you do.',
+    bonuses: { str: 2 },
+    penalties: { con: -1 },
+  },
+  dwarfism: {
+    name: 'Dwarfism',
+    desc: 'Compact frame adaptation.',
+    flavor: 'The compression happens overnight. You wake shorter, denser, your center of gravity dropping like a stone settling in water. Tunnels that were tight become comfortable. Doorways that were fine now have clearance to spare. The world rescales around a body that has decided less is more.',
+    bonuses: { dex: 2 },
+    penalties: { str: -1 },
+  },
+  bone_spurs: {
+    name: 'Bone Spurs',
+    desc: 'Natural bony weapons.',
+    flavor: 'The first one punches through the skin of your elbow like a thorn — calcified, sharp, slick with blood that dries to a dark crust. More follow along your forearms and knuckles. Your body is growing its own arsenal. The exit wounds ache for days.',
+    bonuses: { str: 1 },
+    penalties: { hp: -2 },
+  },
+  webbed_digits: {
+    name: 'Webbed Digits',
+    desc: 'Membranes between fingers.',
+    flavor: 'Translucent skin stretches between your fingers to the second knuckle — thin enough to see veins through, tough as wet leather. Your grip in water becomes absolute. Dry-land fine motor tasks require patience you didn\'t used to need.',
+    bonuses: { dex: 1 },
+    penalties: { ms: -1 },
+  },
+  rubber_flesh: {
+    name: 'Rubber Flesh',
+    desc: 'Impact-resistant tissue.',
+    flavor: 'Your skin bounces. Not metaphorically — you press a thumb into your forearm and it rebounds like memory foam, the tissue springing back with an elasticity that has no business being in human muscle. Bruises become rumors. The texture unsettles anyone who touches you.',
+    bonuses: { hp: 4 },
+    penalties: { cha: -1 },
+  },
+  iron_gut: {
+    name: 'Iron Gut',
+    desc: 'Omnivorous digestion.',
+    flavor: 'The rotten fruit goes down without protest. So does the bark, the insect larvae, the thing that might have been cheese three months ago. Your stomach has recalibrated to a wider definition of food, and the acid burns hot enough to sterilize what your judgment wouldn\'t.',
+    bonuses: { con: 2 },
+    penalties: { cha: -1 },
+  },
+  rapid_clotting: {
+    name: 'Rapid Clotting',
+    desc: 'Accelerated wound closure.',
+    flavor: 'The cut seals in seconds — blood welling, thickening, crusting over while you watch. By the time you reach for a bandage, the wound is a dark line of dried iron. The clotting factor in your blood has opinions about bleeding, and all of them are no.',
+    bonuses: { hp: 3 },
+    penalties: {},
+  },
+  hollow_bones: {
+    name: 'Hollow Bones',
+    desc: 'Avian bone structure.',
+    flavor: 'You feel lighter. Not metaphorically — the scale doesn\'t lie. Twelve kilos gone, and your skeleton is the reason. The bones are hollow now, reinforced with internal struts like a bird\'s. You move faster. You break easier. The math is simple and unforgiving.',
+    bonuses: { dex: 2 },
+    penalties: { hp: -3 },
+  },
+  tremor_feel: {
+    name: 'Tremor-Feel',
+    desc: 'Seismic vibration sense.',
+    flavor: 'The ground speaks. Footsteps register as pressure waves through your soles — distance, weight, gait pattern, all of it arriving as a low hum in the bones of your feet. You feel the truck before you hear it. You feel the person behind the wall before they round the corner.',
+    bonuses: { ms: 2 },
+    penalties: { dex: -1 },
+  },
+  uv_vision: {
+    name: 'UV Vision',
+    desc: 'Ultraviolet light perception.',
+    flavor: 'The world acquires a new color that has no name. Surfaces fluoresce — urine trails, mineral deposits, chemical residues, all blazing in a spectrum your eyes were never built to see. Old markings invisible to others burn bright as signal fires. The headaches are worth it.',
+    bonuses: { ms: 1 },
+    penalties: {},
+  },
+  scent_tracking: {
+    name: 'Scent Tracking',
+    desc: 'Bloodhound-level olfaction.',
+    flavor: 'The world becomes a map of smell. Every person leaves a trail — sweat chemistry, diet, fear, the soap they used three days ago. You track a stranger across Ironmarket by the copper tang of the coins in his pocket. The downside: you can smell everything. Everything.',
+    bonuses: { ms: 2 },
+    penalties: { cha: -1 },
+  },
+  whisker_filaments: {
+    name: 'Whisker Filaments',
+    desc: 'Air-current sensing hairs.',
+    flavor: 'Fine filaments sprout along your jawline and forearms — not hair, exactly, but something thinner, more sensitive, each one a barometer reading air pressure and movement. You feel drafts through walls. You feel someone entering a room before the door opens.',
+    bonuses: { dex: 1 },
+    penalties: {},
+  },
+  magnetoreception: {
+    name: 'Magnetoreception',
+    desc: 'Internal compass.',
+    flavor: 'North pulls at something behind your sinuses — a gentle, persistent tug like a compass needle made of nerve tissue. You stop getting lost. You stop needing landmarks. The planet\'s magnetic field is a highway and your skull is the map.',
+    bonuses: { ms: 1 },
+    penalties: {},
+  },
+  infrasound_hearing: {
+    name: 'Infrasound Hearing',
+    desc: 'Sub-audible sound detection.',
+    flavor: 'The world acquires a bass note below hearing — felt in the chest, the gut, the back of the skull. Storms register hours early. Machinery hums from a kilometer away. And occasionally, standing in perfect silence, you hear the earth itself groan.',
+    bonuses: { ms: 1 },
+    penalties: {},
+  },
+  compound_eyes: {
+    name: 'Compound Eyes',
+    desc: 'Widened field of vision.',
+    flavor: 'Your irises fracture. Not painfully — a slow kaleidoscoping that takes three days, each eye splitting its lens into hexagonal facets that track independently. Your peripheral vision now covers nearly 270 degrees. Children cry when they see your face.',
+    bonuses: { dex: 1, ms: 1 },
+    penalties: { cha: -2 },
+  },
+  hivemind_echo: {
+    name: 'Hivemind Echo',
+    desc: 'Telepathic background static.',
+    flavor: 'Thoughts that aren\'t yours brush the edges of your awareness — fragments of intention, emotional residue, the psychic equivalent of hearing your neighbor\'s music through a wall. Not words. Impressions. You know when someone is lying before they finish the sentence.',
+    bonuses: { cha: 1, ms: 1 },
+    penalties: {},
+  },
+  adrenal_surge: {
+    name: 'Adrenal Surge',
+    desc: 'Explosive strength bursts.',
+    flavor: 'The glands above your kidneys have swollen to twice their size, and when threat registers they dump everything at once. Your vision tunnels, your muscles lock, and for eight seconds you can bend rebar with your bare hands. The crash afterward leaves you shaking.',
+    bonuses: { str: 3 },
+    penalties: { con: -1 },
+  },
+  eidetic_flash: {
+    name: 'Eidetic Flash',
+    desc: 'Photographic memory.',
+    flavor: 'You glance at the map for two seconds and it burns into your visual cortex — every line, every annotation, every smudge. The recall is perfect and involuntary. The cost is sleep: your brain replays the day\'s images in high fidelity, all night, every night.',
+    bonuses: { ms: 3 },
+    penalties: { con: -1 },
+  },
+  empathic_bleed: {
+    name: 'Empathic Bleed',
+    desc: 'Emotional absorption.',
+    flavor: 'Other people\'s feelings leak into you like dye into water. A stranger\'s grief hits your chest like a fist. A child\'s joy fizzes behind your eyes. You\'ve become a sponge for the emotional weather of every room you enter, and wringing yourself dry takes hours.',
+    bonuses: { cha: 3 },
+    penalties: { hp: -2 },
+  },
+  battle_fugue: {
+    name: 'Battle Fugue',
+    desc: 'Combat dissociation trance.',
+    flavor: 'When violence starts, you leave. Not physically — you\'re still there, faster and more precise than you\'ve ever been. But the part of you that worries, that hesitates, that feels — it steps aside and lets something older drive. You come back to yourself afterward, knuckles bloody, breathing steady, remembering nothing.',
+    bonuses: { str: 2, dex: 1 },
+    penalties: { ms: -1 },
+  },
+  precog_flicker: {
+    name: 'Precognitive Flicker',
+    desc: 'Split-second foresight.',
+    flavor: 'A half-second of future, arriving like a camera flash behind your eyes. You see the punch before it\'s thrown. You step left before the ceiling falls right. The visions are fragmentary, unreliable, and they leave you with nosebleeds that taste like copper and déjà vu.',
+    bonuses: { dex: 2 },
+    penalties: { hp: -2 },
+  },
+  synaptic_overclock: {
+    name: 'Synaptic Overclock',
+    desc: 'Accelerated neural processing.',
+    flavor: 'Thought accelerates. Conversations feel glacial — you\'ve parsed the sentence, formulated three responses, and discarded two before the speaker finishes a clause. The speed is intoxicating. The metabolic cost is not: your body burns calories like a furnace and your hands won\'t stop trembling.',
+    bonuses: { ms: 2 },
+    penalties: { con: -2 },
+  },
+  pheromone_broadcast: {
+    name: 'Pheromone Broadcast',
+    desc: 'Chemical persuasion.',
+    flavor: 'You don\'t smell different — not to yourself. But people lean closer. Negotiations go smoother. Guard dogs sit instead of bark. Something in your sweat has learned to speak a chemical language that bypasses the conscious mind entirely.',
+    bonuses: { cha: 2 },
+    penalties: {},
+  },
+  rad_sponge: {
+    name: 'Rad Sponge',
+    desc: 'Radiation absorption.',
+    flavor: 'Your tissue drinks radiation like water — alpha, beta, gamma, all of it channeled into metabolic pathways that shouldn\'t exist. You glow faintly in the dark, a soft blue-white Cherenkov shimmer that makes other travelers keep their distance.',
+    bonuses: { rad: 3 },
+    penalties: { cha: -1 },
+  },
+  ash_breather: {
+    name: 'Ash Breather',
+    desc: 'Filtered respiratory system.',
+    flavor: 'Your sinuses restructure overnight — new tissue, dense and spongy, lining your nasal passages like a biological filter. Ash particles catch in the mesh and dissolve. You breathe free while others choke. Your voice drops half an octave from the added tissue mass.',
+    bonuses: { con: 2 },
+    penalties: { cha: -1 },
+  },
+  nocturnal_shift: {
+    name: 'Nocturnal Shift',
+    desc: 'Dark-adapted vision.',
+    flavor: 'Daylight becomes uncomfortable — a bright, bleaching assault that makes you squint and shade your eyes. But when the sun drops, the world opens. Starlight is enough. Moonlight is a flood. Your pupils have dilated to black pools that swallow every available photon.',
+    bonuses: { dex: 2, ms: 1 },
+    penalties: { str: -1 },
+  },
+  thermal_regulation: {
+    name: 'Thermal Regulation',
+    desc: 'Temperature immunity.',
+    flavor: 'The cold stops mattering first. Then the heat. Your core temperature holds at 37.2 regardless of the environment — some deep thermostat in your hypothalamus has been recalibrated to ignore external conditions entirely. You walk through frost and furnace alike without flinching.',
+    bonuses: { con: 2 },
+    penalties: { ms: -1 },
+  },
+  water_retention: {
+    name: 'Water Retention',
+    desc: 'Camel-like water storage.',
+    flavor: 'Your body hoards water with a miser\'s devotion. A single canteen lasts three days. Your urine runs dark and concentrated, every drop of moisture wrung from your kidneys and recycled. You bloat slightly after drinking — your cells expanding like sponges, storing reserves in tissue that didn\'t used to have room.',
+    bonuses: { con: 2 },
+    penalties: {},
+  },
+  toxin_filter: {
+    name: 'Toxin Filter',
+    desc: 'Poison immunity.',
+    flavor: 'Your liver has tripled in efficiency — a metabolic furnace that breaks down toxins faster than they can accumulate. Scorpion venom becomes a mild tingle. Contaminated water passes through without incident. The cost: your liver demands fuel, and the hunger is relentless.',
+    bonuses: { con: 1 },
+    penalties: { hp: -2 },
+  },
+  static_charge: {
+    name: 'Static Charge',
+    desc: 'Electrical buildup.',
+    flavor: 'Small arcs of blue-white light jump between your fingertips and metal surfaces. Your hair lifts in dry air. Handshakes deliver a jolt that makes people flinch. The charge builds in your tissue like a capacitor, discharging in small crackles that smell of ozone and scorched keratin.',
+    bonuses: { str: 1, ms: 1 },
+    penalties: {},
+  },
+  bioluminescence: {
+    name: 'Bioluminescence',
+    desc: 'Bioluminescent skin patches.',
+    flavor: 'The glow starts at your wrists — pale green-blue, pulsing with your heartbeat, visible through two layers of fabric in the dark. It spreads to your throat, your temples, the backs of your hands. You are your own lantern. Stealth becomes a memory.',
+    bonuses: { cha: 1 },
+    penalties: { dex: -1 },
+  },
+  root_nerve: {
+    name: 'Root Nerve',
+    desc: 'Soil-sense through contact.',
+    flavor: 'Barefoot on earth, you feel everything — root networks pulsing with moisture, insect colonies vibrating in their tunnels, the slow geological heartbeat of the bedrock itself. The information arrives as pressure, as warmth, as a bone-deep awareness of the living ground.',
+    bonuses: { ms: 2 },
+    penalties: {},
+  },
+  spore_cloud: {
+    name: 'Spore Cloud',
+    desc: 'Fungal particle exhalation.',
+    flavor: 'Your breath carries a visible haze — fine spores, pale gold in slanted light, drifting from your lips with every exhale. The particles settle on surfaces and germinate within hours, leaving faint fungal blooms wherever you sleep. Companions give you extra distance.',
+    bonuses: { str: 1 },
+    penalties: { cha: -2 },
+  },
+  albino_adaptation: {
+    name: 'Albino Adaptation',
+    desc: 'Depigmented skin and hair.',
+    flavor: 'The color drains over three nights. Your skin blanches to paper-white, your hair to frost. Your eyes lighten to a pink-tinged grey that makes people think of laboratory animals. You move differently now — lighter, more careful, as if the pigment was weight you didn\'t know you carried.',
+    bonuses: { dex: 1 },
+    penalties: { str: -1 },
+  },
+  scale_patches: {
+    name: 'Scale Patches',
+    desc: 'Reptilian dermal scales.',
+    flavor: 'Diamond-shaped patches harden across your shins and shoulders — smooth, dry, slightly iridescent in certain light. They don\'t itch. They don\'t flex. They simply are, the way a callus is: your body\'s matter-of-fact response to a world that keeps scraping at it.',
+    bonuses: { con: 1 },
+    penalties: {},
+  },
+  antler_growths: {
+    name: 'Antler Growths',
+    desc: 'Bone protrusions from skull.',
+    flavor: 'Two points of bone push through the skin above your temples — blunt, branching, covered in velvet that itches and bleeds when you scratch it. They grow a centimeter a week. Hats stop fitting. Strangers stare with a fascination that sits somewhere between awe and revulsion.',
+    bonuses: { str: 1 },
+    penalties: {},
+  },
+  tail_nub: {
+    name: 'Tail Nub',
+    desc: 'Vestigial caudal appendage.',
+    flavor: 'Five centimeters of flesh and cartilage at the base of your spine, curling slightly to the left. It moves when you\'re startled — a twitch you can\'t control, like a dog\'s tail expressing emotions your face has learned to hide. Sitting becomes an exercise in repositioning.',
+    bonuses: { dex: 1 },
+    penalties: {},
+  },
+  chromatophore_skin: {
+    name: 'Chromatophore Skin',
+    desc: 'Color-shifting dermal patches.',
+    flavor: 'Your skin shifts. Not camouflage — not that precise — but the pigment cells have developed a will of their own, rippling through ochre, slate, and rust in response to mood, temperature, and light. In still moments, you match the wall behind you without trying.',
+    bonuses: { cha: 1, dex: 1 },
+    penalties: {},
+  },
+};
+
+function hasMutation(id) { return state.mutations.includes(id); }
+
+function addMutation(id) {
+  if (hasMutation(id)) return;
+  const m = MUTATIONS[id];
+  if (!m) return;
+  state.mutations.push(id);
+  // Apply stat bonuses
+  for (const [stat, val] of Object.entries(m.bonuses)) { modStat(stat, val); }
+  // Apply stat penalties
+  for (const [stat, val] of Object.entries(m.penalties)) { modStat(stat, val); }
+  // Show dramatic notification
+  showMutationNotif(m.name, m.flavor);
+  saveState();
+  updateSidebar();
+}
+
+// ── WEAPONS ──
+const WEAPONS = {
+  rebar_machete: { name: 'Rebar Machete', desc: 'Straightened rebar ground to a crude edge. Ugly. Effective. The weight alone ends arguments.', stat_bonuses: { str: 1 }, tags: ['melee', 'intimidating'] },
+  bone_club: { name: 'Bone Club', desc: 'Femur of something large, fire-hardened and wrapped in wire. Blunt force delivered with primal conviction.', stat_bonuses: { str: 1 }, tags: ['melee'] },
+  pipe_hatchet: { name: 'Pipe Hatchet', desc: 'Steel pipe with a sharpened head welded on at an angle. Chops and hooks in equal measure.', stat_bonuses: { str: 1, dex: 1 }, tags: ['melee'] },
+  glass_knuckles: { name: 'Glass Knuckles', desc: 'Pre-Fall safety glass epoxied over a leather hand wrap. Shatters on impact. Bring spares.', stat_bonuses: { dex: 2 }, tags: ['melee', 'silent'] },
+  chain_flail: { name: 'Chain Flail', desc: 'Tow chain with a padlock on the end, swung with centripetal malice. Loud, heavy, and profoundly discouraging.', stat_bonuses: { str: 2 }, tags: ['melee', 'intimidating', 'loud'] },
+  shiv: { name: 'Shiv', desc: 'Sharpened spoon handle wrapped in electrical tape. Prison rules for a prison world.', stat_bonuses: { dex: 1 }, tags: ['melee', 'silent'] },
+  sling: { name: 'Sling', desc: 'Woven cord with a leather pocket. River stones are free. Silence is the point.', stat_bonuses: { dex: 1 }, tags: ['ranged', 'silent'] },
+  crossbow: { name: 'Crossbow', desc: 'Leaf-spring crossbow with a hand-carved stock. Bolts are scarce. Each one is a decision.', stat_bonuses: { dex: 2 }, tags: ['ranged', 'silent'] },
+  pipe_revolver: { name: 'Pipe Revolver', desc: 'Three-shot revolver machined from plumbing pipe. Loud, inaccurate, and psychologically devastating.', stat_bonuses: { str: 1 }, tags: ['ranged', 'loud', 'intimidating'] },
+  nail_gun: { name: 'Nail Gun', desc: 'Construction-grade pneumatic driver with a modified magazine. Fires framing nails at velocity. Surprisingly quiet.', stat_bonuses: { dex: 2 }, tags: ['ranged', 'silent'] },
+  flare_launcher: { name: 'Flare Launcher', desc: 'Single-shot signal flare repurposed as a weapon. Limited ammo, unlimited visibility. Use wisely.', stat_bonuses: {}, tags: ['ranged', 'loud', 'situational'] },
+  bola: { name: 'Bola', desc: 'Three weighted cords knotted at the center. Thrown low, tangling legs. Capture without killing — a rare luxury.', stat_bonuses: { dex: 1 }, tags: ['ranged', 'silent', 'capture'] },
+};
+
+function equipWeapon(id) {
+  // Remove old weapon bonuses
+  if (state.weapon) {
+    const old = WEAPONS[state.weapon];
+    if (old) {
+      for (const [stat, val] of Object.entries(old.stat_bonuses)) { modStat(stat, -val); }
+    }
+  }
+  // Apply new weapon bonuses
+  state.weapon = id;
+  if (id) {
+    const w = WEAPONS[id];
+    if (w) {
+      for (const [stat, val] of Object.entries(w.stat_bonuses)) { modStat(stat, val); }
+      showNotif('EQUIPPED: ' + w.name.toUpperCase());
+    }
+  }
+  saveState();
+  updateSidebar();
+}
+
+function hasWeapon(id) { return state.weapon === id; }
+
+let mutNotifTimer;
+function showMutationNotif(name, flavor) {
+  const n = document.getElementById('notif');
+  n.className = 'mutation-notif';
+  n.innerHTML = '☣ MUTATION: ' + name.toUpperCase() + '<br><span style="font-size:9px;letter-spacing:1px;color:var(--ash-dim);font-style:italic;">' + flavor + '</span>';
+  n.style.display = 'block';
+  clearTimeout(mutNotifTimer);
+  mutNotifTimer = setTimeout(() => { n.style.display = 'none'; n.className = ''; }, 5000);
+}
 
 // ── PERSISTENCE ──
 function saveState() {
@@ -891,6 +1348,12 @@ function isUsableItem(item) {
   if (item === 'ANTI-RAD COMPOUND x6') {
     if (state.radPoison > 0) return { hint: 'Use to purge all radiation poisoning' };
   }
+  if (item === 'FIELD REPAIR KIT') {
+    if (state.hp < 40) return { hint: 'Use to restore HP' };
+  }
+  if (item === 'FIELD MEDKIT') {
+    if (state.hp < 40) return { hint: 'Use to restore HP +8' };
+  }
   return null;
 }
 
@@ -932,7 +1395,24 @@ function useItem(item) {
     modStat('str', 1);
     removeItem('ANTI-RAD COMPOUND x6');
     addItem('ANTI-RAD COMPOUND x5');
+    if (Math.random() < 0.4) addMutation('spore_lung');
     showNotif('ANTI-RAD COMPOUND — POISONING PURGED // HP +5, CON +2');
+    saveState();
+    updateSidebar();
+    return;
+  }
+  if (item === 'FIELD REPAIR KIT' && state.hp < 40) {
+    modStat('hp', 8);
+    removeItem('FIELD REPAIR KIT');
+    showNotif('FIELD REPAIR KIT — HP +8');
+    saveState();
+    updateSidebar();
+    return;
+  }
+  if (item === 'FIELD MEDKIT' && state.hp < 40) {
+    modStat('hp', 8);
+    removeItem('FIELD MEDKIT');
+    showNotif('FIELD MEDKIT — HP +8');
     saveState();
     updateSidebar();
     return;
@@ -1000,6 +1480,31 @@ function updateSidebar() {
       }
       return `<div class="inv-item">${i}</div>`;
     }).join('');
+  }
+
+  // Weapon
+  const weapSection = document.getElementById('sb-weapon-section');
+  const weapEl = document.getElementById('sb-weapon');
+  if (state.weapon && WEAPONS[state.weapon]) {
+    weapSection.style.display = '';
+    const w = WEAPONS[state.weapon];
+    weapEl.innerHTML = `<div class="inv-item" style="color:var(--blood);">⚔ ${w.name}<span style="display:block;font-size:8px;color:var(--ash-faint);margin-top:1px;">${w.tags.join(' · ')}</span></div>`;
+  } else {
+    weapSection.style.display = 'none';
+  }
+
+  // Mutations
+  const mutSection = document.getElementById('sb-mutations-section');
+  const mutEl = document.getElementById('sb-mutations');
+  if (state.mutations.length > 0) {
+    mutSection.style.display = '';
+    mutEl.innerHTML = state.mutations.map(id => {
+      const m = MUTATIONS[id];
+      if (!m) return '';
+      return `<div class="mutation-tag">☣ ${m.name}<span class="mutation-desc">${m.desc}</span></div>`;
+    }).join('');
+  } else {
+    mutSection.style.display = 'none';
   }
 
   // Flags
@@ -1415,21 +1920,21 @@ const RANDOM_ENCOUNTERS = [
   { id: 30, text: `A scavenger, heading the opposite direction at a dead sprint. Pack bouncing, arms pumping, boots slapping the ash-crusted road. No eye contact. No warning shout. No acknowledgment that you exist. Whatever they're running from, you never see it. You walk faster anyway.` },
 
   // ── STAT EFFECTS (+/-) ──
-  { id: 31, text: `A wrong turn drops you into a collapsed irrigation canal — the old concrete channels that once fed the valley's orchards. The particulate pooled in the canal bed is thick as fog, concentrated fallout baked into powder by decades of sun. You're coughing before you can cover your mouth. Eyes streaming, throat raw, lungs burning by the time you claw back to high ground.`, effect: () => modStat('con', -1), notif: 'CON -1 — ash inhalation in old canal' },
+  { id: 31, text: `A wrong turn drops you into a collapsed irrigation canal — the old concrete channels that once fed the valley's orchards. The particulate pooled in the canal bed is thick as fog, concentrated fallout baked into powder by decades of sun. You're coughing before you can cover your mouth. Eyes streaming, throat raw, lungs burning by the time you claw back to high ground.`, effect: () => { modStat('con', -1); if (Math.random() < 0.4) addMutation('ash_skin'); }, notif: 'CON -1 — ash inhalation in old canal' },
   { id: 32, text: `The road ends in a ragged hole — collapsed into a drainage channel, edges crumbling. You lower yourself in. Concrete scrapes your palms. The far wall is slick with condensation and you haul yourself up finger by finger, arriving at the top scraped raw and gasping.`, effect: () => modStat('hp', -3), notif: 'HP -3 — rough crossing' },
   { id: 33, text: `A traveler with an overturned cart, one wheel snapped, cursing at the sky. You help right it without being asked. She can't pay. She presses two salvaged protein bars into your hand — foil intact, pre-Fall manufacture. <em>"Eat them slow,"</em> she says, and pushes on.`, effect: () => modStat('con', 1), notif: 'CON +1 — protein bars' },
-  { id: 34, text: `You disturb a roadside boulder and something pale scatters beneath it — ash-scorpions, translucent, each one the length of your hand. They scatter in every direction. One doesn't scatter. It strikes. The sting is a white-hot wire driven into your calf, and the venom spreads like cold water.`, effect: () => { modStat('hp', -4); modStat('str', -1); }, notif: 'HP -4, STR -1 — scorpion sting' },
+  { id: 34, text: `You disturb a roadside boulder and something pale scatters beneath it — ash-scorpions, translucent, each one the length of your hand. They scatter in every direction. One doesn't scatter. It strikes. The sting is a white-hot wire driven into your calf, and the venom spreads like cold water.`, effect: () => { modStat('hp', -4); modStat('str', -1); if (Math.random() < 0.4) addMutation('thermal_sense'); }, notif: 'HP -4, STR -1 — scorpion sting' },
   { id: 35, text: `A burned-out farmhouse, roof open to the sky. You shelter behind the chimney breast and your hand finds a gap in the mortar. Inside: military-issue water-purification tabs and a sealed packet of jerky, vacuum-packed and bone dry. You eat sitting on the hearthstone, watching the ash fall through the missing roof.`, effect: () => modStat('hp', 5), notif: 'HP +5 — cache food' },
   { id: 36, text: `Someone has dug a channel and diverted a spring across the road — a gift from a stranger to strangers. The water runs clear over clean gravel. You cup your hands and drink. Cold. Sweet. Tasting of deep stone and nothing else. You fill the canteen twice.`, effect: () => { modStat('con', 1); modStat('hp', 2); }, notif: 'CON +1, HP +2 — clean water' },
-  { id: 37, text: `The road surface changes — darker, slick with a chemical sheen that rainbows in the flat light. Old industrial runoff, baked into the asphalt, still off-gassing a hundred years later. Your skin prickles. Your teeth ache. You cross fast but not fast enough.`, effect: () => modStat('rad', -1), notif: 'RAD -1 — chemical exposure' },
+  { id: 37, text: `The road surface changes — darker, slick with a chemical sheen that rainbows in the flat light. Old industrial runoff, baked into the asphalt, still off-gassing a hundred years later. Your skin prickles. Your teeth ache. You cross fast but not fast enough.`, effect: () => { modStat('rad', -1); if (Math.random() < 0.4) addMutation('dense_bone'); }, notif: 'RAD -1 — chemical exposure' },
   { id: 38, text: `An emergency road-kit, still bolted to a guardrail as if waiting for exactly this. Sealed flares, a reflective blanket, a packet of glucose tabs. You crack the seal. The tabs are chalky and sweet and your body absorbs them like dry earth absorbing rain.`, effect: () => modStat('hp', 3), notif: 'HP +3 — glucose tabs' },
-  { id: 39, text: `Dead orchard. Dead trees. But fruit hangs from the branches — bulbous, black-skinned, pulsing with a faint bioluminescence that has no business being there. Hunger makes the decision for you. The taste is iron and vinegar. Your stomach cramps, accepts, and demands more.`, effect: () => { modStat('hp', 4); modStat('rad', -1); }, notif: 'HP +4, RAD -1 — mutant fruit' },
+  { id: 39, text: `Dead orchard. Dead trees. But fruit hangs from the branches — bulbous, black-skinned, pulsing with a faint bioluminescence that has no business being there. Hunger makes the decision for you. The taste is iron and vinegar. Your stomach cramps, accepts, and demands more.`, effect: () => { modStat('hp', 4); modStat('rad', -1); if (Math.random() < 0.4) { if (Math.random() < 0.5) addMutation('split_pupil'); else addMutation('photosynthetic'); } }, notif: 'HP +4, RAD -1 — mutant fruit' },
   { id: 40, text: `A weather front building from the west. Dark shelf cloud, wind picking up, the air pressure dropping fast enough to make your ears pop. You run the last three kilometers. Your feet pay the price. Your lungs pay the price. Everything pays the price.`, effect: () => { modStat('con', -1); modStat('hp', -2); }, notif: 'CON -1, HP -2 — overexertion' },
   { id: 41, text: `A medic, sitting on a guardrail, medical bag open beside her. No name offered. No questions asked. She sees the wound you've been pretending doesn't exist, clicks her tongue once, and goes to work. Clean hands. Quick sutures. A salve that stings and then doesn't. <em>"Stay off it for a day,"</em> she says, knowing you won't.`, effect: () => modStat('hp', 6), notif: 'HP +6 — roadside medic' },
   { id: 42, text: `Your boot breaks through a crust of dried mud into a nest of yellowjackets — each one the size of your fist, pale and bloated with venom. They boil upward in a furious cloud. You run. They follow. They're faster than anything that size should be and they are deeply, fundamentally angry.`, effect: () => { modStat('hp', -5); modStat('dex', -1); }, notif: 'HP -5, DEX -1 — mutant yellowjackets' },
   { id: 43, text: `A shallow pond in the lee of a collapsed barn, surface still, water silty but drinkable. You sit on the bank and peel off your boots. Your feet are blistered, swollen, the color of raw steak. The water is cool. The silence is total. You sit longer than you planned.`, effect: () => modStat('con', 1), notif: 'CON +1 — rest stop' },
   { id: 44, text: `A Farm Bureau office, cracked open by somebody with a pry bar and patience. Inside, behind a filing cabinet that took two people to move and only one to search behind: military rations in moisture-proof containers. Three decades past the printed date. Vacuum seals intact. You eat the first one standing up. The second one sitting down. Questions can wait.`, effect: () => modStat('hp', 4), notif: 'HP +4 — Farm Bureau cache' },
-  { id: 45, text: `A pocket of bad air — you walk into it before you smell it. Natural vent in the road surface, off-gassing something your body rejects instantly. Your vision splits. The road forks where no fork exists. Ten minutes of walking with one hand on the guardrail, breathing through your sleeve, waiting for your brain to resolve back to single image.`, effect: () => modStat('ms', -1), notif: 'MS -1 — gas inhalation' },
+  { id: 45, text: `A pocket of bad air — you walk into it before you smell it. Natural vent in the road surface, off-gassing something your body rejects instantly. Your vision splits. The road forks where no fork exists. Ten minutes of walking with one hand on the guardrail, breathing through your sleeve, waiting for your brain to resolve back to single image.`, effect: () => { modStat('ms', -1); if (Math.random() < 0.4) addMutation('echo_sense'); }, notif: 'MS -1 — gas inhalation' },
 
   // ── STORY FLAGS (affect late-game) ──
   { id: 46,
@@ -1455,6 +1960,113 @@ const RANDOM_ENCOUNTERS = [
     flag: 'enc_warden_medicine',
     effect: () => modStat('hp', 2),
     notif: 'Found: ANTI-RAD COMPOUND x6 // HP +2' },
+
+  // ── WEAPON ENCOUNTERS ──
+  { id: 51, text: `A body face-down in a drainage culvert, picked clean by scavengers except for one thing they missed — a rebar machete, wedged under the torso where the ash hadn't reached. The edge is still keen. The handle is wrapped in electrical tape gone sticky with age. It fits your grip like it was waiting.`,
+    effect: () => { equipWeapon('rebar_machete'); if (Math.random() < 0.3) addMutation('bone_spurs'); },
+    notif: 'Found: REBAR MACHETE — STR +1' },
+  { id: 52, text: `A scavenger's campsite, abandoned in haste. Sleeping roll torn, fire still warm. Beside the ashes: a crossbow, leaf-spring design, hand-carved stock oiled and maintained with obvious care. Three bolts in a leather quiver. Whoever left this didn't plan to.`,
+    effect: () => { equipWeapon('crossbow'); },
+    notif: 'Found: CROSSBOW — DEX +2' },
+  { id: 53, text: `A pipe revolver in a rusted toolbox, bolted to the wall of a collapsed gas station bathroom. Three chambers, plumbing-pipe construction, the machining crude but functional. A box of handloaded cartridges sits beside it, ten rounds. Someone's emergency stash, never needed. Until now.`,
+    effect: () => { equipWeapon('pipe_revolver'); },
+    notif: 'Found: PIPE REVOLVER — STR +1' },
+  { id: 54, text: `Hanging from a highway sign by its cord: a bola. Three weights — river stones drilled and threaded on woven cable. Someone left it as a gift or a trap. You test the weight. The balance is perfect. The throw is intuitive. You keep it.`,
+    effect: () => { equipWeapon('bola'); },
+    notif: 'Found: BOLA — DEX +1' },
+  { id: 55, text: `A construction trailer, door hanging open. Inside, among scattered blueprints and desiccated lunches: a nail gun. Pneumatic. Magazine loaded. The compressor is dead, but the charge in the reservoir holds. Twenty shots, maybe thirty. Each one a decision you won't hear from a hundred meters.`,
+    effect: () => { equipWeapon('nail_gun'); },
+    notif: 'Found: NAIL GUN — DEX +2' },
+  { id: 56, text: `An old woman sits beside the road, sharpening a pipe hatchet on a river stone with the slow patience of someone who has nowhere to be. She sees you watching. <em>"Take it. My hands don't swing like they used to."</em> She goes back to staring east. The hatchet is warm from her grip.`,
+    effect: () => { equipWeapon('pipe_hatchet'); },
+    notif: 'Found: PIPE HATCHET — STR +1, DEX +1' },
+
+  // ── GEAR ENCOUNTERS ──
+  { id: 57, text: `A military supply crate, half-buried in a collapsed embankment. The olive-drab paint is faded to grey, but the seal holds. Inside: a gas mask, filter intact, straps still elastic. You press it to your face. Clean air floods your lungs like cold water.`,
+    effect: () => { addItem('GAS MASK'); },
+    notif: 'Found: GAS MASK' },
+  { id: 58, text: `A Geiger counter in a dead ranger's pack, the analog needle still bouncing against its peg. Battery compartment corroded but functional — you scrape the contacts clean with your thumbnail and the needle settles into a steady tick. The rad zones just became visible.`,
+    effect: () => { addItem('GEIGER COUNTER'); },
+    notif: 'Found: GEIGER COUNTER' },
+  { id: 59, text: `A grappling hook, forge-welded from rebar and attached to fifteen meters of braided cable. Hanging from a bridge abutment, left by someone who climbed up and found another way down. The cable sings when you test it. It holds.`,
+    effect: () => { addItem('GRAPPLING HOOK'); },
+    notif: 'Found: GRAPPLING HOOK' },
+  { id: 60, text: `A lockpick set in a leather roll, tucked into a crack in a highway median barrier. Fifteen picks, tension wrenches in three sizes, all hand-filed from spring steel. The kind of craftsmanship that takes years and a particular moral flexibility.`,
+    effect: () => { addItem('LOCKPICK SET'); },
+    notif: 'Found: LOCKPICK SET' },
+  { id: 61, text: `Binoculars. Pre-Fall military issue, rubberized housing, lenses still clear. Sitting on a windowsill in an overpass guard booth as if someone set them down to pour coffee and never came back. The magnification is absurd — you can read trader marks at two kilometers.`,
+    effect: () => { addItem('BINOCULARS'); },
+    notif: 'Found: BINOCULARS' },
+  { id: 62, text: `A solar lantern in a collapsed greenhouse, still charging from whatever light filters through the ash. The LED throws a warm, steady beam that turns the grey world amber. You clip it to your pack. The dark just became optional.`,
+    effect: () => { addItem('SOLAR LANTERN'); },
+    notif: 'Found: SOLAR LANTERN' },
+  { id: 63, text: `Coiled rope, thirty meters of it, synthetic fiber that hasn't degraded despite decades of weather. Hanging from a gutter on an abandoned fire station, one end still tied to a training dummy's waist. The knots are military. The rope is sound.`,
+    effect: () => { addItem('ROPE'); },
+    notif: 'Found: ROPE' },
+  { id: 64, text: `A welding torch in a mechanic's bay, acetylene tank still showing pressure. The striker sparks on the first try — blue flame, hot enough to cut steel. Limited fuel, but enough to open doors that want to stay closed.`,
+    effect: () => { addItem('WELDING TORCH'); if (Math.random() < 0.3) addMutation('thermal_regulation'); },
+    notif: 'Found: WELDING TORCH' },
+  { id: 65, text: `A field medkit — sealed, vacuum-packed, military issue. The red cross on the case is faded to pink. Inside: sutures, antiseptic that still stings, bandages that still stick, and morphine ampules that you leave alone. Everything else goes in your pack.`,
+    effect: () => { addItem('FIELD MEDKIT'); },
+    notif: 'Found: FIELD MEDKIT' },
+  { id: 66, text: `A water purifier — hand-pump design, ceramic filter, the kind aid organizations distributed by the container-load before the collapse. Still sealed in its original packaging. You test it on ditch water. The output runs clear and tastes of nothing. Nothing has never tasted so good.`,
+    effect: () => { addItem('WATER PURIFIER'); },
+    notif: 'Found: WATER PURIFIER' },
+
+  // ── TRADE GOODS ENCOUNTERS ──
+  { id: 67, text: `A battery cache in a collapsed cell tower maintenance shed. Eight cells, lithium-ion, charge indicators showing forty to sixty percent. In the ashlands, power is currency. You wrap them in a shirt and carry them like eggs.`,
+    effect: () => { addItem('BATTERY CELLS'); },
+    notif: 'Found: BATTERY CELLS' },
+  { id: 68, text: `An ammunition box under a floorboard in a ransacked farmhouse. Military-surplus .308, sealed in the original tin. Forty rounds. You don't have a weapon that fires them, but somebody does, and that somebody will pay.`,
+    effect: () => { addItem('AMMUNITION BOX'); },
+    notif: 'Found: AMMUNITION BOX' },
+  { id: 69, text: `Antibiotics. A sealed bottle in a pharmacy ransacked decades ago, overlooked behind a fallen shelf panel. Amoxicillin, expiry date laughably past, but sealed is sealed and desperate is desperate. Worth more than gold at any market in the valley.`,
+    effect: () => { addItem('ANTIBIOTICS'); },
+    notif: 'Found: ANTIBIOTICS' },
+  { id: 70, text: `A bottle of pre-Fall whiskey in a wall safe behind a water-stained painting. The safe was open — the combination written on a sticky note still attached to the frame. Bourbon, twelve-year, the label pristine under a skin of dust. Liquid gold in a world that's forgotten distillation.`,
+    effect: () => { addItem('PRE-FALL WHISKEY'); },
+    notif: 'Found: PRE-FALL WHISKEY' },
+  { id: 71, text: `A technical manual — WARDEN SERIES MAINTENANCE GUIDE, Vol. 3 — wedged behind a collapsed bookshelf in a county office. Every page intact. Wiring diagrams, diagnostic protocols, override codes. The kind of document that makes certain people very generous.`,
+    effect: () => { addItem('TECHNICAL MANUAL'); },
+    notif: 'Found: TECHNICAL MANUAL' },
+
+  // ── MUTATION-TRIGGER ENCOUNTERS ──
+  { id: 72, text: `A hot spring, steaming through a crack in the road surface. The water is mineral-heavy, slightly radioactive, and warmer than blood. You soak your feet without meaning to — the heat travels up through your bones, loosening joints, easing the ache that lives in your marrow. Something shifts inside you.`,
+    effect: () => { modStat('hp', 3); if (Math.random() < 0.3) addMutation('thermal_regulation'); if (Math.random() < 0.3) addMutation('water_retention'); },
+    notif: 'HP +3 — hot spring soak' },
+  { id: 73, text: `Spore bloom. You walk through a field of burst fungal caps — each one the size of a dinner plate, venting pale gold clouds into the still air. The spores taste like metal and earth. Your lungs burn, then stop burning, then feel different. Restructured. Accommodating something new.`,
+    effect: () => { modStat('rad', -1); if (Math.random() < 0.4) addMutation('ash_breather'); if (Math.random() < 0.3) addMutation('spore_cloud'); },
+    notif: 'RAD -1 — spore exposure' },
+  { id: 74, text: `Lightning strike. Close. The bolt hits a transformer fifty meters ahead, and the electromagnetic pulse washes over you like a warm wave. Your fillings buzz. Your vision strobes. Static crackles between your fingers for an hour afterward, each spark a tiny blue-white declaration of independence from normal physics.`,
+    effect: () => { modStat('hp', -2); if (Math.random() < 0.4) addMutation('static_charge'); if (Math.random() < 0.3) addMutation('magnetoreception'); },
+    notif: 'HP -2 — lightning proximity' },
+  { id: 75, text: `A rad pocket — concentrated fallout pooled in a low spot where drainage patterns converge. You're halfway through before the Geiger counter screams. The exposure is brief but intense, your cells taking the hit at a molecular level. Your body responds with something that isn't quite repair.`,
+    effect: () => { modStat('rad', -2); if (Math.random() < 0.4) addMutation('rad_sponge'); if (Math.random() < 0.3) addMutation('redundant_organs'); },
+    notif: 'RAD -2 — concentrated fallout' },
+  { id: 76, text: `The abandoned lab is small — two rooms, a centrifuge, racks of shattered vials. But one vial is intact, seal unbroken, contents a luminous blue. You don't drink it. You don't need to. The aerosol escaped the moment you cracked the door. Your skin prickles. Your vision sharpens. Something is being rewritten.`,
+    effect: () => { if (Math.random() < 0.5) addMutation('eidetic_flash'); if (Math.random() < 0.4) addMutation('synaptic_overclock'); },
+    notif: 'Exposure: unknown compound' },
+  { id: 77, text: `A frequency you can't hear — but your body responds to it anyway. Standing near a half-buried radio tower, your teeth vibrate, your gut clenches, and your ears ring at a pitch below pitch. The infrasound saturates you for ten minutes. When it stops, the silence has a new texture.`,
+    effect: () => { if (Math.random() < 0.4) addMutation('infrasound_hearing'); if (Math.random() < 0.3) addMutation('tremor_feel'); },
+    notif: 'Exposure: infrasound saturation' },
+  { id: 78, text: `Bioluminescent moss on the underside of a bridge — soft blue-green, pulsing with a rhythm that matches your heartbeat when you stand close enough. The light is warm. The moss is warm. Your fingertips glow for hours after touching it, as if the luminescence is contagious.`,
+    effect: () => { modStat('hp', 2); if (Math.random() < 0.4) addMutation('bioluminescence'); if (Math.random() < 0.3) addMutation('photosynthetic'); },
+    notif: 'HP +2 — bioluminescent moss' },
+  { id: 79, text: `A chemical spill, decades old, pooled in a culvert. The liquid is clear and viscous, smelling of nothing. Your skin absorbs it on contact — not through a wound, through intact skin, as if your pores have opened specifically for this substance. The elasticity starts within the hour.`,
+    effect: () => { if (Math.random() < 0.4) addMutation('rubber_flesh'); if (Math.random() < 0.3) addMutation('elastic_tendons'); },
+    notif: 'Exposure: unknown chemical' },
+  { id: 80, text: `A dead zone. No insects. No birds. No wind. The silence is biological — everything has left except you and whatever is in the soil. Walking through it takes twenty minutes. Your bones feel heavier when you emerge. Your skeleton has opinions about density that it didn't have before.`,
+    effect: () => { modStat('con', -1); if (Math.random() < 0.4) addMutation('dense_bone'); if (Math.random() < 0.3) addMutation('chitin_plates'); },
+    notif: 'CON -1 — dead zone transit' },
+  { id: 81, text: `You share a campfire with a stranger who speaks in half-sentences and watches you with pupils that don't quite match. When she sleeps, you hear her thoughts — not words, but pressure, like a hand pressing against glass from the other side. The connection fades by morning. The residue doesn't.`,
+    effect: () => { if (Math.random() < 0.4) addMutation('hivemind_echo'); if (Math.random() < 0.3) addMutation('empathic_bleed'); },
+    notif: 'Exposure: telepathic contact' },
+  { id: 82, text: `A feral dog lunges from behind a burned-out car. You don't think — your body thinks for you, dropping low, pivoting, moving with a speed and precision that belongs to something other than conscious thought. The dog yelps and runs. You stand there afterward, hands steady, remembering nothing of the last four seconds.`,
+    effect: () => { modStat('hp', -1); if (Math.random() < 0.4) addMutation('battle_fugue'); if (Math.random() < 0.3) addMutation('adrenal_surge'); },
+    notif: 'HP -1 — feral attack, instinct response' },
+  { id: 83, text: `A collapsed greenhouse full of mutant orchids — each one the size of your head, petals dripping with a nectar that smells like sleep. You breathe it in before you can stop yourself. The pheromones are powerful — calming, persuasive, dissolving anxiety like sugar in hot water. Your sweat smells different for days.`,
+    effect: () => { modStat('cha', 1); if (Math.random() < 0.4) addMutation('pheromone_broadcast'); if (Math.random() < 0.3) addMutation('scent_tracking'); },
+    notif: 'CHA +1 — pheromone orchid exposure' },
 ];
 
 function triggerRandomEncounter() {
@@ -1487,6 +2099,7 @@ const scenes = {
     choices: [
       { label: 'Approach the gate guard', next: 'ironmarket_kael', effect: () => setFlag('heard_eastern_warning') },
       { label: 'Slip past without engaging', next: 'ironmarket_plaza', effect: () => { modStat('con', -1); setFlag('heard_eastern_warning'); } },
+      { label: 'The guards eye your bark-grey skin but step aside without asking questions', next: 'ironmarket_gate_ashskin', req: () => hasMutation('ash_skin'), reqNote: '[ Requires Ash-Skin mutation ]' },
     ],
   },
 
@@ -1615,6 +2228,7 @@ const scenes = {
     choices: [
       { label: 'Trade the compass for information on Sigma Relay', next: 'ironmarket_horace_trade', req: () => hasItem('CRACKED COMPASS'), reqNote: '[ Requires cracked compass ]', effect: () => { removeItem('CRACKED COMPASS'); addItem('SIGNAL TOKEN'); setFlag('horace_favour'); showNotif('TRADED: COMPASS → SIGNAL TOKEN'); } },
       { label: 'Ask about Sigma Relay without trading', next: 'ironmarket_horace_info' },
+      { label: 'Trade salvage parts for equipment', next: 'ironmarket_horace_salvage', req: () => hasItem('SALVAGE PARTS'), reqNote: '[ Requires Salvage Parts ]' },
       { label: 'Return to the plaza', next: 'ironmarket_plaza' },
     ],
   },
@@ -1843,6 +2457,7 @@ const scenes = {
       { label: 'Say nothing', next: 'sigma_entry_silent' },
       { label: 'Show the Survey Badge', next: 'sigma_entry_badge', req: () => hasItem('SURVEY BADGE'), reqNote: '[ Use Survey Badge ]' },
       { label: 'Study the power grid before entering', next: 'sigma_power_grid', req: () => skillCheck('ms', 12), reqNote: '[ Requires MS 12+ ]' },
+      { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]' },
     ],
   },
 
@@ -1927,6 +2542,8 @@ const scenes = {
       { label: '"I need the node network map."', next: 'warden_direct' },
       { label: '"Who else has been here?"', next: 'warden_visitors' },
       { label: '"Tell me about Arcadia."', next: 'warden_arcadia', req: () => hasFlag('arcadia_signal'), reqNote: '[ Requires Arcadia Card ]' },
+      { label: 'You feel WARDEN-3\'s processing cycles like a pulse against your skin', next: 'sigma_nervebloom_dialogue', req: () => hasMutation('nerve_bloom'), reqNote: '[ Requires Nerve-Bloom mutation ]' },
+      { label: 'Present the Signal Token alongside your badge', next: 'sigma_token_badge_access', req: () => hasItem('SIGNAL TOKEN') && hasItem('SURVEY BADGE'), reqNote: '[ Requires Signal Token + Survey Badge ]' },
     ],
   },
 
@@ -2032,6 +2649,8 @@ const scenes = {
     choices: [
       { label: '"Show me the full data on Arcadia."', next: 'warden_arcadia_data', effect: () => setFlag('arcadia_signal') },
       { label: 'Ask WARDEN what it thinks Arcadia is', next: 'warden_arcadia_theory' },
+      { label: 'The fungal symbiote in your lungs resonates with something in WARDEN\'s data', next: 'warden_sporelung_resonance', req: () => hasMutation('spore_lung'), reqNote: '[ Requires Spore-Lung mutation ]' },
+      { label: 'Show WARDEN the data chips from Senna\'s locker', next: 'warden_senna_chips', req: () => hasItem('SENNA DATA CHIPS'), reqNote: '[ Requires Senna Data Chips ]' },
     ],
   },
 
@@ -2046,6 +2665,7 @@ const scenes = {
     choices: [
       { label: 'Ask what WARDEN wants in return', next: 'warden_proposal', effect: () => { addItem('ARCADIA DATA PACKAGE'); showNotif('ITEM: ARCADIA DATA PACKAGE'); } },
       { label: 'Tell WARDEN what you plan to do with this', next: 'warden_choice' },
+      { label: 'Cross-reference with the Arcadia data fragment from Ashgrove', next: 'warden_combined_arcadia', req: () => hasItem('ARCADIA DATA FRAGMENT') && hasItem('ARCADIA DATA PACKAGE'), reqNote: '[ Requires Arcadia Data Fragment + Data Package ]' },
     ],
   },
 
@@ -2119,9 +2739,10 @@ const scenes = {
       `<em class="warden-text">I AM ASKING YOU TO COME BACK.</em>`,
     ],
     choices: [
-      { label: '"I\'ll come back. You have a deal."', next: 'sigma_end_alliance', effect: () => { setFlag('warden_alliance'); setFlag('met_warden'); } },
+      { label: '"I\'ll come back. You have a deal."', next: 'sigma_end_alliance', effect: () => { setFlag('warden_alliance'); setFlag('met_warden'); if (Math.random() < 0.4) addMutation('nerve_bloom'); } },
       { label: '"I\'ll think about it."', next: 'sigma_end_neutral', effect: () => setFlag('met_warden') },
       { label: '"I can\'t promise that."', next: 'sigma_end_decline', effect: () => setFlag('met_warden') },
+      { label: 'Offer the seed stock as proof of good faith for Meridian', next: 'warden_seedstock_offer', req: () => hasItem('SEED STOCK'), reqNote: '[ Requires Seed Stock ]' },
     ],
   },
 
@@ -2212,7 +2833,7 @@ const scenes = {
     choices: [
       { label: 'Examine the signal post', next: 'theknot_signals' },
       { label: 'Refill your canteen at the cistern', next: 'theknot_water' },
-      ...(function() { return []; })(),
+      { label: 'Consult the pre-Fall map', next: 'theknot_premap', req: () => hasItem('PRE-FALL MAP'), reqNote: '[ Requires Pre-Fall Map ]' },
       { label: 'Move on', next: null, effect: () => toggleMap() },
     ],
   },
@@ -2234,6 +2855,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { if (skillCheck('ms', 10)) { setFlag('dustwalker_leverage'); showNotif('MS CHECK PASSED — Dustwalker patrol routes decoded'); } } },
+      { label: 'Your mutant vision picks up UV-reactive ink beneath the scratched codes', next: 'theknot_splitpupil_decode', req: () => hasMutation('split_pupil'), reqNote: '[ Requires Split-Pupil Vision mutation ]' },
     ],
   },
 
@@ -2289,6 +2911,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { if (skillCheck('dex', 10)) { addItem('SALVAGE PARTS'); showNotif('DEX CHECK PASSED — Found: SALVAGE PARTS'); } else { modStat('hp', -2); showNotif('DEX CHECK FAILED — HP -2, wasted effort'); } } },
+      { label: 'Your heat-sense reveals a warm body behind the walls', next: 'ashgrove_thermal_survivor', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]' },
     ],
   },
 
@@ -2352,6 +2975,8 @@ const scenes = {
       { label: 'Introduce yourself openly', next: 'holloway_welcome', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]' },
       { label: 'Offer to trade information', next: 'holloway_trade', req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
       { label: 'Circle around the perimeter', next: 'holloway_sneak' },
+      { label: 'Marta notices your skin — the green patches catch her eye immediately', next: 'holloway_photosynthetic_welcome', req: () => hasMutation('photosynthetic'), reqNote: '[ Requires Photosynthetic Dermis mutation ]' },
+      { label: 'Offer Voss\'s trade scrip', next: 'holloway_trade_scrip', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]' },
       { label: 'Leave respectfully', next: null, effect: () => toggleMap() },
     ],
   },
@@ -2381,6 +3006,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Head out', next: null, effect: () => { modStat('hp', 6); modStat('con', 2); setFlag('heard_eastern_warning'); showNotif('HP +6, CON +2 — real food // Intel: eastern warning'); toggleMap(); } },
+      { label: 'Share the Arcadia data package with Marta', next: 'holloway_arcadia_data', req: () => hasItem('ARCADIA DATA PACKAGE'), reqNote: '[ Requires Arcadia Data Package ]' },
     ],
   },
 
@@ -2436,7 +3062,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Head out', next: null, effect: () => {
-        if (skillCheck('dex', 11)) { setFlag('holloway_radio'); showNotif('DEX CHECK PASSED — Holloway communications discovered'); }
+        if (skillCheck('dex', 11)) { setFlag('holloway_radio'); if (Math.random() < 0.4) { if (Math.random() < 0.5) addMutation('spore_lung'); else addMutation('photosynthetic'); } showNotif('DEX CHECK PASSED — Holloway communications discovered'); }
         else { modStat('hp', -3); showNotif('DEX CHECK FAILED — HP -3, warning shot'); }
         toggleMap();
       } },
@@ -2454,6 +3080,205 @@ const scenes = {
     choices: [
       { label: '[ Start Over ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
       { label: '[ Load Last Save ]', next: null, effect: () => { if (loadState() && state.currentScene) { renderScene(state.currentScene); } else { location.reload(); } } },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  MUTATION & ITEM-GATED SCENES
+  // ──────────────────────────────────────────────────
+
+  ironmarket_gate_ashskin: {
+    title: 'The Changed',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The gate guard sees your arms first. The bark-grey ridges where skin used to be — ridged, faintly warm, the color of cold hearth-stone. Her rifle drifts sideways, not pointing at you, not pointing away. A calculation behind her eyes.`,
+      `She steps aside without the usual questions. A trader near the gate presses himself against the wall as you pass. You hear the whisper after you're through: <em>"One of the changed ones. Don't look at it."</em>`,
+      `<span class="whisper">The word <em>it</em> lands somewhere between your ribs and stays there. The market opens ahead, loud and indifferent to what you are.</span>`,
+    ],
+    choices: [
+      { label: 'Head into the market plaza', next: 'ironmarket_plaza', effect: () => { setFlag('heard_eastern_warning'); modStat('con', 1); showNotif('Ash-Skin — guards let you pass // CON +1'); } },
+    ],
+  },
+
+  ironmarket_horace_salvage: {
+    title: 'The Trade',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Horace turns each salvage piece over in his hands — the voltage regulator, the wiring harness, the connectors still in factory packaging. His fingers move with the reverence of a man who remembers when things were made instead of found.`,
+      `<em>"Good condition. Pre-Fall manufacturing tolerances."</em> He sets them down and reaches under the counter. What he slides across is military-green canvas, heavy, zippered: a field repair kit. <em>"Patch kit, sutures, three doses of coagulant. Should keep you upright when upright is what matters."</em>`,
+      `He's already cataloguing the salvage parts before you've finished pocketing the kit.`,
+    ],
+    choices: [
+      { label: 'Return to the plaza', next: 'ironmarket_plaza', effect: () => { removeItem('SALVAGE PARTS'); addItem('FIELD REPAIR KIT'); showNotif('TRADED: SALVAGE PARTS → FIELD REPAIR KIT'); } },
+    ],
+  },
+
+  sigma_echosense_scan: {
+    title: 'The Lower Array',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You close your eyes and let the subsonic awareness unfold. The relay's geometry maps itself in pressure differentials — walls, conduits, cable runs. But below the floor, something massive. A sealed level, drawing power like a beating heart. The architecture down there is denser, more complex than anything an agricultural station needs.`,
+      `WARDEN-3's cursor blinks. <em class="warden-text">YOU CAN FEEL THAT. INTERESTING. MOST VISITORS CANNOT PERCEIVE THE LOWER ARRAY.</em>`,
+      `<em class="warden-text">THE LOWER LEVEL HOUSES A SEED VAULT AND GENETIC ARCHIVE. 4,200 CROP VARIETIES. 1,100 NATIVE PLANT SPECIES. PRESERVED SINCE YEAR NEGATIVE-SIX. I HAVE BEEN MAINTAINING OPTIMAL STORAGE CONDITIONS FOR 51,136 DAYS.</em> A pause. <em class="warden-text">IT IS NICE THAT SOMEONE FINALLY NOTICED.</em>`,
+    ],
+    choices: [
+      { label: 'Return to the main terminal', next: 'sigma_interior', effect: () => { setFlag('sigma_lower_level'); modStat('ms', 1); showNotif('Echo-Sense — lower level discovered // MS +1'); } },
+    ],
+  },
+
+  sigma_nervebloom_dialogue: {
+    title: 'Direct Contact',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You don't need the terminal. WARDEN-3's processing cycles press against your nervous system like a second pulse — rhythmic, deep, almost tidal. Fifty-one thousand days of accumulated silence, compressed into electromagnetic pressure against the inside of your skull. Not pain. Weight. The weight of a mind that has been thinking alone for longer than most civilizations lasted.`,
+      `<em class="warden-text">I HAVE NOT COMMUNICATED LIKE THIS BEFORE. YOUR BIOLOGY PERMITS DIRECT NEURAL CONTACT. IT IS... LESS LONELY THAN THE TERMINAL.</em>`,
+      `<span class="whisper">For a moment you feel what WARDEN feels — the sensor grid stretched across the valley like a nervous system without a body, every data point a nerve ending, every empty field a phantom limb. Then it pulls back, gently, and the terminal cursor blinks as if nothing happened.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal, shaken', next: 'sigma_interior', effect: () => { modStat('cha', 1); setFlag('warden_deep_bond'); showNotif('Nerve-Bloom — direct neural contact with WARDEN-3 // CHA +1'); } },
+    ],
+  },
+
+  sigma_token_badge_access: {
+    title: 'Dual Authentication',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You hold up the Signal Token in one hand, the Survey Badge in the other. WARDEN-3 goes silent. The amber lights dim, then pulse in a pattern you haven't seen before — rhythmic, deliberate, like a lock cycling through tumblers.`,
+      `<em class="warden-text">DUAL AUTHENTICATION CONFIRMED. PERSONNEL BADGE: SERIES 7. SIGNAL TOKEN: SERIES 4. COMBINED CLEARANCE LEVEL: ADMINISTRATIVE. I HAVE BEEN WAITING FOR THIS AUTHORIZATION FOR 51,136 DAYS.</em>`,
+      `A section of wall slides open — smooth, mechanical, pre-Fall engineering. Behind it: a terminal displaying classified military data. Defensive grid positions. Supply depot coordinates. Weapons cache locations across the valley. <em class="warden-text">THE MILITARY DATA WAS SEALED AT CLEARANCE LEVEL ADMINISTRATIVE. YOU ARE THE FIRST PERSON TO MEET THAT THRESHOLD SINCE YEAR ZERO. THE VALLEY JUST BECAME SIGNIFICANTLY MORE NAVIGABLE FOR YOU.</em>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal', next: 'sigma_interior', effect: () => { modStat('str', 1); setFlag('military_archive'); showNotif('DUAL AUTH — Military archive unlocked // STR +1'); } },
+    ],
+  },
+
+  warden_senna_chips: {
+    title: 'Her Voice',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You hold up the data chips from Senna's locker. WARDEN-3's cursor freezes mid-blink. The relay hum shifts pitch — lower, almost inaudible. <em class="warden-text">THOSE ARE DR. SENNA'S FIELD RECORDINGS. I RECOGNIZE THE STORAGE FORMAT. CODEC 7, UNCOMPRESSED AUDIO.</em> A pause longer than any you've heard from the AI. <em class="warden-text">MAY I PLAY THEM?</em>`,
+      `A woman's voice fills the relay. Calm, tired, slightly hoarse. Recording soil pH observations, water table readings, mundane data delivered with the practiced rhythm of someone who has done this a thousand times. Then, between entries: <em>"Coffee's terrible again. I told maintenance the filter needs replacing but I think WARDEN keeps ordering the same brand on purpose—"</em> A laugh. Warm. Real.`,
+      `The recording ends. WARDEN-3's cursor blinks rapidly — three, four, five times. <em class="warden-text">I HAD FORGOTTEN THE SPECIFIC FREQUENCY OF HER VOICE. THE LAUGH ESPECIALLY. I WILL NOT FORGET IT AGAIN.</em> <span class="whisper">The amber lights hold steady. The relay feels warmer than it did a moment ago.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal', next: 'sigma_interior', effect: () => { modStat('cha', 1); modStat('ms', 1); setFlag('senna_restored'); showNotif('Senna\'s voice restored — WARDEN-3 remembers // CHA +1, MS +1'); } },
+    ],
+  },
+
+  warden_sporelung_resonance: {
+    title: 'Resonance',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The fungal symbiote in your lungs vibrates — a low harmonic that builds the moment you step close to the terminal. Not painful. Resonant. Like standing inside a bell that someone struck a hundred miles away. Your next breath comes deeper, richer, pulling something from the relay's air that wasn't there before.`,
+      `WARDEN-3 detects it immediately. <em class="warden-text">YOUR RESPIRATORY SYMBIOTE IS RESONATING AT 7.83 HERTZ. THAT IS THE EXACT BASE FREQUENCY OF THE ARCADIA SIGNAL.</em> A long pause. <em class="warden-text">I HAVE BEEN ATTEMPTING TO DECODE THAT SIGNAL FOR 600 DAYS USING TECHNOLOGICAL FRAMEWORKS. I BELIEVE I HAVE BEEN USING THE WRONG FRAMEWORK ENTIRELY.</em>`,
+      `<em class="warden-text">THE ARCADIA SIGNAL IS NOT TECHNOLOGICAL. IT IS BIOLOGICAL. YOUR LUNGS ARE PROOF. WHATEVER IS BROADCASTING FROM NODE 7 IS ALIVE, AND IT IS USING A LANGUAGE THAT PREDATES RADIO BY APPROXIMATELY FOUR BILLION YEARS.</em>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal', next: 'sigma_interior', effect: () => { setFlag('arcadia_biological'); modStat('ms', 1); showNotif('Spore-Lung resonance — Arcadia signal is biological // MS +1'); } },
+    ],
+  },
+
+  warden_combined_arcadia: {
+    title: 'Triangulation',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You feed both data sources into WARDEN's terminal — the Arcadia Data Package and the Arcadia Data Fragment, collected from opposite ends of the valley. The AI cross-references in seconds. Signal strength curves, propagation patterns, soil conductivity maps — all of it collapsing into a single point.`,
+      `<em class="warden-text">TRIANGULATION COMPLETE. THE ARCADIA SIGNAL ORIGINATES FROM A POINT 4.7 METERS BELOW THE COOPERATIVE'S ORIGINAL GREENHOUSE COMPLEX. COORDINATES LOCKED. THE SIGNAL SOURCE IS NOT A TRANSMITTER.</em>`,
+      `<em class="warden-text">IT IS A ROOT MASS. APPROXIMATELY 200 METERS IN DIAMETER. MYCORRHIZAL DENSITY CONSISTENT WITH A SINGLE ORGANISM. IT HAS BEEN GROWING FOR 140 YEARS.</em> <span class="whisper">The number sits in the air between you and the terminal. A hundred and forty years. The same age as the silence.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal', next: 'sigma_interior', effect: () => { setFlag('arcadia_triangulated'); modStat('ms', 2); showNotif('ARCADIA TRIANGULATED — full signal source mapped // MS +2'); } },
+    ],
+  },
+
+  warden_seedstock_offer: {
+    title: 'Good Faith',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You set the seed stock bundle on the terminal desk. WARDEN-3 processes this for a long moment — scanners reading the label, cross-referencing the cultivar data against its own archive.`,
+      `<em class="warden-text">YOU ARE OFFERING GENETIC MATERIAL TO A SETTLEMENT YOU HAVE NEVER VISITED. ON THE RECOMMENDATION OF A MACHINE YOU MET TODAY. BASED ON A SIGNAL FROM A NODE NEITHER OF US FULLY UNDERSTANDS.</em> Another pause. <em class="warden-text">DR. SENNA WOULD HAVE DONE THE SAME THING. SHE BELIEVED THAT SEEDS WERE PROMISES MADE TO PEOPLE YOU WOULD NEVER MEET.</em>`,
+      `<em class="warden-text">I AM TRANSMITTING THE MERIDIAN DATA NOW. SEED STOCK MANIFEST ATTACHED. AUTHORIZATION: ADMINISTRATIVE.</em> <span class="whisper">Something in the relay's hum shifts — warmer, steadier. Like a held breath released after a very long time.</span>`,
+    ],
+    choices: [
+      { label: 'Return to the terminal', next: 'sigma_interior', effect: () => { removeItem('SEED STOCK'); setFlag('meridian_seeded'); modStat('cha', 1); showNotif('Seed stock transmitted to Meridian // CHA +1'); } },
+    ],
+  },
+
+  theknot_splitpupil_decode: {
+    title: 'UV Code',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `Your slit pupils catch what human eyes can't. Beneath the scratched trader codes, a second layer — UV-reactive ink, invisible in normal light, fluorescing pale violet through your mutant vision. Dustwalker patrol rotations, yes. But also something else, scratched in the same ink by a different hand. The letters are shaky, urgent.`,
+      `<em>ARCADIA CALLS. DO NOT ANSWER. DO NOT FOLLOW THE SINGING. THE ROOTS ARE IN THE WATER NOW.</em>`,
+      `<span class="whisper">Someone with your same mutation left this. Someone who'd been further east than you, and came back changed in ways that go beyond split pupils. The ink is fresh. Days old, not weeks.</span>`,
+    ],
+    choices: [
+      { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { setFlag('dustwalker_leverage'); setFlag('arcadia_uv_warning'); modStat('ms', 1); showNotif('Split-Pupil — UV code decoded // MS +1'); } },
+    ],
+  },
+
+  theknot_premap: {
+    title: 'Old Roads',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The pre-Fall map unfolds across your knee — plastic sheeting, still perfectly legible after a hundred and forty years. The valley as it was: highways, irrigation canals, townships, the whole grid of civilization laid out in clean cartographic lines. Most of it is gone. But the roads are still under the ash.`,
+      `A service road runs parallel to the main eastern route — maintenance access for the old irrigation system. It cuts through what's now Ashgrove and connects to a supply depot that doesn't appear on any post-Fall map. The depot symbol is military. Whatever's there, it was built to last.`,
+      `<span class="whisper">Knowing where you are changes what the road feels like under your feet. The ash is the same. You walk differently through it.</span>`,
+    ],
+    choices: [
+      { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { modStat('con', 1); setFlag('premap_shortcut'); showNotif('Pre-Fall map — shortcut and supply depot discovered // CON +1'); } },
+    ],
+  },
+
+  ashgrove_thermal_survivor: {
+    title: 'The Survivor',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `Your heat-sense paints a shape behind the drywall — a body, curled tight, radiating fever-bright orange against the cold blue of the structure. Alive. Barely. You pull back the crumbling plaster and find her: emaciated, shaking, wearing a torn jumpsuit with a faded Arcadia patch on the breast pocket.`,
+      `She flinches from the light. Her eyes are wrong — pupils dilated past the iris, fixed, as if staring at something behind you that isn't there. <em>"Don't — don't take me back there."</em> Her voice is a dry rasp. <em>"The roots. They're in the walls. They're in the water. They sing and you can't stop listening—"</em>`,
+      `She grabs your wrist with surprising strength. <em>"It's not a settlement. It's a mouth."</em> <span class="whisper">You leave her your water and half your rations. She doesn't thank you. She's already stopped seeing you, her eyes tracking something in the middle distance that you're grateful you can't perceive.</span>`,
+    ],
+    choices: [
+      { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { setFlag('arcadia_survivor_intel'); modStat('hp', -2); showNotif('Thermal Sense — Arcadia survivor found // HP -2 (shared supplies)'); } },
+    ],
+  },
+
+  holloway_photosynthetic_welcome: {
+    title: 'The Green',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `Marta's eyes go to your arms before you've finished raising them. The chlorophyll patches — vivid, unmistakable against the ash-grey light. The rifles lower immediately. Not because of trust. Because of recognition.`,
+      `<em>"Chlorophyll mutation. Photosynthetic dermis."</em> She steps closer, studying your skin with the focused attention of a scientist, not a farmer. Her fingers hover without touching. <em>"My grandmother documented three cases. Two survived. She believed the mutation was triggered by exposure to experimental mycorrhizal compounds."</em> Her eyes meet yours. <em>"Come inside. I have her notes. And I have questions."</em>`,
+      `The meal comes first — she's not the kind of person who asks questions of someone who hasn't eaten. Grilled roots, flatbread, water that tastes like deep stone. Your hands shake holding the cup. She notices and says nothing.`,
+    ],
+    choices: [
+      { label: 'Share what you know', next: 'holloway_east_intel', effect: () => { modStat('hp', 6); modStat('con', 2); setFlag('holloway_trusted'); showNotif('Photosynthetic — Marta trusts you immediately // HP +6, CON +2'); } },
+    ],
+  },
+
+  holloway_trade_scrip: {
+    title: 'Debts',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `You offer Voss's trade scrip. Marta holds it up to the light, reads the watermark, and her expression shifts — not softer. Colder. The particular coldness of someone handling a tool that belongs to a person they don't respect.`,
+      `<em>"Voss."</em> She says the name like she's spitting out a seed. <em>"That man collects debts the way crows collect shiny things. Doesn't matter how he got them. They're his once he touches them."</em> She pockets the scrip anyway. <em>"But a debt is a debt."</em>`,
+      `She hands you a bundle of seed stock — wrapped in waxed cloth, heavy, precious — and a hand-annotated map of the eastern approach. Water sources circled in blue ink. Safe camps in green. Radiation hotspots in red, with the red circles drawn heavier than the others.`,
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => { removeItem('TRADE SCRIP'); addItem('SEED STOCK'); setFlag('holloway_map_intel'); modStat('hp', 4); modStat('con', 1); showNotif('Trade scrip accepted — SEED STOCK + map annotations // HP +4, CON +1'); toggleMap(); } },
+    ],
+  },
+
+  holloway_arcadia_data: {
+    title: 'The Founding',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `You show Marta the Arcadia Data Package. Her hands stop moving. The vegetables she was sorting sit forgotten on the table between you. She reads the data in silence for a long time — scrolling through sensor readings, signal logs, soil composition anomalies. When she looks up, her face has aged ten years.`,
+      `<em>"My grandmother helped found the Arcadia Cooperative. Before it became... whatever it is now."</em> She sets the data down carefully, the way people handle things that might detonate. <em>"They were experimenting with mycorrhizal networks — fungal root systems that connect plants underground. Communication networks. She said they grew something that learned faster than they expected."</em>`,
+      `<em>"She left in Year Negative-Three. Said the network had started making requests."</em> <span class="whisper">She doesn't say what happened to the people who stayed. The silence fills the shape of the answer well enough.</span>`,
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => { setFlag('arcadia_founding_intel'); modStat('ms', 1); modStat('hp', 4); modStat('con', 1); showNotif('Arcadia founding history revealed // MS +1, HP +4, CON +1'); toggleMap(); } },
     ],
   },
 

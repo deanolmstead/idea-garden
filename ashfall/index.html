@@ -682,13 +682,13 @@ body::after {
         <div class="sidebar-section-title">Inventory</div>
         <div id="sb-inventory"></div>
       </div>
+      <div id="sb-mutations-section">
+        <div class="sidebar-section-title" style="color:var(--olive)">☣ Mutations</div>
+        <div id="sb-mutations"><span style="font-family:'Roboto Condensed',sans-serif;font-size:8px;letter-spacing:1px;color:var(--ash-faint);">NONE — EXPOSURE PENDING</span></div>
+      </div>
       <div id="sb-weapon-section" style="display:none;">
         <div class="sidebar-section-title">Weapon</div>
         <div id="sb-weapon"></div>
-      </div>
-      <div id="sb-mutations-section" style="display:none;">
-        <div class="sidebar-section-title">Mutations</div>
-        <div id="sb-mutations"></div>
       </div>
       <div>
         <div class="sidebar-section-title">Intel</div>
@@ -1493,18 +1493,16 @@ function updateSidebar() {
     weapSection.style.display = 'none';
   }
 
-  // Mutations
-  const mutSection = document.getElementById('sb-mutations-section');
+  // Mutations — always visible
   const mutEl = document.getElementById('sb-mutations');
   if (state.mutations.length > 0) {
-    mutSection.style.display = '';
     mutEl.innerHTML = state.mutations.map(id => {
       const m = MUTATIONS[id];
       if (!m) return '';
       return `<div class="mutation-tag">☣ ${m.name}<span class="mutation-desc">${m.desc}</span></div>`;
     }).join('');
   } else {
-    mutSection.style.display = 'none';
+    mutEl.innerHTML = '<span style="font-family:\'Roboto Condensed\',sans-serif;font-size:8px;letter-spacing:1px;color:var(--ash-faint);">NONE — EXPOSURE PENDING</span>';
   }
 
   // Flags
@@ -1868,6 +1866,17 @@ function closeMapPanel() {
   mapPanelTarget = null;
 }
 
+// ── MUTATION ROLL ──
+function rollStartingMutations() {
+  const allIds = Object.keys(MUTATIONS);
+  const picked = [];
+  while (picked.length < 2) {
+    const id = allIds[Math.floor(Math.random() * allIds.length)];
+    if (!picked.includes(id)) picked.push(id);
+  }
+  return picked;
+}
+
 // ── GAME START ──
 function startGame(loadSave) {
   document.getElementById('title-screen').style.display = 'none';
@@ -1876,7 +1885,9 @@ function startGame(loadSave) {
   if (loadSave && loadState() && state.currentScene && scenes[state.currentScene]) {
     renderScene(state.currentScene);
   } else {
-    renderScene('ironmarket_gate');
+    // Roll starting mutations and show character creation
+    state._pendingMutations = rollStartingMutations();
+    renderScene('character_creation');
   }
 }
 
@@ -3080,6 +3091,55 @@ const scenes = {
     choices: [
       { label: '[ Start Over ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
       { label: '[ Load Last Save ]', next: null, effect: () => { if (loadState() && state.currentScene) { renderScene(state.currentScene); } else { location.reload(); } } },
+    ],
+  },
+
+  // ──────────────────────────────────────────────────
+  //  CHARACTER CREATION
+  // ──────────────────────────────────────────────────
+
+  character_creation: {
+    title: 'The Ash Remembers',
+    chapter: '— Emergence —',
+    text: [
+      `You were born in the ash. Or close enough — nobody remembers the time before, and the stories have worn thin from retelling. What you know: the valley is grey, the sky is grey, the water tastes like chalk and iron.`,
+      `What you also know: the ash changes people. Not everyone. Not predictably. But the mutations come — they always come — and you carry yours the way you carry your pack. Part of you. Part of what the valley made.`,
+      `<span class="whisper">You feel it in your blood. The ash has already rewritten you. Two marks — two gifts, two prices. The valley's signature on your body.</span>`,
+    ],
+    choices: [
+      { label: 'Accept what the ash has made you', next: 'character_creation_reveal', effect: () => {
+        if (state._pendingMutations) {
+          state._pendingMutations.forEach(id => addMutation(id));
+          delete state._pendingMutations;
+        }
+        saveState();
+      } },
+    ],
+  },
+
+  character_creation_reveal: {
+    title: 'Marked',
+    chapter: '— Emergence —',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.mutations && state.mutations.length >= 2) {
+          const m1 = MUTATIONS[state.mutations[0]];
+          const m2 = MUTATIONS[state.mutations[1]];
+          return [
+            `The first mark: <strong>${m1 ? m1.name : '???'}</strong>. ${m1 ? m1.flavor : ''}`,
+            `The second mark: <strong>${m2 ? m2.name : '???'}</strong>. ${m2 ? m2.flavor : ''}`,
+            `<span class="whisper">Two mutations. Two changes written into your cells by a hundred and forty years of fallout. You check your gear — canteen half-full, a handful of rad tabs, a cracked compass that still points north most of the time — and head for Ironmarket. It's the closest thing to civilization the valley has left.</span>`,
+          ];
+        }
+        return [
+          `The ash has marked you. You feel it in your bones, your skin, the way light bends differently through your eyes.`,
+          `You check your gear — canteen half-full, a handful of rad tabs, a cracked compass that still points north most of the time.`,
+          `<span class="whisper">Ironmarket. It's the closest thing to civilization the valley has left. You head for the gate.</span>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Head for Ironmarket', next: 'ironmarket_gate' },
     ],
   },
 

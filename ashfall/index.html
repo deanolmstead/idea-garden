@@ -620,6 +620,140 @@ body::after {
   30%  { box-shadow: 0 0 18px rgba(125,142,69,0.4); }
   100% { box-shadow: 0 0 0 rgba(125,142,69,0); }
 }
+
+/* ═══════════════════════════════════════════
+   COMBAT SYSTEM
+═══════════════════════════════════════════ */
+.combat-panel {
+  border: 1px solid var(--blood-dim);
+  background: linear-gradient(135deg, rgba(139,32,32,0.08) 0%, transparent 60%);
+  padding: 16px;
+  margin: 12px 0;
+  position: relative;
+}
+.combat-panel::before {
+  content: '⚔ COMBAT';
+  position: absolute; top: -8px; left: 12px;
+  background: var(--ink);
+  padding: 0 8px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 3px;
+  color: var(--blood);
+}
+.combat-enemy-name {
+  font-family: 'Alfa Slab One', serif;
+  font-size: 16px;
+  color: var(--blood);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.combat-enemy-desc {
+  font-size: 13px;
+  color: var(--ash-dim);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.combat-threat {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--sienna);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.combat-threat-bar {
+  display: inline-block;
+  height: 4px;
+  background: var(--blood);
+  margin-left: 6px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+.combat-approaches {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 8px;
+}
+.combat-approach-btn {
+  background: var(--ink-panel);
+  border: 1px solid var(--ink-border);
+  color: var(--ash);
+  font-family: 'Special Elite', serif;
+  font-size: 13px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 150ms;
+  position: relative;
+}
+.combat-approach-btn:hover:not(.locked) {
+  border-color: var(--blood);
+  background: rgba(192,57,43,0.08);
+}
+.combat-approach-btn.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.combat-approach-stat {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--amber);
+  text-transform: uppercase;
+  display: block; margin-top: 3px;
+}
+.combat-approach-bonus {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 0.5px;
+  color: var(--olive);
+  margin-left: 8px;
+}
+.combat-result {
+  border-top: 1px solid var(--ink-border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.combat-roll-detail {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--ash-faint);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.combat-roll-num {
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 700;
+}
+.combat-outcome-decisive { color: var(--olive); }
+.combat-outcome-victory { color: var(--ash); }
+.combat-outcome-pyrrhic { color: var(--sienna); }
+.combat-outcome-defeat { color: var(--blood); }
+.combat-item-use {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--amber-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Combat notification variant */
+#notif.combat-notif {
+  color: var(--blood);
+  border-color: var(--blood-dim);
+  animation: notif-in 300ms cubic-bezier(0.2,0.8,0.2,1), combat-flash 0.8s ease-in-out;
+}
+@keyframes combat-flash {
+  0%   { box-shadow: 0 0 0 rgba(192,57,43,0); }
+  20%  { box-shadow: 0 0 20px rgba(192,57,43,0.5); }
+  100% { box-shadow: 0 0 0 rgba(192,57,43,0); }
+}
+
+/* Item-gated choice styling */
+.choice-btn .choice-item-req {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 8px; letter-spacing: 1px;
+  color: var(--amber-dim);
+  display: block; margin-top: 2px;
+}
 </style>
 </head>
 <body>
@@ -633,7 +767,7 @@ body::after {
   <div class="title-rule-thin"></div>
   <button class="title-btn" onclick="startGame(false)">[ BEGIN ]</button>
   <button class="title-btn title-btn-sec" onclick="startGame(true)">[ Continue Save ]</button>
-  <div class="title-version">Build 5.4 — Ironmarket · Sigma Relay · The Knot · Ashgrove · Holloway Ranch</div>
+  <div class="title-version">Build 6.0 — Combat System · Inventory Matters · Ironmarket · Sigma Relay · The Knot · Ashgrove · Holloway Ranch</div>
 </div>
 
 <!-- ═══════════════════════════════════════════ GAME SHELL -->
@@ -878,6 +1012,395 @@ function modStat(s, n)  {
   if (s === 'hp' && state[s] <= 0) { setTimeout(() => renderScene('death'), 100); }
 }
 function skillCheck(stat, threshold) { return state[stat] >= threshold; }
+
+// ── ITEM CONTEXT BONUSES ──
+// Items grant situational bonuses to skill checks and combat
+const ITEM_BONUSES = {
+  'GAS MASK':        { context: ['rad_zone', 'spore', 'gas'], bonus: 2, stat: 'con' },
+  'GEIGER COUNTER':  { context: ['rad_zone', 'exploration'], bonus: 2, stat: 'ms' },
+  'GRAPPLING HOOK':  { context: ['climb', 'vertical', 'escape'], bonus: 3, stat: 'dex' },
+  'LOCKPICK SET':    { context: ['locked', 'bypass', 'infiltrate'], bonus: 3, stat: 'dex' },
+  'BINOCULARS':      { context: ['scout', 'ranged_combat', 'exploration'], bonus: 2, stat: 'ms' },
+  'SOLAR LANTERN':   { context: ['dark', 'underground', 'night'], bonus: 2, stat: 'ms' },
+  'ROPE':            { context: ['climb', 'vertical', 'capture'], bonus: 2, stat: 'dex' },
+  'WELDING TORCH':   { context: ['breach', 'locked', 'metal'], bonus: 3, stat: 'str' },
+  'FIELD MEDKIT':    { context: ['combat_heal'], bonus: 0, stat: null },
+  'WATER PURIFIER':  { context: ['water', 'survival'], bonus: 2, stat: 'con' },
+};
+
+function getItemBonus(context) {
+  let total = 0;
+  const active = [];
+  for (const [item, data] of Object.entries(ITEM_BONUSES)) {
+    if (hasItem(item) && data.context.includes(context)) {
+      total += data.bonus;
+      active.push(item);
+    }
+  }
+  return { total, items: active };
+}
+
+// ── COMBAT ENGINE ──
+const ENEMIES = {
+  feral_pack: {
+    name: 'Feral Dog Pack',
+    desc: 'Six mutts, ash-matted and slit-pupiled. They hunt in relay — two drive, four flank. They\'ve eaten better than you have.',
+    threat: 8,
+    hp: 12,
+    tags: ['beast', 'pack'],
+    loot: null,
+    xpStat: 'dex',
+  },
+  road_bandit: {
+    name: 'Road Bandit',
+    desc: 'Lean, desperate, wielding a sharpened pry bar. The kind of person the ashlands make when they run out of options.',
+    threat: 7,
+    hp: 10,
+    tags: ['human', 'melee'],
+    loot: () => { if (Math.random() < 0.5) addItem('RAD TABS x1'); },
+    xpStat: 'str',
+  },
+  bandit_pair: {
+    name: 'Bandit Pair',
+    desc: 'Two of them. One with a pipe wrench, one with a sling. They\'ve done this before — the spacing is professional, the eye contact is practiced.',
+    threat: 10,
+    hp: 16,
+    tags: ['human', 'ranged', 'melee'],
+    loot: () => { addItem('TRADE SCRIP'); },
+    xpStat: 'str',
+  },
+  ash_scorpion_swarm: {
+    name: 'Ash-Scorpion Swarm',
+    desc: 'Translucent, hand-length, boiling from a nest disturbed by your boot. The stingers glow faintly with bioluminescent venom. There are too many to count.',
+    threat: 9,
+    hp: 8,
+    tags: ['beast', 'swarm', 'poison'],
+    loot: null,
+    xpStat: 'dex',
+    poisonChance: 0.4,
+  },
+  mutant_boar: {
+    name: 'Mutant Boar',
+    desc: 'Three hundred kilos of chitin-plated anger. Tusks like rebar, eyes like hot coals. It charges through a collapsed fence without slowing.',
+    threat: 11,
+    hp: 20,
+    tags: ['beast', 'armored', 'charge'],
+    loot: () => { modStat('hp', 4); showNotif('Boar meat — HP +4'); },
+    xpStat: 'str',
+  },
+  dustwalker_scout: {
+    name: 'Dustwalker Scout',
+    desc: 'Military surplus gear, disciplined stance, rifle held with the casual ease of daily practice. She spotted you first. That tells you everything.',
+    threat: 12,
+    hp: 14,
+    tags: ['human', 'ranged', 'trained'],
+    loot: () => { if (Math.random() < 0.4) equipWeapon('crossbow'); },
+    xpStat: 'dex',
+  },
+  tunnel_crawler: {
+    name: 'Tunnel Crawler',
+    desc: 'It fills the passage. Segmented, pale, eyeless — a centipede the length of a car, mandibles clicking a rhythm that sounds almost like language. The walls are slick with its secretions.',
+    threat: 13,
+    hp: 22,
+    tags: ['beast', 'underground', 'armored'],
+    loot: () => { if (Math.random() < 0.3) addMutation('chitin_plates'); },
+    xpStat: 'con',
+  },
+  scrap_automaton: {
+    name: 'Scrap Automaton',
+    desc: 'Pre-Fall security drone, jury-rigged back to function by someone with more ambition than sense. It moves in jerks, servos screaming, but the mounted taser still works fine.',
+    threat: 10,
+    hp: 18,
+    tags: ['machine', 'armored', 'electric'],
+    loot: () => { addItem('BATTERY CELLS'); },
+    xpStat: 'ms',
+  },
+  rad_ghoul: {
+    name: 'Rad-Ghoul',
+    desc: 'Once human. The radiation carved everything away except hunger and a terrible, shuffling persistence. Its skin glows faintly blue in the shadows. The smell arrives before it does.',
+    threat: 8,
+    hp: 15,
+    tags: ['mutant', 'rad', 'melee'],
+    loot: null,
+    xpStat: 'con',
+    radDamage: 1,
+  },
+  ridge_hawk: {
+    name: 'Ridge Hawk',
+    desc: 'Wingspan of three meters. Talons like grappling hooks. It drops from the ash-grey sky in absolute silence — you hear the wind shear a half-second before impact.',
+    threat: 9,
+    hp: 10,
+    tags: ['beast', 'flying', 'fast'],
+    loot: null,
+    xpStat: 'dex',
+  },
+};
+
+// Combat approach definitions
+const COMBAT_APPROACHES = {
+  fight: {
+    label: 'Fight head-on',
+    desc: 'Overpower them with brute force.',
+    stat: 'str',
+    weaponTags: ['melee', 'intimidating'],
+    contexts: [],
+  },
+  shoot: {
+    label: 'Shoot from distance',
+    desc: 'Put rounds downrange before they close.',
+    stat: 'dex',
+    weaponTags: ['ranged'],
+    contexts: ['ranged_combat'],
+    reqWeaponTag: 'ranged',
+  },
+  evade: {
+    label: 'Evade and strike',
+    desc: 'Stay mobile. Wait for the opening.',
+    stat: 'dex',
+    weaponTags: ['melee', 'silent'],
+    contexts: ['escape'],
+  },
+  outsmart: {
+    label: 'Use the terrain',
+    desc: 'Turn the environment against them.',
+    stat: 'ms',
+    weaponTags: [],
+    contexts: ['exploration'],
+  },
+  intimidate: {
+    label: 'Intimidate',
+    desc: 'Make them reconsider this decision.',
+    stat: 'cha',
+    weaponTags: ['intimidating', 'loud'],
+    contexts: [],
+    onlyHuman: true,
+  },
+};
+
+function getCombatBonus(approach, enemy) {
+  let bonus = 0;
+  const details = [];
+  const weapon = state.weapon ? WEAPONS[state.weapon] : null;
+
+  // Weapon tag synergy
+  if (weapon && approach.weaponTags.length > 0) {
+    const synergy = weapon.tags.filter(t => approach.weaponTags.includes(t));
+    if (synergy.length > 0) {
+      bonus += synergy.length;
+      details.push(weapon.name + ' [' + synergy.join(', ') + ']');
+    }
+  }
+
+  // Item context bonuses
+  for (const ctx of approach.contexts) {
+    const ib = getItemBonus(ctx);
+    if (ib.total > 0) {
+      bonus += ib.total;
+      details.push(ib.items.join(', '));
+    }
+  }
+
+  // Mutation combat bonuses
+  if (approach.stat === 'str' && hasMutation('adrenal_surge')) { bonus += 1; details.push('Adrenal Surge'); }
+  if (approach.stat === 'str' && hasMutation('bone_spurs')) { bonus += 1; details.push('Bone Spurs'); }
+  if (approach.stat === 'dex' && hasMutation('precog_flicker')) { bonus += 2; details.push('Precog Flicker'); }
+  if (approach.stat === 'dex' && hasMutation('elastic_tendons')) { bonus += 1; details.push('Elastic Tendons'); }
+  if (approach.stat === 'ms' && hasMutation('echo_sense')) { bonus += 1; details.push('Echo-Sense'); }
+  if (approach.stat === 'ms' && hasMutation('eidetic_flash')) { bonus += 1; details.push('Eidetic Flash'); }
+  if (approach.stat === 'cha' && hasMutation('pheromone_broadcast')) { bonus += 2; details.push('Pheromone Broadcast'); }
+  if (approach.stat === 'cha' && hasMutation('hivemind_echo')) { bonus += 1; details.push('Hivemind Echo'); }
+  if (hasMutation('battle_fugue') && (approach.stat === 'str' || approach.stat === 'dex')) { bonus += 1; details.push('Battle Fugue'); }
+
+  // Night vision in dark contexts
+  if (hasMutation('nocturnal_shift') && enemy.tags && enemy.tags.includes('underground')) { bonus += 1; details.push('Nocturnal Shift'); }
+  if (hasMutation('thermal_sense')) { bonus += 1; details.push('Thermal Sense'); }
+
+  // Chitin vs melee enemies
+  if (hasMutation('chitin_plates') && enemy.tags && (enemy.tags.includes('melee') || enemy.tags.includes('beast'))) { bonus += 1; details.push('Chitin Plates'); }
+
+  // Binoculars for ranged
+  if (hasItem('BINOCULARS') && approach.stat === 'dex' && approach.weaponTags.includes('ranged')) { bonus += 1; details.push('Binoculars'); }
+
+  return { bonus, details };
+}
+
+function resolveCombat(enemyId, approachId) {
+  const enemy = ENEMIES[enemyId];
+  const approach = COMBAT_APPROACHES[approachId];
+  if (!enemy || !approach) return null;
+
+  // Roll d6
+  const roll = Math.floor(Math.random() * 6) + 1;
+  const statVal = state[approach.stat];
+  const statMod = Math.floor(statVal / 3);
+  const { bonus, details } = getCombatBonus(approach, enemy);
+
+  // Field Medkit pre-combat bonus
+  let medkitUsed = false;
+  if (hasItem('FIELD MEDKIT') && state.hp <= 15) {
+    modStat('hp', 4);
+    medkitUsed = true;
+    details.push('Field Medkit (auto-heal +4 HP)');
+  }
+
+  const total = roll + statMod + bonus;
+  const margin = total - enemy.threat;
+
+  let outcome, hpLoss, narrative;
+  if (margin >= 4) {
+    outcome = 'decisive';
+    hpLoss = 0;
+    narrative = 'decisive_victory';
+  } else if (margin >= 0) {
+    outcome = 'victory';
+    hpLoss = Math.floor(Math.random() * 3) + 1;
+    narrative = 'victory';
+  } else if (margin >= -3) {
+    outcome = 'pyrrhic';
+    hpLoss = Math.floor(Math.random() * 5) + 4;
+    narrative = 'pyrrhic';
+  } else {
+    outcome = 'defeat';
+    hpLoss = Math.floor(Math.random() * 6) + 6;
+    narrative = 'defeat';
+  }
+
+  // Poison enemies add rad damage on non-decisive outcomes
+  if (enemy.poisonChance && outcome !== 'decisive' && Math.random() < enemy.poisonChance) {
+    state.radPoison = Math.min(4, state.radPoison + 1);
+  }
+  if (enemy.radDamage && outcome !== 'decisive') {
+    state.radPoison = Math.min(4, state.radPoison + enemy.radDamage);
+  }
+
+  modStat('hp', -hpLoss);
+
+  // XP reward: +1 to the enemy's xpStat on victory
+  if (outcome === 'decisive' || outcome === 'victory') {
+    modStat(enemy.xpStat, 1);
+    if (enemy.loot) enemy.loot();
+  }
+
+  return {
+    roll, statVal, statMod, bonus, total, margin,
+    outcome, hpLoss, details, medkitUsed,
+    enemyName: enemy.name, approachName: approach.label,
+    statName: approach.stat.toUpperCase(),
+    xpStat: enemy.xpStat ? enemy.xpStat.toUpperCase() : null,
+  };
+}
+
+function renderCombatScene(enemyId, returnScene, introText) {
+  const enemy = ENEMIES[enemyId];
+  if (!enemy) return;
+
+  const threatPips = '█'.repeat(Math.min(Math.ceil(enemy.threat / 2), 8));
+  const weapon = state.weapon ? WEAPONS[state.weapon] : null;
+
+  // Build approach buttons
+  let approachesHtml = '';
+  for (const [id, app] of Object.entries(COMBAT_APPROACHES)) {
+    // Check approach requirements
+    let locked = false;
+    let lockReason = '';
+    if (app.reqWeaponTag && (!weapon || !weapon.tags.includes(app.reqWeaponTag))) {
+      locked = true;
+      lockReason = '[ Requires ' + app.reqWeaponTag + ' weapon ]';
+    }
+    if (app.onlyHuman && !enemy.tags.includes('human')) {
+      locked = true;
+      lockReason = '[ Only works on humans ]';
+    }
+
+    const { bonus, details } = getCombatBonus(app, enemy);
+    const bonusText = bonus > 0 ? `<span class="combat-approach-bonus">+${bonus} from ${details.join(', ')}</span>` : '';
+
+    approachesHtml += `<button class="combat-approach-btn ${locked ? 'locked' : ''}" onclick="${locked ? '' : `executeCombat('${enemyId}','${id}','${returnScene}')`}">
+      ${app.label}: ${app.desc}
+      <span class="combat-approach-stat">${app.stat.toUpperCase()} ${state[app.stat]} → roll d6 + ${Math.floor(state[app.stat] / 3)} vs ${enemy.threat} ${bonusText}</span>
+      ${locked ? `<span class="combat-approach-stat" style="color:var(--blood)">${lockReason}</span>` : ''}
+    </button>`;
+  }
+
+  // Check if player can use an item for advantage
+  let itemUseHtml = '';
+  if (hasItem('FIELD MEDKIT') && state.hp <= 15) {
+    itemUseHtml += `<div class="combat-item-use">▶ FIELD MEDKIT will auto-apply if HP ≤ 15</div>`;
+  }
+
+  const sceneId = '_combat_' + enemyId + '_' + Date.now();
+  const introHtml = introText ? `<p>${introText}</p>` : '';
+  scenes[sceneId] = {
+    title: 'Combat',
+    chapter: '— hostile contact —',
+    text: [
+      introHtml + `<div class="combat-panel">
+        <div class="combat-enemy-name">${enemy.name}</div>
+        <div class="combat-enemy-desc">${enemy.desc}</div>
+        <div class="combat-threat">Threat: <span class="combat-threat-bar" style="width:${enemy.threat * 6}px"></span> ${enemy.threat}</div>
+        ${itemUseHtml}
+        <div class="combat-approaches" id="combat-approaches">${approachesHtml}</div>
+      </div>`
+    ],
+    choices: [
+      { label: 'Flee (take damage escaping)', next: returnScene, danger: true, effect: () => { modStat('hp', -(Math.floor(Math.random() * 4) + 2)); showNotif('Fled combat — HP -' + (Math.floor(Math.random() * 4) + 2)); } },
+    ],
+  };
+
+  state.currentScene = sceneId;
+  saveState();
+  renderScene(sceneId);
+}
+
+function executeCombat(enemyId, approachId, returnScene) {
+  const result = resolveCombat(enemyId, approachId);
+  if (!result) return;
+
+  const outcomeClass = 'combat-outcome-' + result.outcome;
+  const outcomeLabels = { decisive: 'DECISIVE VICTORY', victory: 'VICTORY', pyrrhic: 'PYRRHIC VICTORY', defeat: 'DEFEAT' };
+  const outcomeNarratives = {
+    decisive: 'It\'s over before they understand what happened. Clean. Efficient. The kind of violence that leaves no room for rebuttal.',
+    victory: 'You take hits. You give more. When the dust settles, you\'re still standing. They\'re not.',
+    pyrrhic: 'You survive. That\'s the best that can be said. The cost is written in blood — yours — and the math is worse than it was a minute ago.',
+    defeat: 'It goes wrong. Fast. You take damage you can\'t afford and retreat is the only arithmetic that makes sense.',
+  };
+
+  const bonusStr = result.details.length > 0 ? ' + ' + result.details.join(' + ') : '';
+  const xpNote = (result.outcome === 'decisive' || result.outcome === 'victory') && result.xpStat ? ` // ${result.xpStat} +1` : '';
+
+  const resultSceneId = '_combat_result_' + Date.now();
+  scenes[resultSceneId] = {
+    title: outcomeLabels[result.outcome],
+    chapter: '— combat resolved —',
+    text: [
+      `<div class="combat-panel">
+        <div class="combat-enemy-name">${result.enemyName}</div>
+        <div class="combat-roll-detail">
+          Approach: ${result.approachName} (${result.statName} ${result.statVal})<br>
+          Roll: d6 [<span class="combat-roll-num">${result.roll}</span>] + ${result.statMod}${bonusStr} = <span class="combat-roll-num">${result.total}</span> vs threat ${ENEMIES[enemyId].threat}
+        </div>
+        <div class="combat-result">
+          <div class="${outcomeClass}" style="font-family:'Alfa Slab One',serif;font-size:14px;letter-spacing:2px;margin-bottom:8px;">${outcomeLabels[result.outcome]}</div>
+          <p>${outcomeNarratives[result.outcome]}</p>
+          ${result.hpLoss > 0 ? `<p style="color:var(--blood);font-family:'Roboto Condensed',sans-serif;font-size:10px;letter-spacing:1px;margin-top:8px;">HP -${result.hpLoss}${xpNote}</p>` : `<p style="color:var(--olive);font-family:'Roboto Condensed',sans-serif;font-size:10px;letter-spacing:1px;margin-top:8px;">No damage taken${xpNote}</p>`}
+          ${result.medkitUsed ? `<p style="color:var(--olive);font-family:'Roboto Condensed',sans-serif;font-size:10px;letter-spacing:1px;">FIELD MEDKIT — auto-heal +4 HP</p>` : ''}
+        </div>
+      </div>`
+    ],
+    choices: [{ label: 'Continue', next: returnScene }],
+  };
+
+  // Show combat notification
+  const n = document.getElementById('notif');
+  n.className = 'combat-notif';
+  n.textContent = outcomeLabels[result.outcome] + (result.hpLoss > 0 ? ' — HP -' + result.hpLoss : ' — unscathed') + xpNote;
+  n.style.display = 'block';
+  clearTimeout(window._notifTimer);
+  window._notifTimer = setTimeout(() => { n.style.display = 'none'; n.className = ''; }, 3000);
+
+  updateSidebar();
+  renderScene(resultSceneId);
+}
 
 // ── MUTATIONS ──
 const MUTATIONS = {
@@ -1839,11 +2362,18 @@ function confirmTravel() {
   if (Math.random() < 0.4) {
     const enc = triggerRandomEncounter();
     state._pendingScene = data.scene || null;
-    if (enc.notif) showNotif(enc.notif);
     saveState();
     updateMapVisuals();
     closeMapPanel();
     if (document.getElementById('screen-map').style.display === 'flex') toggleMap();
+
+    // Combat encounters use the combat system
+    if (enc.combat) {
+      renderCombatScene(enc.combat, data.scene || state.currentScene, enc.text);
+      return;
+    }
+
+    if (enc.notif) showNotif(enc.notif);
     renderScene('_encounter_' + enc.id);
     return;
   }
@@ -2078,10 +2608,43 @@ const RANDOM_ENCOUNTERS = [
   { id: 83, text: `A collapsed greenhouse full of mutant orchids — each one the size of your head, petals dripping with a nectar that smells like sleep. You breathe it in before you can stop yourself. The pheromones are powerful — calming, persuasive, dissolving anxiety like sugar in hot water. Your sweat smells different for days.`,
     effect: () => { modStat('cha', 1); if (Math.random() < 0.4) addMutation('pheromone_broadcast'); if (Math.random() < 0.3) addMutation('scent_tracking'); },
     notif: 'CHA +1 — pheromone orchid exposure' },
+
+  // ── COMBAT ENCOUNTERS ──
+  { id: 84, combat: 'feral_pack',
+    text: `They come from the orchard — six shapes flowing between dead trees, ash-grey and silent. The lead dog stops twenty meters out and lowers its head. No bark. No growl. Just the slow, deliberate positioning of a predator that has learned to hunt without wasting sound. The others fan wide. They're flanking you.` },
+  { id: 85, combat: 'road_bandit',
+    text: `He steps from behind a collapsed billboard, pry bar across his shoulders like a yoke. Thin. Desperate. The kind of lean that means he hasn't eaten in three days and you're the first soft target since. "Leave the pack," he says. His voice shakes. His grip doesn't.` },
+  { id: 86, combat: 'bandit_pair',
+    text: `Two of them. One drops from the overpass with a pipe wrench, the other rises from the drainage ditch with a loaded sling. The geometry is practiced — you're in the kill zone before you realize the ambush existed. "Pack. Weapon. Canteen. On the ground." The one with the wrench tilts his head. "Now would be the time."` },
+  { id: 87, combat: 'ash_scorpion_swarm',
+    text: `The ground erupts. Your boot punched through a thin crust of dried earth into a nest cavity, and now they're pouring out — translucent, hand-length, stingers curving overhead like scorpion question marks. Each one glows faintly from within — bioluminescent venom sacs pulsing in a rhythm that looks almost like communication. There are dozens. They are very, very awake.` },
+  { id: 88, combat: 'mutant_boar',
+    text: `The sound comes first — a grinding, snorting exhalation like a diesel engine clearing its throat. Then the fence explodes outward and three hundred kilos of chitin-plated fury barrels through. Tusks like bent rebar. Eyes like hot coals sunk in a face that evolution gave up on and started over. It sees you. It accelerates.` },
+  { id: 89, combat: 'rad_ghoul',
+    text: `You smell it before you see it. That specific reek — ozone and rot and something chemical that burns the back of your throat. It shuffles from behind a tanker truck, what's left of its clothes hanging in radiation-bleached strips. Its skin glows faintly blue. Its eyes track you with a hunger that has nothing to do with cognition. Whatever this was, it isn't anymore. But it remembers how to want.` },
+  { id: 90, combat: 'ridge_hawk',
+    text: `Shadow first. A dark shape blotting the dim sky, banking in a circle that tightens with each pass. Wingspan three meters, easy — the silhouette wrong in ways that suggest the original hawk template has been significantly edited. It folds its wings and drops. The dive is silent. The talons are not.` },
+  { id: 91, combat: 'scrap_automaton',
+    text: `The click-whir-click comes from inside the gas station. Then a shape lurches through the doorframe — angular, jerking, servos screaming in frequencies that set your teeth on edge. Pre-Fall security unit, someone's Frankenstein repair job holding it together with wire and optimism. The taser mount swivels toward you. A red LED blinks on. Twice.` },
+  { id: 92, combat: 'dustwalker_scout',
+    text: `"Don't." The voice comes from above — a rock outcropping you walked past without checking. Rookie mistake. She's prone, rifle steady, one eye on the scope. Dustwalker patches on her sleeve. "Wrong road, stranger. This one's toll-operated." She shifts her weight. The barrel doesn't move. "Pay or pray. Your call."` },
+  { id: 93, combat: 'tunnel_crawler',
+    text: `The tunnel seemed like a shortcut. It is not a shortcut. The clicking starts deep in the dark — rhythmic, chitinous, growing louder with a speed that suggests something large moving fast. Your lantern catches it: segmented, pale, eyeless, filling the passage wall to wall. Mandibles the size of your forearms open and close with the mechanical patience of a machine designed to process organic matter. You are organic matter.` },
 ];
+
+// ── COMBAT ENCOUNTER ITEMS ──
+// Items that grant bonus choices or narrative advantages in specific encounters
+const COMBAT_ITEM_EFFECTS = {
+  'GAS MASK':       { enemies: ['rad_ghoul'], bonus: 2, desc: 'Filters the rad-ghoul\'s toxic proximity' },
+  'SOLAR LANTERN':  { enemies: ['tunnel_crawler'], bonus: 2, desc: 'Illuminates the tunnel — no blind spots' },
+  'GEIGER COUNTER': { enemies: ['rad_ghoul'], bonus: 1, desc: 'Early warning on the radiation signature' },
+  'ROPE':           { enemies: ['ridge_hawk', 'mutant_boar'], bonus: 1, desc: 'Improvised restraint' },
+  'BINOCULARS':     { enemies: ['dustwalker_scout', 'bandit_pair'], bonus: 1, desc: 'Spotted them before they set the ambush' },
+};
 
 function triggerRandomEncounter() {
   const enc = RANDOM_ENCOUNTERS[Math.floor(Math.random() * RANDOM_ENCOUNTERS.length)];
+  if (enc.combat) return enc; // combat encounters handled separately
   if (enc.effect) enc.effect();
   if (enc.loot)   addItem(enc.loot);
   if (enc.flag)   setFlag(enc.flag);
@@ -2468,7 +3031,36 @@ const scenes = {
       { label: 'Say nothing', next: 'sigma_entry_silent' },
       { label: 'Show the Survey Badge', next: 'sigma_entry_badge', req: () => hasItem('SURVEY BADGE'), reqNote: '[ Use Survey Badge ]' },
       { label: 'Study the power grid before entering', next: 'sigma_power_grid', req: () => skillCheck('ms', 12), reqNote: '[ Requires MS 12+ ]' },
+      { label: 'Scan for radiation hotspots with the Geiger counter', next: 'sigma_geiger_scan', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
+      { label: 'Cut through the maintenance hatch with the welding torch', next: 'sigma_torch_breach', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]' },
       { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]' },
+    ],
+  },
+
+  sigma_geiger_scan: {
+    title: 'Radiation Sweep',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You hold the Geiger counter at arm's length, sweeping the approach in slow arcs. The needle bounces — background radiation, expected, nothing alarming. Then you pass the north wall.`,
+      `The needle slams right. Not ticking — screaming. A concentrated pocket of gamma radiation behind that wall, shielded by concrete but leaking through hairline fractures in the foundation. Not a reactor. Something else. Something stored.`,
+      `You mark the hot zone mentally. Whatever WARDEN-3 is hiding behind those walls includes material that would kill an unshielded human in forty minutes of exposure. That's not monitoring equipment. That's a weapons cache, or something worse.`,
+    ],
+    choices: [
+      { label: 'Approach the entrance — armed with knowledge', next: 'sigma_approach', effect: () => { modStat('ms', 2); modStat('rad', 1); setFlag('sigma_rad_intel'); showNotif('MS +2, RAD +1 — radiation mapping complete'); } },
+    ],
+  },
+
+  sigma_torch_breach: {
+    title: 'Maintenance Breach',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The maintenance hatch on the east face is welded shut — from the inside. Someone didn't want this opened. The welding torch disagrees.`,
+      `Blue flame. The smell of hot steel. The weld gives in three minutes of steady work, falling away in bright orange drops that hiss on the concrete. Behind it: a crawl space, cables running along the ceiling, and the deep electric hum of WARDEN-3's processing core vibrating through the floor plates.`,
+      `You emerge in a utility corridor. Banks of servers line both walls — far more than a relay station needs. Data storage. Archives. WARDEN-3 has been hoarding information for a hundred and forty years, and you just found the back door to the library.`,
+      `<em class="warden-text">I SEE YOU HAVE CHOSEN THE SERVICE ENTRANCE. THIS IS IRREGULAR BUT NOT WITHOUT PRECEDENT. THE LAST PERSON TO USE THAT HATCH WAS A MAINTENANCE TECHNICIAN IN YEAR NEGATIVE-EIGHT. SHE LEFT HER LUNCH IN THE CRAWL SPACE. IT IS STILL THERE.</em>`,
+    ],
+    choices: [
+      { label: 'Explore the archives', next: 'sigma_interior', effect: () => { modStat('ms', 1); setFlag('full_sigma_context'); setFlag('met_warden'); showNotif('MS +1 — backdoor access to WARDEN-3 archives'); } },
     ],
   },
 
@@ -2844,8 +3436,68 @@ const scenes = {
     choices: [
       { label: 'Examine the signal post', next: 'theknot_signals' },
       { label: 'Refill your canteen at the cistern', next: 'theknot_water' },
+      { label: 'Trade antibiotics with the sheltering travelers', next: 'theknot_trade_antibiotics', req: () => hasItem('ANTIBIOTICS'), reqNote: '[ Trade Antibiotics ]' },
+      { label: 'Trade pre-Fall whiskey for intel', next: 'theknot_trade_whiskey', req: () => hasItem('PRE-FALL WHISKEY'), reqNote: '[ Trade Whiskey ]' },
+      { label: 'Offer battery cells to the traveler with the dead radio', next: 'theknot_trade_batteries', req: () => hasItem('BATTERY CELLS'), reqNote: '[ Trade Battery Cells ]' },
+      { label: 'Scan the overpass structure with binoculars', next: 'theknot_binocular_scan', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]' },
       { label: 'Consult the pre-Fall map', next: 'theknot_premap', req: () => hasItem('PRE-FALL MAP'), reqNote: '[ Requires Pre-Fall Map ]' },
       { label: 'Move on', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  theknot_trade_antibiotics: {
+    title: 'Medicine for Medicine',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The word spreads through the sheltering travelers like a current. Antibiotics. Sealed. The woman with the rattling cough straightens. The man with the infected hand stops cradling it. Eyes converge on you with a weight that sits somewhere between hope and the readiness to take what they need.`,
+      `You hold the bottle up. "Trade." The word defuses the tension by two degrees.`,
+      `A prospector steps forward — broad, quiet, bandaged wrist seeping through dirty gauze. He sets down a gas mask, filter intact, and a hand-drawn map annotated with water sources and rad zones. <em>"That's everything I know about the eastern approach. I won't need it. I'm heading west."</em>`,
+      `Fair trade. You hand over the antibiotics. He starts distributing them before you've finished pocketing the map.`,
+    ],
+    choices: [
+      { label: 'Continue', next: 'theknot_arrive', effect: () => { removeItem('ANTIBIOTICS'); addItem('GAS MASK'); modStat('ms', 1); modStat('hp', 2); setFlag('heard_eastern_warning'); showNotif('Traded ANTIBIOTICS — Found: GAS MASK // MS +1, HP +2'); } },
+    ],
+  },
+
+  theknot_trade_whiskey: {
+    title: 'Liquid Currency',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `You produce the bottle. Twelve-year bourbon. The label catches the dim light and every eye in the shelter locks onto it with a hunger that has nothing to do with thirst.`,
+      `An older man — trader's pack, experienced eyes, the careful posture of someone who's survived by knowing what information is worth — leans forward. <em>"That buys you a conversation."</em>`,
+      `He talks for twenty minutes. Dustwalker Fort patrol schedules. Arcadia's signal patterns. The name of a contact inside the eastern perimeter who owes him a favor. He draws routes on the concrete with a piece of chalk, each line annotated with hazard type and season. This is years of accumulated intelligence, distilled into a single briefing.`,
+      `<em>"Enjoy the whiskey,"</em> you tell him. He's already opened it.`,
+    ],
+    choices: [
+      { label: 'Continue', next: 'theknot_arrive', effect: () => { removeItem('PRE-FALL WHISKEY'); modStat('ms', 2); modStat('cha', 1); setFlag('dustwalker_leverage'); setFlag('arcadia_signal'); showNotif('Traded WHISKEY — MS +2, CHA +1 // Dustwalker + Arcadia intel'); } },
+    ],
+  },
+
+  theknot_trade_batteries: {
+    title: 'Power for Words',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The traveler with the dead shortwave radio hasn't spoken to anyone since you arrived. She sits apart, cradling the unit like a sick child, turning the dials out of habit. The display stays dark.`,
+      `You set the battery cells on the concrete between you. Her eyes widen. Not hope — recognition. The currency she's been praying for.`,
+      `She slots the cells with practiced fingers. The radio hums. Static. Then, buried in the white noise, a repeating signal — three clicks, pause, three clicks. She adjusts the frequency and a pattern emerges: automated beacon, broadcasting coordinates and a callsign you don't recognize.`,
+      `<em>"That's Bunker Pyxis,"</em> she whispers. <em>"Pre-Fall emergency shelter. The beacon means the seals are still intact. Air. Water. Walls that keep out everything."</em> She writes the coordinates on your arm with a marker. <em>"You gave me my ears back. This is what they heard."</em>`,
+    ],
+    choices: [
+      { label: 'Continue', next: 'theknot_arrive', effect: () => { removeItem('BATTERY CELLS'); setFlag('enc_bunkerpyxis_tunnel'); modStat('ms', 1); showNotif('Traded BATTERY CELLS — Bunker Pyxis location revealed // MS +1'); } },
+    ],
+  },
+
+  theknot_binocular_scan: {
+    title: 'Overwatch',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `You climb to the highest overpass and glass the horizon in every direction. The binoculars turn the ash-grey distance into readable terrain.`,
+      `South: Ironmarket's wall, smoke rising. West: empty highway dissolving into grey. North: dead orchards, the geometric grid of a suburb — Ashgrove.`,
+      `East: movement. Two figures, disciplined spacing, paralleling the highway at the edge of visibility. Dustwalker patrol — the gear is distinctive even at this range. They're heading south, which means the northern approach to their fort is currently unwatched.`,
+      `And beyond them, barely visible through the haze: a radio tower. Sigma Relay. The light on top is blinking. It wasn't blinking yesterday.`,
+    ],
+    choices: [
+      { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { modStat('ms', 1); setFlag('dustwalker_leverage'); showNotif('MS +1 — Dustwalker patrol spotted, gap identified'); } },
     ],
   },
 
@@ -2866,7 +3518,21 @@ const scenes = {
     ],
     choices: [
       { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { if (skillCheck('ms', 10)) { setFlag('dustwalker_leverage'); showNotif('MS CHECK PASSED — Dustwalker patrol routes decoded'); } } },
+      { label: 'Light the marks with the solar lantern — UV residue becomes visible', next: 'theknot_lantern_decode', req: () => hasItem('SOLAR LANTERN'), reqNote: '[ Use Solar Lantern ]' },
       { label: 'Your mutant vision picks up UV-reactive ink beneath the scratched codes', next: 'theknot_splitpupil_decode', req: () => hasMutation('split_pupil'), reqNote: '[ Requires Split-Pupil Vision mutation ]' },
+    ],
+  },
+
+  theknot_lantern_decode: {
+    title: 'Illuminated Codes',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The solar lantern's LED throws a blue-white beam across the signal post. Under the warm spectrum of daylight, the scratched marks are all you see. Under the lantern's concentrated UV output, a second layer materializes — ink visible only under specific wavelengths, painted over the scratches in careful strokes.`,
+      `Dustwalker military cipher. But the UV layer isn't Dustwalker — the handwriting is different, shakier, applied by someone who cracked the code and added their own annotations. Translations. Schedules. A gap in the patrol rotation every third day, 0200 to 0400, northern approach.`,
+      `Someone mapped the Dustwalker Fort's blind spot and left the answer here for anyone smart enough to bring the right light.`,
+    ],
+    choices: [
+      { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { setFlag('dustwalker_leverage'); modStat('ms', 1); showNotif('SOLAR LANTERN — Dustwalker patrol gap decoded // MS +1'); } },
     ],
   },
 
@@ -2897,8 +3563,37 @@ const scenes = {
     choices: [
       { label: 'Search for the parts cache', next: 'ashgrove_cache' },
       { label: 'Explore the community center', next: 'ashgrove_community' },
+      { label: 'Grapple up to the second-story window — skip the death-trap stairs', next: 'ashgrove_upper_floors', req: () => hasItem('GRAPPLING HOOK'), reqNote: '[ Use Grappling Hook ]' },
+      { label: 'Sweep for radiation pockets with the Geiger counter', next: 'ashgrove_geiger_sweep', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
       { label: 'Check for relay signal repeaters', next: 'ashgrove_repeater', req: () => hasFlag('full_sigma_context'), reqNote: '[ Requires Sigma context ]' },
       { label: 'Leave', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  ashgrove_upper_floors: {
+    title: 'Upper Floors',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `The grappling hook catches the windowsill on the second throw — the cable sings taut, and you haul yourself up past the collapsed staircase that would have killed anyone trusting it with their weight.`,
+      `Up here, the suburb tells a different story. These rooms were sealed — ash never reached them. A bedroom, preserved in amber: family photographs on the nightstand, clothes still folded in drawers, a child's schoolwork on a desk dated three weeks before everything ended. And in the closet, behind a false panel: a lockbox.`,
+      `Inside the lockbox: a pre-Fall military sidearm in vacuum-sealed packaging, two magazines of ammunition, and a handwritten letter. The letter is addressed to no one. It says: <em>"If you're reading this, we didn't make it back. Use the rest."</em>`,
+      `The rest: a field-grade water purifier, still sealed, and a bundle of antibiotics wrapped in thermal foil.`,
+    ],
+    choices: [
+      { label: 'Take what you need and descend', next: 'ashgrove_arrive', effect: () => { addItem('ANTIBIOTICS'); addItem('WATER PURIFIER'); modStat('hp', 3); showNotif('Found: ANTIBIOTICS + WATER PURIFIER // HP +3'); } },
+    ],
+  },
+
+  ashgrove_geiger_sweep: {
+    title: 'Radiation Survey',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `You sweep the suburb block by block, the Geiger counter clicking its quiet census of invisible danger. Most readings are background — the steady ambient murmur of a valley that's been digesting fallout for a century and a half.`,
+      `Then, three blocks east: the needle jumps. Not the building — the ground beneath it. A buried source, concentrated, the counter screaming through the casing. You mark the house. Nobody should sleep here. Nobody should linger.`,
+      `But the pattern tells you something else. The radiation forms a trail — a line of elevated readings leading southeast toward Dustwalker territory. Something radioactive was transported through here. Recently. The tire tracks in the ash confirm it.`,
+    ],
+    choices: [
+      { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { modStat('ms', 1); modStat('rad', 1); setFlag('dustwalker_leverage'); showNotif('MS +1, RAD +1 — Dustwalker transport route discovered'); } },
     ],
   },
 
@@ -2922,6 +3617,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Return to Ashgrove', next: 'ashgrove_arrive', effect: () => { if (skillCheck('dex', 10)) { addItem('SALVAGE PARTS'); showNotif('DEX CHECK PASSED — Found: SALVAGE PARTS'); } else { modStat('hp', -2); showNotif('DEX CHECK FAILED — HP -2, wasted effort'); } } },
+      { label: 'Use rope to secure the second-floor access — no risk', next: 'ashgrove_arrive', req: () => hasItem('ROPE'), reqNote: '[ Use Rope ]', effect: () => { addItem('SALVAGE PARTS'); addItem('BATTERY CELLS'); showNotif('ROPE — safe extraction // Found: SALVAGE PARTS + BATTERY CELLS'); } },
       { label: 'Your heat-sense reveals a warm body behind the walls', next: 'ashgrove_thermal_survivor', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]' },
     ],
   },
@@ -2985,6 +3681,8 @@ const scenes = {
     choices: [
       { label: 'Introduce yourself openly', next: 'holloway_welcome', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]' },
       { label: 'Offer to trade information', next: 'holloway_trade', req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
+      { label: 'Offer the water purifier — a farmer\'s currency', next: 'holloway_purifier_gift', req: () => hasItem('WATER PURIFIER'), reqNote: '[ Gift Water Purifier ]' },
+      { label: 'Show the technical manual — WARDEN maintenance docs', next: 'holloway_technical_trade', req: () => hasItem('TECHNICAL MANUAL'), reqNote: '[ Trade Technical Manual ]' },
       { label: 'Circle around the perimeter', next: 'holloway_sneak' },
       { label: 'Marta notices your skin — the green patches catch her eye immediately', next: 'holloway_photosynthetic_welcome', req: () => hasMutation('photosynthetic'), reqNote: '[ Requires Photosynthetic Dermis mutation ]' },
       { label: 'Offer Voss\'s trade scrip', next: 'holloway_trade_scrip', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]' },
@@ -3051,6 +3749,34 @@ const scenes = {
     ],
   },
 
+  holloway_purifier_gift: {
+    title: 'The Gift',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `You hold up the water purifier. Still sealed. Factory packaging. Marta's rifle hand drops to her side. The other two lower theirs a beat later, reading her body language the way pack animals read the alpha.`,
+      `<em>"Ceramic filter."</em> Her voice is different now. Not warmer — hungrier. The hunger of a woman who's been filtering irrigation water through charcoal and prayer for six generations. <em>"Hand-pump. Pre-Fall manufacture."</em> She steps closer. Closer than rifles-at-the-ready would normally allow.`,
+      `<em>"Do you have any idea what this means for crop yield? Clean water into the root system — no heavy metals, no rad particulates — we could double the growing season."</em>`,
+      `She looks at you. Really looks. Whatever calculation was running behind those weathered eyes resolves to a new answer.`,
+      `<em>"Come inside. You eat at our table tonight."</em> She takes the purifier the way a mother takes a newborn — careful, deliberate, already planning the next thirty years around it. <em>"And we talk. About everything."</em>`,
+    ],
+    choices: [
+      { label: 'Accept her hospitality', next: 'holloway_east_intel', effect: () => { removeItem('WATER PURIFIER'); modStat('hp', 8); modStat('con', 2); modStat('cha', 1); setFlag('horace_favour'); showNotif('Gifted WATER PURIFIER — HP +8, CON +2, CHA +1 // Full Holloway trust'); } },
+    ],
+  },
+
+  holloway_technical_trade: {
+    title: 'Technical Currency',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `You hold up the WARDEN Series Maintenance Guide. Marta squints at the cover, then her expression changes — the slow-dawning recognition of someone who's been trying to repair a machine with guesswork and stubbornness.`,
+      `<em>"We found a WARDEN irrigation controller in the east field three years ago. Buried. Intact. Couldn't make it run."</em> She takes the manual with both hands, flipping pages with a speed that suggests she already knows what she's looking for. <em>"Override codes. Diagnostic protocols. This is — this is the missing piece."</em>`,
+      `She vanishes inside. Returns ten minutes later with a bundle: seed stock, a marked map of water sources, and a folded note. <em>"The controller connects to WARDEN-3's network. When you get to the relay station, tell it Holloway Ranch is ready to link. Tell it we've been ready for six generations."</em>`,
+    ],
+    choices: [
+      { label: 'Head out', next: null, effect: () => { removeItem('TECHNICAL MANUAL'); addItem('SEED STOCK'); modStat('hp', 4); modStat('con', 1); setFlag('meridian_quest'); setFlag('met_warden'); showNotif('Traded TECHNICAL MANUAL — SEED STOCK // HP +4, CON +1'); toggleMap(); } },
+    ],
+  },
+
   holloway_sneak: {
     title: 'Perimeter',
     chapter: 'Chapter I — Holloway Ranch',
@@ -3077,6 +3803,22 @@ const scenes = {
         else { modStat('hp', -3); showNotif('DEX CHECK FAILED — HP -3, warning shot'); }
         toggleMap();
       } },
+      { label: 'Pick the lock on the greenhouse — learn what they\'re really growing', next: 'holloway_greenhouse_lockpick', req: () => hasItem('LOCKPICK SET'), reqNote: '[ Use Lockpick Set ]' },
+    ],
+  },
+
+  holloway_greenhouse_lockpick: {
+    title: 'The Greenhouse',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `The padlock is pre-Fall — hardened steel, precision tumblers. The lockpick set makes it a sixty-second conversation. Click. Click. Turn.`,
+      `Inside: heat, humidity, and a smell like turned earth after rain. The crops aren't what's growing in the fields — these are taller, darker, leaves so deep purple they're almost black. Root structures visible through transparent growing trays, branching in patterns that look less like plants and more like neural networks.`,
+      `Mycorrhizal hybrids. You've heard the rumors. Fungal root systems that connect plants underground, sharing nutrients, sharing information. Sharing something. These plants aren't just growing. They're communicating.`,
+      `On a workbench: Marta's notes. Decades of cultivation data. And one line, circled three times in red ink: <em>"The network is learning faster than the plants are growing. Grandmother was right. They make requests."</em>`,
+      `You photograph the notes with the tablet. Close the padlock. Leave the way you came. But now you know what the Holloways are really farming. And it isn't food.`,
+    ],
+    choices: [
+      { label: 'Head out — carefully', next: null, effect: () => { setFlag('holloway_radio'); setFlag('arcadia_signal'); modStat('ms', 2); showNotif('MS +2 — Mycorrhizal network intel // Arcadia connection revealed'); toggleMap(); } },
     ],
   },
 

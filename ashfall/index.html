@@ -4161,6 +4161,111 @@ const scenes = {
     ],
   },
 
+  dustwalker_recon: {
+    title: 'Reconnaissance',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You belly down behind a concrete divider and glass the fort through the binoculars. The magnification is absurd — you can count the rivets on the gate from four hundred meters.`,
+      `Northern patrol: two soldiers, clockwork loop, nine-minute cycle. The gap between their turn and the southern patrol's overlap is forty seconds. Tight, but walkable if you know the angle.`,
+      `Eastern wall: a drainage culvert, grated but rusted. Big enough to crawl through. No camera, no tripwire — they trust the razor wire to discourage that approach. It would discourage a sane person.`,
+      `Interior: vehicle bay, two trucks, a forklift. They're loading something onto one of the trucks. Cylindrical containers, hazard-yellow, handled with the exaggerated care people reserve for things that can kill them slowly. Radiation symbols on every canister.`,
+    ],
+    choices: [
+      { label: 'Use the patrol gap — forty seconds is enough', next: 'dustwalker_stealth', effect: () => { setFlag('dustwalker_recon_done'); modStat('ms', 1); showNotif('MS +1 — patrol patterns mapped'); } },
+      { label: 'Try the drainage culvert', next: 'dustwalker_culvert', effect: () => setFlag('dustwalker_recon_done') },
+      { label: 'You\'ve seen enough — approach the gate with intel', next: 'dustwalker_gate', effect: () => { setFlag('dustwalker_recon_done'); setFlag('dustwalker_leverage'); } },
+    ],
+  },
+
+  dustwalker_thermal_recon: {
+    title: 'Heat Map',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You close your eyes. The thermal sense unfolds like a second skin — heat signatures blooming behind the concrete walls in shades your brain has learned to name. Orange for body temperature. Red for engines. White-hot for whatever is running in the northeast corner of the compound.`,
+      `Twelve bodies. Two in the tower, two on patrol, three in what reads like a barracks, two near the vehicles, one in a central structure — command post, probably — and two standing very still near the white-hot signature. Guards. Guarding something that generates more heat than a diesel engine.`,
+      `The drainage culvert on the east side reads cold. No bodies near it. No sensors — at least nothing that generates heat. It's a gap in their awareness, and your mutation just handed it to you.`,
+    ],
+    choices: [
+      { label: 'Take the cold culvert — your thermal map is the advantage', next: 'dustwalker_culvert', effect: () => { setFlag('dustwalker_recon_done'); modStat('ms', 1); showNotif('MS +1 — thermal mapping complete'); } },
+      { label: 'Twelve bodies, one exit — the math says diplomacy', next: 'dustwalker_gate', effect: () => { setFlag('dustwalker_recon_done'); setFlag('dustwalker_leverage'); } },
+    ],
+  },
+
+  dustwalker_pheromone_entry: {
+    title: 'Chemical Diplomacy',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You walk toward the gate. No hurry. Hands visible. The rifle barrels track you — two from the tower, one from the gate guard. Standard triangulation. You'd be dead in a crossfire before you heard the first shot.`,
+      `But the pheromones are already working. You can feel them — a warmth in your skin, a subtle chemical broadcast that bypasses the conscious mind and speaks directly to the limbic system. <em>Safe. Known. Not a threat.</em>`,
+      `The gate guard's rifle drops two inches. Then four. His shoulders unknot. His breathing slows. He doesn't know why he's relaxing. He just is.`,
+      `<em>"State your business."</em> The words are regulation, but the tone isn't. The tone says he's already decided to let you in.`,
+    ],
+    choices: [
+      { label: '"Trade. I have information your commander wants."', next: 'dustwalker_interior', effect: () => { modRep('dustwalker', 1); modStat('cha', 1); showNotif('CHA +1 — pheromone entry // Dustwalker rep: KNOWN'); } },
+    ],
+  },
+
+  dustwalker_stealth: {
+    title: 'The Gap',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.dustwalker_recon_done) {
+          return [
+            `You timed it from the recon. Nine-minute patrol cycle. Forty-second window. You count the steps — boot-crunch on gravel, steady as a metronome — and move on the turn.`,
+            `Low and fast along the concrete barrier. The razor wire is a problem you solve with a blanket thrown over the top — three seconds of exposure, then you're over, rolling into the shadow of the vehicle bay. Nobody shouts. Nobody shoots. The patrol completes its turn and walks past the spot where you crossed twelve seconds ago.`,
+          ];
+        }
+        return [
+          `The patrol gap is tighter than you'd like — you're reading the pattern on the fly, counting boot-steps, guessing at the overlap. Your body makes the decision before your brain finishes calculating.`,
+          `Sprint. Low. The razor wire catches your sleeve and opens a line of fire across your forearm. You bite down on the sound and keep moving, tumbling into the shadow of the vehicle bay with your heart hammering against your ribs and blood running into your palm.`,
+        ];
+      })(),
+      `The vehicle bay smells like diesel and hot metal. Two trucks. A forklift. And on the truck bed: cylindrical containers, hazard-yellow, radiation trefoils stenciled on every surface. They're loading something. Something that needs lead-lined canisters and soldiers who handle it at arm's length.`,
+    ],
+    choices: [
+      { label: 'Examine the rad canisters', next: 'dustwalker_transport', effect: () => { if (!hasFlag('dustwalker_recon_done')) modStat('hp', -3); if (!hasFlag('dustwalker_recon_done')) showNotif('HP -3 — razor wire cut'); } },
+      { label: 'Slip past to the command post', next: 'dustwalker_commander', effect: () => { if (!hasFlag('dustwalker_recon_done')) modStat('hp', -3); if (!hasFlag('dustwalker_recon_done')) showNotif('HP -3 — razor wire cut'); setFlag('dustwalker_infiltrated'); } },
+      { label: 'Check the armory first', next: 'dustwalker_armory', req: () => hasItem('LOCKPICK SET'), reqNote: '[ Use Lockpick Set ]', effect: () => { if (!hasFlag('dustwalker_recon_done')) modStat('hp', -3); } },
+    ],
+  },
+
+  dustwalker_culvert: {
+    title: 'The Drain',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The culvert is exactly as unpleasant as it looks. Two hundred meters of corrugated steel pipe, knee-deep in stagnant water that smells like rust and something organic you choose not to identify. The grate at the entrance gives way to a solid kick — the rust has been doing your work for a century.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasItem('GAS MASK')) {
+          return [
+            `The gas mask filters the worst of it. Your eyes water but your lungs stay clean. Small mercies in small spaces.`,
+          ];
+        }
+        return [
+          `The air is thick with methane and decay. Your lungs burn. Your eyes stream. You breathe through your sleeve and keep crawling, trying not to think about what your hands are touching.`,
+        ];
+      })(),
+      `You emerge inside the compound, behind the motor pool. Blinking in the grey light. Soaked to the thighs. But inside. And nobody knows you're here.`,
+    ],
+    choices: [
+      { label: 'Head for the vehicle bay', next: 'dustwalker_transport', effect: () => { if (!hasItem('GAS MASK')) { modStat('hp', -2); modStat('con', -1); showNotif('HP -2, CON -1 — toxic fumes'); } setFlag('dustwalker_infiltrated'); } },
+      { label: 'Move toward the command post', next: 'dustwalker_commander', effect: () => { if (!hasItem('GAS MASK')) { modStat('hp', -2); modStat('con', -1); showNotif('HP -2, CON -1 — toxic fumes'); } setFlag('dustwalker_infiltrated'); } },
+    ],
+  },
+
+  dustwalker_armory: {
+    title: 'The Armory',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The armory padlock is military-grade — hardened steel, anti-pick housing. But the housing is mounted on a door that's been repaired three times, and the third repair used commercial screws. The lockpick set exploits the gap between ambition and budget.`,
+      `Inside: racks. Rifles you can't carry. Ammunition you can't use. But on the back wall — a weapon locker with a glass front, and behind the glass: a pre-Fall tactical crossbow with a fiber-optic sight. Magazine-fed. Fifteen bolts. The kind of engineering that makes you briefly nostalgic for a civilization you never knew.`,
+      `Beside it: a case of anti-rad compound, sealed, medical-grade. Six doses. And a tactical vest — kevlar weave, still flexible, with a note pinned inside: <em>"For the next poor bastard who has to escort the shipment. — Sgt. Kova"</em>`,
+    ],
+    choices: [
+      { label: 'Take the crossbow and supplies', next: 'dustwalker_stealth', effect: () => { equipWeapon('crossbow'); addItem('ANTI-RAD COMPOUND x6'); modStat('con', 1); showNotif('EQUIPPED: Crossbow // Found: ANTI-RAD COMPOUND x6 // CON +1 — tactical vest'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

@@ -4136,6 +4136,31 @@ const scenes = {
     ],
   },
 
+  // ──────────────────────────────────────────────────
+  //  DUSTWALKER FORT
+  // ──────────────────────────────────────────────────
+
+  dustwalker_arrive: {
+    title: 'Dustwalker Fort',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The fort assembles itself from the haze in stages. Guard tower first — a water tower retrofitted with sheet metal and a sniper blind, the Dustwalker boot-print stenciled on every face. Then the walls: highway barriers stacked three deep, topped with razor wire that catches the grey light like a crown of thorns.`,
+      `Two patrols visible. Northern approach, southern approach. Disciplined spacing — twelve meters apart, rifles held at low ready, eyes sweeping in practiced arcs. They move like people who've been drilled until the drill became anatomy.`,
+      `The gate is welded steel, wide enough for a vehicle. A sign above it in military stencil: <em>FORT RESURGENCE — DUSTWALKER TERRITORY — UNAUTHORIZED ENTRY IS A DEATH SENTENCE WE ARE HAPPY TO CARRY OUT.</em>`,
+      `Beyond the walls, the sound of diesel generators and the low clang of metal on metal. They're building something in there. Or loading something.`,
+    ],
+    choices: [
+      { label: 'Approach the gate openly — use your leverage', next: 'dustwalker_gate', req: () => hasFlag('dustwalker_leverage') || hasItem('TRADE SCRIP'), reqNote: '[ Requires Dustwalker leverage or Trade Scrip ]' },
+      { label: 'Talk your way in', next: 'dustwalker_gate_cha', req: () => skillCheck('cha', 12), reqNote: '[ Requires CHA 12+ ]' },
+      { label: 'Circle to the northern gap in the patrol rotation', next: 'dustwalker_stealth', req: () => skillCheck('dex', 11), reqNote: '[ Requires DEX 11+ ]' },
+      { label: 'Glass the perimeter with binoculars first', next: 'dustwalker_recon', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]' },
+      { label: 'Your thermal sense maps the heat signatures inside', next: 'dustwalker_thermal_recon', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]' },
+      { label: 'The pheromones do the talking — the gate guard relaxes before you speak', next: 'dustwalker_pheromone_entry', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]' },
+      { label: 'Force your way through', next: 'dustwalker_assault', danger: true },
+      { label: 'Leave — you\'re not ready for this', next: null, effect: () => toggleMap() },
+    ],
+  },
+
 }; // end scenes
 
 // Init

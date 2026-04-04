@@ -4887,6 +4887,48 @@ const scenes = {
     ],
   },
 
+  bunkerpyxis_armory: {
+    title: 'The Armory',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The armory is behind a blast door smaller than the main entrance but built to the same specification. The lock is biometric — a palm scanner, dead for a century. But the emergency release is mechanical, and mechanical things respond to persistence and a pry bar.`,
+      `Inside: a room the size of a walk-in closet, lined floor to ceiling with equipment that predates the collapse by enough years to have been cutting-edge when it was stored. Not weapons — tools. The kind of tools a government issues when it expects its people to survive in conditions that would kill civilians.`,
+      `A hazmat suit, sealed, rated for gamma exposure. A water purifier — military grade, ceramic filter, good for ten thousand liters. A lockpick set machined to tolerances that make your current set look like bent paperclips. And on the top shelf, in a case marked FIELD RESEARCH: a compound crossbow with a telescopic sight, still coated in cosmoline.`,
+      `Beside the weapons case, a handwritten note taped to the shelf: <em>"For whoever comes after us. You'll need these more than we did. We had each other. — Sgt. Castellan, Bunker Pyxis Garrison, Year Negative-One"</em>`,
+      `Castellan. The same name from the project director's log. The military and the research team knew each other. Whatever happened at the end, they faced it together.`,
+    ],
+    choices: [
+      { label: 'Take the hazmat suit and water purifier', next: 'bunkerpyxis_archives', effect: () => { addItem('HAZMAT SUIT'); addItem('WATER PURIFIER'); modStat('rad', 2); showNotif('Found: HAZMAT SUIT + WATER PURIFIER // RAD +2'); } },
+      { label: 'Take the crossbow and lockpick set', next: 'bunkerpyxis_archives', effect: () => { equipWeapon('crossbow'); addItem('LOCKPICK SET'); modStat('dex', 1); showNotif('EQUIPPED: Crossbow + LOCKPICK SET // DEX +1'); } },
+      { label: 'Take everything you can carry', next: 'bunkerpyxis_archives', req: () => skillCheck('str', 12), reqNote: '[ Requires STR 12+ ]', effect: () => { addItem('HAZMAT SUIT'); addItem('WATER PURIFIER'); equipWeapon('crossbow'); addItem('LOCKPICK SET'); modStat('rad', 2); modStat('dex', 1); modStat('con', -1); showNotif('Full armory loaded // RAD +2, DEX +1, CON -1 — heavy carry'); } },
+    ],
+  },
+
+  bunkerpyxis_exit: {
+    title: 'Emergence',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `You climb back through the bunker. Past the archives. Past the residential level — the chess game still waiting, white to move, a decision suspended for a hundred and forty years. Past the storage racks and the empty clipboard.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.bunkerpyxis_network_presence) {
+          return [
+            `You feel them now — in the walls. The mycorrhizal filaments, threading through the concrete, growing so slowly that a century of growth amounts to millimeters of penetration. But they're there. The network is here. It's been listening through the walls of this bunker for years, parsing the data on those servers the same way you just did. Whatever you learned, it already knows.`,
+            `The question isn't what you found. The question is what you do with it that the network doesn't expect.`,
+          ];
+        }
+        return [
+          `The daylight hits like a physical force after the bunker's amber twilight. You stand in the entrance, blinking, letting your eyes readjust to a world that feels both larger and less certain than it did when you went in.`,
+          `The ash is still falling. The valley is still grey. But you carry something now that changes the arithmetic of every decision ahead — knowledge of what Arcadia is, what it was designed to be, and what it has become without anyone left to tell it to stop.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Head for Arcadia — you know what you\'re walking into now', next: null, effect: () => { setFlag('arcadia_signal'); showNotif('Bunker Pyxis cleared — Arcadia approach unlocked'); toggleMap(); }, req: () => hasFlag('arcadia_signal'), reqNote: '[ Requires Arcadia intel ]' },
+      { label: 'Return to Ironmarket — process what you\'ve learned', next: null, effect: () => { modStat('hp', 4); showNotif('HP +4 — safe exit // returning to process intel'); toggleMap(); } },
+      { label: 'Head to Dustwalker Fort — Vance needs to see this data', next: null, effect: () => { toggleMap(); }, req: () => !hasFlag('dustwalker_hostile_entry'), reqNote: '[ Requires non-hostile Dustwalker status ]' },
+    ],
+  },
+
 }; // end scenes
 
 // Init

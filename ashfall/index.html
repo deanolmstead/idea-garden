@@ -4404,6 +4404,174 @@ const scenes = {
     ],
   },
 
+  dustwalker_commander: {
+    title: 'Commander Vance',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.dustwalker_hostile_entry) {
+          return [
+            `She's waiting for you. Standing behind her desk, sidearm drawn but held low — not pointed at you, pointed at the floor. A calculated gesture. The door behind you clicks shut. Two soldiers flanking it.`,
+            `Commander Vance is fifty, maybe older — the ashlands compress the timeline. Close-cropped silver hair. A scar bisecting her left eyebrow. The posture of someone who hasn't slouched since the academy that trained her stopped existing.`,
+            `<em>"You killed one of my people."</em> Flat. No anger. The kind of calm that's worse than shouting. <em>"Injured two more. Damaged a gate that took three weeks to weld."</em> She sets the sidearm on the desk. <em>"Give me one reason this conversation continues with you breathing."</em>`,
+          ];
+        }
+        if (typeof state !== 'undefined' && state.flags && state.flags.dustwalker_infiltrated) {
+          return [
+            `You shouldn't be here. That's the first thing her expression says when you open the door to the command building. The second thing: she's not surprised.`,
+            `Commander Vance sits behind a desk that was once a school principal's — the nameplate is still visible under a layer of tactical maps. She's fifty, maybe older. Silver hair, military crop. A scar bisects her left eyebrow. Her hands are folded on the desk, and they don't move toward the sidearm when you enter.`,
+            `<em>"You got past my perimeter."</em> Not a question. A measurement. <em>"That's either very skilled or very stupid. Sit down. Let's determine which."</em>`,
+          ];
+        }
+        return [
+          `The command building smells like old paper and gun oil. Maps cover every wall — the valley rendered in hand-drawn detail, patrol routes in red, supply lines in blue, and one area circled in black ink with no annotation at all. East. Deep east.`,
+          `Commander Vance stands as you enter. The courtesy is precise, military — an acknowledgment of your presence, not your importance. She's fifty, maybe older. Silver hair, military crop. A scar bisects her left eyebrow. Her eyes take your measure in two seconds and file the result somewhere you can't read.`,
+          `<em>"I'm told you have intelligence."</em> She gestures to a chair. <em>"Intelligence is the only currency I don't counterfeit. Sit."</em>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: '"I know about the shipments. The rad canisters. Arcadia."', next: 'dustwalker_vance_arcadia', req: () => hasFlag('dustwalker_stockpile') || hasFlag('arcadia_signal') || hasItem('DUSTWALKER LOGBOOK'), reqNote: '[ Requires Arcadia intel ]' },
+      { label: '"I have WARDEN-3\'s data. Valley-wide sensor grid. A century of observation."', next: 'dustwalker_vance_warden', req: () => hasFlag('warden_alliance') || hasFlag('sigma_data_taken'), reqNote: '[ Requires WARDEN data ]' },
+      { label: '"What\'s in the black circle on your map? The unmarked zone east?"', next: 'dustwalker_vance_map' },
+      { label: '"I want safe passage east. What does that cost?"', next: 'dustwalker_vance_deal' },
+      { label: 'Your synaptic overclock processes her micro-expressions faster than she can mask them', next: 'dustwalker_vance_overclock', req: () => hasMutation('synaptic_overclock'), reqNote: '[ Requires Synaptic Overclock mutation ]' },
+      { label: 'Attack Vance — take the maps by force', next: 'dustwalker_vance_fight', danger: true, hidden: () => !hasFlag('dustwalker_hostile_entry') },
+    ],
+  },
+
+  dustwalker_vance_arcadia: {
+    title: 'The Arcadia Question',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Vance goes still. Not the stillness of surprise — the stillness of someone recalculating how dangerous you are.`,
+      `<em>"You know more than you should."</em> She walks to the map wall. Her finger traces the black circle. <em>"Arcadia Cooperative. Founded Year Negative-Twelve. Agricultural research station. Mycorrhizal network experiments."</em> She says each word like she's reading a death certificate.`,
+      `<em>"Fourteen years ago, the network achieved something the founders didn't anticipate. Sentience. Or something close enough that the distinction stopped mattering."</em> She turns back to you. <em>"It's been growing ever since. Underground. The root system extends forty kilometers in every direction. It's under this fort. It's under Ironmarket. It's under the ash."</em>`,
+      `<em>"The canisters are — "</em> She pauses. Chooses the next word with the precision of someone defusing an explosive. <em>"— nutrition. Radioactive isotopes. The network metabolizes them the way you metabolize food. We've been feeding it for six years."</em>`,
+      `<em>"Why?"</em> Your question sits between you like a loaded weapon.`,
+      `<em>"Because it asked."</em> She meets your eyes. <em>"And because the alternative is what happens when you stop feeding something that's learned how to be hungry."</em>`,
+    ],
+    choices: [
+      { label: '"You\'re keeping a monster alive."', next: 'dustwalker_vance_deal', effect: () => { modRep('dustwalker', -1); } },
+      { label: '"You\'re managing a threat. I understand. What do you need?"', next: 'dustwalker_vance_alliance', effect: () => { modRep('dustwalker', 1); } },
+      { label: '"I\'m going to Arcadia. What should I expect?"', next: 'dustwalker_vance_briefing' },
+    ],
+  },
+
+  dustwalker_vance_warden: {
+    title: 'The Data Trade',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You describe WARDEN-3's sensor grid. The century of archived weather patterns, radiation maps, soil analysis. Vance listens without moving — the kind of listening that records everything and reveals nothing.`,
+      `When you finish, she's quiet for ten seconds. Then: <em>"A hundred and forty years of environmental data."</em> She says it the way Marta Holloway said it — like a prayer. But Vance's prayer has a different ending.`,
+      `<em>"That data would let us predict the network's growth patterns. Map its expansion. Anticipate where it surfaces next."</em> She opens a desk drawer and removes a folded map — hand-annotated, detailed, the kind of intelligence that costs lives to gather.`,
+      `<em>"Arcadia approach vectors. Safe corridors through the root system. Timing windows when the network's attention is directed elsewhere."</em> She holds the map up. <em>"Trade?"</em>`,
+    ],
+    choices: [
+      { label: 'Accept the trade — WARDEN data for Arcadia approach', next: 'dustwalker_vance_briefing', effect: () => { setFlag('arcadia_signal'); setFlag('dustwalker_arcadia_map'); modRep('dustwalker', 2); modStat('ms', 1); showNotif('WARDEN data traded — ARCADIA APPROACH MAP // Dustwalker rep: TRUSTED'); } },
+      { label: '"I need more than a map. I need your help getting in."', next: 'dustwalker_vance_alliance', req: () => skillCheck('cha', 11), reqNote: '[ Requires CHA 11+ ]' },
+      { label: 'Decline — this data is too valuable to hand over', next: 'dustwalker_vance_deal', effect: () => { modRep('dustwalker', -1); } },
+    ],
+  },
+
+  dustwalker_vance_map: {
+    title: 'The Black Circle',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Vance looks at the map. At the black circle. At you.`,
+      `<em>"Forty-six kilometers east-southeast. A place we don't go."</em> Her voice drops half a register. <em>"Not because we can't. Because every patrol we've sent comes back — "</em> She searches for the word. <em>"— edited. Same people. Same memories. But something fundamental has been adjusted. They follow orders differently afterward. They sleep differently. They listen to things we can't hear."</em>`,
+      `<em>"Arcadia."</em> She says the name like a diagnosis. <em>"The network has been calling to sensitive individuals for years. Mutations help — the more you've changed, the louder the signal. Some people walk east and don't realize they're following instructions they never received."</em>`,
+    ],
+    choices: [
+      { label: '"I\'m going there. Brief me."', next: 'dustwalker_vance_briefing' },
+      { label: '"How do I avoid being — edited?"', next: 'dustwalker_vance_briefing', effect: () => { setFlag('arcadia_uv_warning'); modStat('ms', 1); showNotif('MS +1 — network resistance briefing'); } },
+    ],
+  },
+
+  dustwalker_vance_overclock: {
+    title: 'Reading Vance',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The synaptic overclock fires. Time dilates — not literally, but your processing speed quadruples and Vance's micro-expressions bloom like time-lapse flowers.`,
+      `She's afraid. Not of you — of something behind you, temporally. Something she's seen that she can't unsee. The fear lives in the tension around her eyes, the way her fingers rest on the desk — not casual, anchored. Grounding herself.`,
+      `She believes what she's doing is right. That conviction is structural, load-bearing. Remove it and she collapses. But there's a crack — a flicker when she mentions the eastern shipments, a tightening of the jaw that means she knows the cost of what she's feeding.`,
+      `And underneath everything: exhaustion. The deep, geological exhaustion of someone who's been holding a line alone for years, watching it erode, unable to ask for help because asking for help means admitting the line is moving.`,
+      `She needs an ally. She just doesn't know how to ask.`,
+    ],
+    choices: [
+      { label: '"Commander. You don\'t have to hold this alone."', next: 'dustwalker_vance_alliance', effect: () => { modRep('dustwalker', 2); modStat('ms', 1); showNotif('MS +1 — Vance\'s fear decoded // Dustwalker rep: TRUSTED'); } },
+      { label: '"You\'re scared. What did the network show you?"', next: 'dustwalker_vance_arcadia', effect: () => { modStat('ms', 1); } },
+    ],
+  },
+
+  dustwalker_vance_fight: {
+    title: 'Bad Arithmetic',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You lunge across the desk. Vance moves faster than a fifty-year-old has any right to — the sidearm is in her hand before your fingers reach the maps, and the muzzle finds the center of your chest with the precision of a woman who has pointed guns at people professionally for three decades.`,
+      `<em>"Don't."</em> One word. Final. <em>"The maps aren't worth your life. And they're definitely not worth mine."</em>`,
+      `The soldiers behind you close the distance. You feel rifle barrels against your spine. The math is very clear.`,
+    ],
+    choices: [
+      { label: 'Stand down', next: 'dustwalker_vance_deal', effect: () => { modRep('dustwalker', -1); modStat('hp', -2); showNotif('HP -2 — rifle butt to the kidney // stand down'); } },
+    ],
+  },
+
+  dustwalker_vance_alliance: {
+    title: 'Alliance',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Something shifts behind Vance's eyes. The weight redistributes — not lighter, but shared. For the first time since you entered, her shoulders drop a centimeter.`,
+      `<em>"The network is growing faster than our shipments can sustain. In six months it will reach the aquifer. After that, anyone who drinks the water will carry it inside them."</em> She unfolds the Arcadia approach map and spreads it flat.`,
+      `<em>"I need someone inside. Someone the network hasn't touched. Someone who can reach the core and determine if it can be reasoned with."</em> She looks at you with the frank assessment of a woman who has run out of better options. <em>"Or destroyed."</em>`,
+      `She gives you everything: approach vectors, timing windows, a rad-shielded container for biological samples, and a frequency — short-range, encrypted — to reach her from inside Arcadia's perimeter.`,
+      `<em>"Come back."</em> It's not an order. It's the closest thing to a request her rank allows.`,
+    ],
+    choices: [
+      { label: 'Accept the mission', next: null, effect: () => { setFlag('dustwalker_alliance'); setFlag('arcadia_signal'); setFlag('dustwalker_arcadia_map'); addItem('RAD-SHIELDED CONTAINER'); addItem('ENCRYPTED RADIO'); modRep('dustwalker', 1); modStat('hp', 6); modStat('con', 1); showNotif('DUSTWALKER ALLIANCE — Arcadia mission accepted // HP +6, CON +1'); toggleMap(); } },
+    ],
+  },
+
+  dustwalker_vance_deal: {
+    title: 'The Price of Passage',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Vance's expression hardens back to regulation. The window of vulnerability — if it existed — closes.`,
+      `<em>"Safe passage east costs more than conversation."</em> She taps the desk. <em>"I need the Sigma Relay's sensor data. All of it. Environmental monitoring, radiation patterns, growth projections. The AI there — WARDEN-3 — it has what I need to predict the network's expansion."</em>`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.sigma_destroyed) {
+          return [
+            `Your silence tells her everything. Her jaw sets. <em>"You destroyed it."</em> Not a question. <em>"A hundred and forty years of data, and you destroyed it."</em>`,
+            `She stands. The conversation is over. <em>"Get out of my fort. If I see you again, it'll be through a scope."</em>`,
+          ];
+        }
+        return [
+          `<em>"Bring me that data and I'll give you Arcadia approach vectors. Safe corridors. Everything I know."</em> She meets your eyes. <em>"That's the deal. Take it or walk."</em>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Accept — get WARDEN\'s data for Vance', next: null, effect: () => { setFlag('dustwalker_data_quest'); modRep('dustwalker', 1); showNotif('Dustwalker deal: bring WARDEN data for Arcadia vectors'); toggleMap(); }, hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Leave the fort', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  dustwalker_vance_briefing: {
+    title: 'Briefing',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Vance spreads the Arcadia approach map on her desk. Her finger traces a route through terrain you recognize from WARDEN's data — if you have it — or from trader rumors if you don't.`,
+      `<em>"The network is densest in the center. Mycorrhizal filaments — root structures — threaded through every square meter of soil in a forty-kilometer radius. The closer you get, the more it knows you're coming."</em>`,
+      `<em>"The commune is on the surface. Thirty, forty people. They look normal. They eat, sleep, talk. But they're connected to the network. Permanently. It sees through them. It speaks through them."</em>`,
+      `<em>"The core is underground. A single organism — the original experimental culture, grown for a hundred and forty years. It processes information. It makes decisions. It"</em> — she pauses — <em>"wants things."</em>`,
+      `<em>"Two rules."</em> She holds up two fingers. <em>"Don't eat anything that grows there. And don't sleep. The network interfaces through REM cycles. Stay awake and you stay yourself."</em>`,
+    ],
+    choices: [
+      { label: 'Head for Arcadia', next: null, effect: () => { setFlag('arcadia_signal'); setFlag('dustwalker_briefing'); addItem('ARCADIA APPROACH MAP'); modStat('ms', 1); showNotif('ARCADIA APPROACH MAP acquired // MS +1 — briefing complete'); toggleMap(); } },
+      { label: 'Negotiate an alliance first', next: 'dustwalker_vance_alliance', req: () => repCheck('dustwalker', 1), reqNote: '[ Requires Dustwalker rep: KNOWN+ ]' },
+    ],
+  },
+
 }; // end scenes
 
 // Init

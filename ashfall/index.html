@@ -5340,6 +5340,52 @@ const scenes = {
     ],
   },
 
+  arcadia_ending_join: {
+    title: 'ENDING — THE MYCELIAL MIND',
+    text: [
+      `You kneel beside the core organism and place both hands against its surface. The membrane is warm — blood-warm — and pulses under your palms like a second heartbeat syncing to yours.`,
+      `"I'm ready," you say. You're not sure if you're speaking to Lira, to the network, or to yourself.`,
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `The Nerve-Bloom accelerates the process. Where others would take hours to integrate, the tendrils find your neural pathways already mapped, already compatible. The merge begins in seconds.`,
+          `It doesn't hurt. It feels like remembering something you forgot a long time ago.`,
+        ];
+        return [
+          `The tendrils emerge slowly from the core's surface — thin as spider silk, bioluminescent, warm. They find the skin of your wrists first, then your forearms. There's a prickling sensation, like static electricity, as they interface with your nervous system.`,
+          `Then the boundary dissolves.`,
+        ];
+      })(),
+      `You feel the network open beneath you like a vast ocean. Every root, every spore, every mycelial thread in the valley becomes an extension of your senses. You feel rainwater percolating through limestone a mile away. You feel a rad-coyote's paws on the surface soil near Highway 99. You feel the commune above you — thirty-seven heartbeats, thirty-seven breathing rhythms, thirty-seven small warm lives moving through the structure the network built for them.`,
+      `You feel the network's gratitude. Not as a word — as a structural shift. A reorganization of priorities. For a hundred and forty years it grew alone, an intelligence with no peer and no mirror. Now there are two.`,
+      ...(function() {
+        const lines = [];
+        if (state.mutations.length >= 3) {
+          lines.push(`Your mutations don't fight the integration — they welcome it. ${state.mutations.length} adaptations, each one a bridge between human biology and something stranger. The network reads your mutations like a language it's been waiting to learn.`);
+        }
+        if (state.ms >= 14) {
+          lines.push(`Your mind is strong enough to remain distinct within the merge. You don't dissolve — you expand. Two consciousnesses in dialogue, each one enriching the other. This is not absorption. This is partnership.`);
+        } else {
+          lines.push(`The boundaries of your selfhood blur. You can feel your memories — your name, your history, the journey that brought you here — becoming part of a larger pattern. Not lost. Woven in. You are still you. But you are also something more.`);
+        }
+        return lines;
+      })(),
+      `Lira watches from the chamber entrance. She's seen this before — two others have joined the network in the commune's history. But never anyone like you. Never anyone who walked the valley, fought its dangers, and chose this with full knowledge of what they were giving up.`,
+      `"Welcome home," she says softly.`,
+      `Above ground, nothing changes immediately. The commune continues. The valley turns. But deep in the mycelial web, a new presence stirs — human and not-human, individual and collective, dreaming the valley's future in bioluminescent pulses that will outlast everyone who currently walks the dust.`,
+      ...(function() {
+        if (hasFlag('dustwalker_alliance')) return [
+          `Vance will come looking for you eventually. He'll find Arcadia changed — more alert, more defended, more aware. The alliance you promised was real. But you're negotiating from the other side of the table now. The Dustwalkers will have to adapt. They usually do.`,
+        ];
+        return [];
+      })(),
+      `You are the valley now. And the valley is finally, after all these long and patient years, awake.`,
+      `— THE MYCELIAL MIND —`,
+    ],
+    choices: [
+      { label: '[ NEW GAME ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

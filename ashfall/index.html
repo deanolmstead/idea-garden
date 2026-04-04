@@ -5258,6 +5258,88 @@ const scenes = {
     ],
   },
 
+  arcadia_ending_destroy_toxin: {
+    title: 'ENDING — THE BURNING ROOT',
+    text: [
+      `You uncap the mycotoxin formula. The liquid is black and viscous, almost alive in its own right — engineered by pre-war biologists to kill exactly this kind of organism.`,
+      `You pour it into the root channel at the base of the core. The effect is immediate.`,
+      `The bioluminescent column shudders. Colors race through it — panic colors, alarm colors, signals that have no human name. The temperature drops ten degrees in seconds as the network begins pulling energy inward, trying to isolate the toxin.`,
+      `It can't. The mycotoxin was designed to travel faster than the immune response. It rides the nutrient channels like a wildfire rides wind.`,
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `Through your Nerve-Bloom you feel it dying. Not rage — bewilderment. After a hundred and forty years of patience, after finally finding a mind that could understand it, that mind chose this. The last emotion the network sends you isn't anger. It's disappointment.`,
+        ];
+        if (hasFlag('arcadia_open_contact')) return [
+          `You feel a faint echo through the fading connection — surprise, then something that might be sorrow. Then silence.`,
+        ];
+        return [];
+      })(),
+      `Above you, the commune shakes. Walls crack as root structures contract and die. You hear screaming — not from the network, from the people. Lira's people.`,
+      `The bioluminescence goes dark. Section by section, chamber by chamber, the light dies. Within an hour, Arcadia is a tomb of dead fungal matter and shattered stone.`,
+      `Lira finds you at the exit. She doesn't speak. She doesn't need to.`,
+      ...(function() {
+        if (hasFlag('dustwalker_alliance')) return [
+          `The Dustwalkers arrive within the day. Vance surveys the dead network with professional satisfaction. "Clean work," he says. He doesn't ask what it cost you.`,
+          `The Dustwalkers absorb Arcadia's refugees. Some of them adapt. Some don't. The valley's balance shifts — the Dustwalkers control the eastern pass now, and Ironmarket's monopoly on trade begins to erode.`,
+        ];
+        return [
+          `Word spreads fast. Within a week, salvage teams from Ironmarket and the Dustwalker patrols are picking through Arcadia's bones. The commune scatters — some to Ironmarket, some to the wastes. Most are never seen again.`,
+        ];
+      })(),
+      `The San Joaquin Valley grows quieter. The rad-storms still blow. The sun still burns. But something is missing now — a presence, a pulse, a dreaming thing beneath the earth that had watched over this place for longer than anyone alive can remember.`,
+      `You killed it. Maybe it needed killing. You'll spend the rest of your life deciding.`,
+      `— THE BURNING ROOT —`,
+    ],
+    choices: [
+      { label: '[ NEW GAME ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+    ],
+  },
+
+  arcadia_ending_destroy_force: {
+    title: 'ENDING — ASH AND RUIN',
+    text: [
+      ...(function() {
+        const w = state.weapon || 'bare hands';
+        return [`You raise your ${w} and strike the core organism.`];
+      })(),
+      `The outer membrane splits with a sound like tearing canvas. Bioluminescent fluid sprays across the chamber — hot, alkaline, burning where it touches skin. The core organism convulses.`,
+      ...(function() {
+        const results = [];
+        if (state.str >= 14) {
+          results.push(`Your strength is enough. You tear through the root structure systematically, severing the primary nutrient channels one by one. The network can't regenerate faster than you can destroy.`);
+        } else {
+          results.push(`It's harder than you expected. The organism heals almost as fast as you can damage it. You have to be strategic — targeting junctions, severing clusters, collapsing support structures. It takes hours.`);
+          results.push(`By the end your arms are shaking and your weapon is slick with bioluminescent fluid. But the core is dark.`);
+        }
+        return results;
+      })(),
+      `The death isn't quiet like the mycotoxin. It's violent. The chamber floods with defensive spores — your lungs burn, your eyes stream. Root tendrils lash blindly, cracking stone. A section of ceiling collapses.`,
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `Through your Nerve-Bloom you feel every blow landing. The network's pain is your pain. You keep going anyway. By the end, something in your own neural pathways has gone quiet — the Nerve-Bloom mutation has burned itself out, overloaded by the death-signals. You'll never interface with anything again.`,
+        ];
+        return [];
+      })(),
+      `You stagger out of the collapsing chamber. Behind you, Arcadia begins to die — not all at once, but in stages, like a body losing circulation. The outer structures will take weeks to fully decompose.`,
+      `The commune evacuates. Some of them see you emerge, covered in bioluminescent fluid and blood. They know what you did. They'll remember.`,
+      ...(function() {
+        if (getRep('arcadia') >= 2) return [
+          `Lira catches your arm as you pass. "They trusted you," she says. Her voice is flat. Empty. "I trusted you."`,
+          `She lets go. You don't see her again.`,
+        ];
+        return [
+          `Lira watches from the perimeter. She doesn't approach. She saw this possibility the moment she let you in.`,
+        ];
+      })(),
+      `The valley adjusts. It always does. New power dynamics, new trade routes, new borders drawn in the dust. Arcadia becomes a ruin — another dead place in a world full of them.`,
+      `You did what you thought was necessary. The valley is safer, or at least simpler. Whether that's the same thing is a question you'll carry like rad-burn — always there, never fully healed.`,
+      `— ASH AND RUIN —`,
+    ],
+    choices: [
+      { label: '[ NEW GAME ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

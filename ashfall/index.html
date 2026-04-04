@@ -4347,6 +4347,63 @@ const scenes = {
     ],
   },
 
+  dustwalker_interior: {
+    title: 'Inside the Fort',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.dustwalker_infiltrated) {
+          return [
+            `You move through the compound in the gaps between attention. The Dustwalkers have the discipline of a military unit and the blind spots of one — they watch the perimeter, not the interior. Once you're inside the pattern, you're invisible.`,
+            `The compound is smaller than it seemed from outside. Barracks. Mess hall. Motor pool. A radio shack with an antenna that hums at a frequency you can feel in your fillings. And in the center: the command building — poured concrete, reinforced door, a single window with blackout curtains drawn tight.`,
+            `But it's the vehicle bay that stops you. Two flatbed trucks, engines warm. And on the truck beds: lead-lined canisters, hazard-yellow, radiation trefoils on every surface. They're loading them. Preparing a shipment. East.`,
+          ];
+        }
+        return [
+          `The escort deposits you inside the gate with the courtesy of someone delivering a package they didn't order. The compound unfolds: barracks to the left, mess hall straight ahead — the permanent smell of boiled grain and recycled protein — motor pool to the right.`,
+          `Dustwalker soldiers move with purpose. Nobody loiters. Nobody makes eye contact longer than necessary. The discipline is genuine, not performed — these people have internalized the idea that efficiency is survival and waste is death.`,
+          `The vehicle bay draws your eye. Two flatbed trucks, tarped, but the tarp on the nearer one has shifted in the wind. Underneath: cylindrical canisters, lead-lined, hazard-yellow. Radiation trefoils. They're not hiding them — they're loading them.`,
+          `Your escort nods toward the central building. <em>"Commander Vance. Don't keep her waiting."</em>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Go to Commander Vance', next: 'dustwalker_commander' },
+      { label: 'Examine the rad canisters first', next: 'dustwalker_transport', hidden: () => hasFlag('dustwalker_infiltrated') },
+      { label: 'Examine the rad canisters up close', next: 'dustwalker_transport', hidden: () => !hasFlag('dustwalker_infiltrated') },
+      { label: 'Check the radio shack', next: 'dustwalker_radio', req: () => hasFlag('dustwalker_infiltrated'), reqNote: '[ Infiltration only ]' },
+      { label: 'Your magnetoreception picks up massive ferrous signatures underground', next: 'dustwalker_underground', req: () => hasMutation('magnetoreception'), reqNote: '[ Requires Magnetoreception mutation ]' },
+    ],
+  },
+
+  dustwalker_radio: {
+    title: 'The Radio Shack',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The radio shack is unlocked — why would it be? Nobody unauthorized gets inside the perimeter. Nobody except you.`,
+      `Inside: a bank of shortwave receivers and one long-range transmitter, jury-rigged from three different pre-Fall units into something that shouldn't work but does. The logbook sits open on the desk. You photograph the last thirty entries with a quick scan.`,
+      `Transmissions to and from a callsign you don't recognize: ARCADIA-PRIME. Daily check-ins. Cargo manifests. And one entry, circled in red ink three times: <em>"Shipment 14 — Core Material — ETA 72 hours. Acknowledge receipt. Acknowledge integration protocol."</em>`,
+      `Integration protocol. The words sit in your stomach like cold metal. Whatever they're shipping to Arcadia, Arcadia isn't just receiving it. Arcadia is <em>integrating</em> it.`,
+    ],
+    choices: [
+      { label: 'Take the logbook and move on', next: 'dustwalker_interior', effect: () => { addItem('DUSTWALKER LOGBOOK'); setFlag('arcadia_signal'); modStat('ms', 1); showNotif('Found: DUSTWALKER LOGBOOK // MS +1 — Arcadia integration protocol'); } },
+    ],
+  },
+
+  dustwalker_underground: {
+    title: 'Beneath the Fort',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The magnetoreception hits like a migraine — a deep, structural pull beneath your feet. Iron. Massive amounts of it. Not rebar, not piping. Something shaped. Something stored.`,
+      `You find the access hatch behind the motor pool. Storm drain cover, welded shut, then unwelded — the cut marks are fresh. Below: a ladder descending into a concrete chamber that predates the fort by a century. Pre-Fall infrastructure. The Dustwalkers didn't build this. They found it.`,
+      `The chamber is ten meters square. Stacked floor to ceiling: identical lead-lined canisters. Hundreds of them. More than the trucks could move in a month. More than any military operation needs.`,
+      `The Geiger counter on the wall reads numbers you've never seen outside a textbook. The iron you're sensing isn't the canisters — it's the shielding. Three layers of ferromagnetic composite between you and whatever is inside those cylinders. Whatever they're shipping to Arcadia, this is the stockpile. And it's been here for a very long time.`,
+    ],
+    choices: [
+      { label: 'Mark the location and get out — this is above your pay grade', next: 'dustwalker_interior', effect: () => { setFlag('dustwalker_stockpile'); setFlag('arcadia_signal'); modStat('ms', 2); showNotif('MS +2 — underground stockpile discovered // Arcadia connection confirmed'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

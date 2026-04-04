@@ -5216,6 +5216,48 @@ const scenes = {
     ],
   },
 
+  arcadia_choice: {
+    title: 'THE DECISION',
+    text: [
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `You withdraw from the neural interface, synapses still echoing with the network's vast, lonely consciousness. You know it completely now — its fear, its hope, the architecture of its dreaming.`,
+          `You know exactly how fragile it is. And exactly how dangerous.`,
+        ];
+        if (hasFlag('arcadia_open_contact')) return [
+          `The merge fades slowly, like surfacing from deep water. The network's presence lingers at the edges of your awareness — a warmth behind your eyes, a whisper you can almost parse.`,
+          `You've felt what it feels. The valley as a single living system. Beautiful. And terrifying.`,
+        ];
+        if (hasFlag('arcadia_guarded_contact')) return [
+          `The bioluminescent patterns fade to a slow, patient pulse. The network waits. It has communicated what it can through light and color — the rest is up to you.`,
+          `You understand enough. Maybe not everything, but enough to make this choice.`,
+        ];
+        return [`You stand in the heart of Arcadia, the core organism pulsing gently around you. The moment of decision has arrived.`];
+      })(),
+      `Lira stands at the chamber entrance, watching you. The commune above goes about its routines, unaware that a single decision made in this room could reshape the valley.`,
+      ...(function() {
+        if (hasFlag('dustwalker_alliance')) return [
+          `Vance's words echo: the Dustwalkers want the network contained or destroyed. An alliance with them means Arcadia cannot continue as it is.`,
+        ];
+        return [];
+      })(),
+      ...(function() {
+        if (hasFlag('bunker_protocols')) return [
+          `The Pyxis protocols are clear — the original researchers intended containment, not coexistence. The network exceeded every parameter they set.`,
+        ];
+        return [];
+      })(),
+      `Four paths forward. Each one permanent. Each one the valley's future.`,
+    ],
+    choices: [
+      { label: 'Destroy the network — deploy the mycotoxin through the root system', next: 'arcadia_ending_destroy_toxin', req: () => hasItem('MYCOTOXIN FORMULA'), reqNote: '[ Requires Mycotoxin Formula ]', danger: true },
+      { label: 'Destroy the network — burn the core with everything you have', next: 'arcadia_ending_destroy_force', req: () => state.weapon !== null, reqNote: '[ Requires equipped weapon ]', danger: true },
+      { label: 'Join the network — become part of Arcadia permanently', next: 'arcadia_ending_join', req: () => hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact'), reqNote: '[ Requires open or nerve-bloom contact ]' },
+      { label: 'Negotiate coexistence — broker terms between Arcadia and the valley', next: 'arcadia_ending_negotiate', req: () => (getRep('arcadia') >= 1 && (getRep('dustwalker') >= 0 || getRep('ironmarket') >= 0)), reqNote: '[ Requires Arcadia rep +1 and non-hostile standing with another faction ]' },
+      { label: 'Walk away — some decisions aren\'t yours to make', next: 'arcadia_ending_walk' },
+    ],
+  },
+
 }; // end scenes
 
 // Init

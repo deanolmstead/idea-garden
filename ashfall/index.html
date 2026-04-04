@@ -4773,6 +4773,54 @@ const scenes = {
     ],
   },
 
+  bunkerpyxis_crawler: {
+    title: 'The Guardian',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The clicking stops. That's worse.`,
+      `You're halfway down the stairwell when the silence lands on you like a change in air pressure. The emergency strips flicker — once, twice — and in the strobe you see it. Filling the corridor below. Segmented. Pale. Eyeless. A centipede the length of a car, mandibles open, body coiled in the stairwell like a spring waiting to release.`,
+      `It didn't find you by accident. It stopped patrolling and came here. To the stairwell. To you. Whatever sensory apparatus it uses — vibration, heat, chemical trace — it parsed your location from the noise of your descent and repositioned with a speed that makes your stomach drop.`,
+      `The mandibles click once. A sound like a rifle bolt cycling. Then it moves.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasItem('SOLAR LANTERN')) {
+          return [
+            `You swing the solar lantern up — full brightness, aimed directly at the head segment. The creature recoils. Not pain — confusion. Its eyeless face flinches from the concentrated UV, mandibles snapping shut reflexively. Three seconds of hesitation. Three seconds you can use.`,
+          ];
+        }
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Fight the tunnel crawler', next: 'bunkerpyxis_crawler_result', effect: () => { renderCombatScene('tunnel_crawler', 'bunkerpyxis_crawler_result', 'It fills the stairwell. The walls amplify every click into a percussive wave. The mandibles reach for you with the deliberate patience of something that has never needed to hurry because nothing has ever escaped.'); } },
+      { label: 'Blind it with the lantern and run past', next: 'bunkerpyxis_archives', req: () => hasItem('SOLAR LANTERN'), reqNote: '[ Use Solar Lantern ]', effect: () => { modStat('hp', -3); modStat('dex', 1); showNotif('DEX +1, HP -3 — lantern blind, scrambled past'); } },
+      { label: 'Use the flare gun — light and noise in a confined space', next: 'bunkerpyxis_archives', req: () => hasItem('FLARE GUN'), reqNote: '[ Use Flare Gun ]', effect: () => { removeItem('FLARE GUN'); addItem('FLARE GUN (SPENT)'); modStat('hp', -1); showNotif('HP -1 — flare disoriented crawler // clear passage'); } },
+      { label: 'Your chitin plates can take the hit — charge through', next: 'bunkerpyxis_archives', req: () => hasMutation('chitin_plates'), reqNote: '[ Requires Chitin Plates mutation ]', effect: () => { modStat('hp', -2); modStat('con', 1); showNotif('CON +1, HP -2 — chitin absorbed the mandible strike'); } },
+    ],
+  },
+
+  bunkerpyxis_crawler_result: {
+    title: 'After the Crawler',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.hp > 8) {
+          return [
+            `It stops moving. The segments go slack, mandibles half-open, the pale body settling into the stairwell like a deflated balloon. Up close, you can see the details: bioluminescent nodes along each segment, sensory pits where eyes should be, a carapace that's harder than anything organic has a right to be.`,
+            `This wasn't a wild animal. It was engineered. Pre-Fall biotech, seeded into the bunker as a security measure and left to grow for a century and a half. A living lock, guarding whatever is below.`,
+            `The stairwell is clear. Below: the archives. The answers.`,
+          ];
+        }
+        return [
+          `You're alive. That's the best summary available. The crawler is wounded — retreated into a maintenance duct, trailing bioluminescent fluid that glows faint blue on the concrete. You're wounded too, but you're still standing and it isn't, and in the ashlands that's called winning.`,
+          `The stairwell opens below. Whatever the bunker is protecting, you've earned access to it in the oldest currency there is.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Descend to the archives', next: 'bunkerpyxis_archives', effect: () => { if (Math.random() < 0.3) addMutation('chitin_plates'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

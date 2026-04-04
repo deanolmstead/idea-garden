@@ -4716,6 +4716,63 @@ const scenes = {
     ],
   },
 
+  bunkerpyxis_descent: {
+    title: 'The Sealed World',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `Emergency lighting strips line the ceiling — amber LEDs, running on a power source that hasn't been maintained in a hundred and forty years and hasn't needed to be. The air is cool, dry, and carries a faint ozone tang that means the filtration system is still cycling. The bunker is alive in the way that machines are alive — obedient, tireless, indifferent to whether anyone notices.`,
+      `The top level is storage. Racks of sealed containers, labeled in military shorthand: MRE-STANDARD, WATER-PURIFIED-20L, MED-KIT-FIELD-GRADE, AMMO-NATO-5.56. A snapshot of a civilization preparing for the worst and achieving it.`,
+      `Most of the racks are empty. Not looted — requisitioned. The inventory tags show controlled drawdowns, each one signed and dated. Someone was managing this supply chain right up until the last signature, dated Year Negative-One. After that: nothing. The pen is still on the clipboard.`,
+      `A stairwell descends to the residential level. From below: a sound. Rhythmic. Chitinous. The steady click-click-click of something with too many legs moving through a space designed for things with two.`,
+    ],
+    choices: [
+      { label: 'Descend carefully — toward the clicking', next: 'bunkerpyxis_crawler', effect: () => { modStat('con', -1); showNotif('CON -1 — bunker descent stamina'); } },
+      { label: 'Search the storage level first', next: 'bunkerpyxis_storage' },
+      { label: 'You mapped the crawler\'s patrol — wait for the gap', next: 'bunkerpyxis_crawler_bypass', req: () => hasFlag('bunkerpyxis_mapped'), reqNote: '[ Requires echo-sense map ]' },
+      { label: 'Use the Geiger counter to check for contamination', next: 'bunkerpyxis_geiger', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
+    ],
+  },
+
+  bunkerpyxis_storage: {
+    title: 'Supply Cache',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `You work the racks systematically. Most containers are empty or hold supplies that expired decades ago — protein bars turned to chalk, water purification tablets dissolved into powder. But military packaging was built for pessimists, and pessimists build things that last.`,
+      `Third rack, bottom shelf: a field medkit, vacuum-sealed, the indicator strip still green. Behind it, wedged into a gap between containers: a pre-Fall technical manual — <em>WARDEN Series Autonomous Monitoring Systems: Maintenance and Override Protocols.</em> Someone stashed this here deliberately. Insurance, maybe. Or a message.`,
+      `And in the ammunition locker — empty, mostly, but not entirely. A flare gun with six flares. Not a weapon. A signal. The kind of thing you carry when you want to be found.`,
+    ],
+    choices: [
+      { label: 'Take what\'s useful and head down', next: 'bunkerpyxis_crawler', effect: () => { addItem('FIELD MEDKIT'); addItem('TECHNICAL MANUAL'); addItem('FLARE GUN'); modStat('hp', 3); showNotif('Found: FIELD MEDKIT + TECHNICAL MANUAL + FLARE GUN // HP +3'); } },
+    ],
+  },
+
+  bunkerpyxis_geiger: {
+    title: 'Contamination Check',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The Geiger counter sweeps the storage level in slow arcs. Background radiation — minimal. The bunker's shielding is doing its job. But as you move toward the stairwell, the needle climbs. Not the stairwell itself — the wall beside it.`,
+      `You trace the reading. Behind the concrete: a sealed compartment, not on the floor plan. The radiation signature is familiar — the same structured isotope pattern you found in the Dustwalker canisters, if you found them. Biological enrichment. Something organic, something growing, has been concentrating radioactive material inside the walls of this bunker.`,
+      `Mycorrhizal filaments. The network reaches here. Through the bedrock, through the foundation, threading itself into the infrastructure like roots through a crack in a sidewalk. The bunker kept people out for a hundred and forty years. It didn't keep the network out.`,
+    ],
+    choices: [
+      { label: 'Mark the contamination and descend — carefully', next: 'bunkerpyxis_crawler', effect: () => { modStat('ms', 1); modStat('rad', 1); setFlag('bunkerpyxis_network_presence'); showNotif('MS +1, RAD +1 — network infiltration detected in bunker walls'); } },
+    ],
+  },
+
+  bunkerpyxis_crawler_bypass: {
+    title: 'The Gap',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `You mapped it from above. Seven-minute loop. Sixty-second window at the junction. You count the clicks — each one a footfall, each footfall exactly 1.3 seconds apart. The crawler is a metronome. Predictable. Exploitable.`,
+      `You descend the stairwell on the count of forty-two. The residential level opens into a corridor — doors left and right, personal quarters, a common room at the far end. The clicking is behind you and moving away. Fifty-eight seconds left.`,
+      `You move fast. Past the quarters — brief glimpses of lives interrupted, beds still made, family photographs on nightstands. Past the common room — chairs arranged around a table, a chess game frozen mid-play, white to move. Through the fire door at the corridor's end and into the lower stairwell.`,
+      `The clicking fades. You're below it now. The crawler patrols the residential level. You're heading for the basement. Whatever this bunker was really built to protect is down there.`,
+    ],
+    choices: [
+      { label: 'Descend to the archives', next: 'bunkerpyxis_archives', effect: () => { modStat('dex', 1); showNotif('DEX +1 — crawler bypassed // clean descent'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

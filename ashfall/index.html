@@ -4929,6 +4929,108 @@ const scenes = {
     ],
   },
 
+  // ──────────────────────────────────────────────────
+  //  ARCADIA
+  // ──────────────────────────────────────────────────
+
+  arcadia_arrive: {
+    title: 'Arcadia',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The ash stops falling.`,
+      `Not gradually — it stops, as if an invisible wall separates the grey valley from whatever exists beyond this point. The air changes. Humid. Warm. Carrying a smell that takes you a full minute to identify because you've never encountered it at this concentration: <em>growth.</em>`,
+      `The ground beneath your boots is dark — almost black — and threaded with pale filaments that catch the dim light like veins beneath skin. They pulse. Not visibly, not quite, but you feel it through your soles — a rhythm, deep and slow, like the heartbeat of something enormous sleeping beneath you.`,
+      `Trees. Not the dead orchard husks of the ashlands — living trees, bark slick with moisture, leaves so green they look artificial. But wrong. The branches grow in patterns that are too regular, too geometric. Hexagonal canopies. Roots that surface and dive in perfect arcs. Nature doesn't make right angles. Something is editing the growth.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasFlag('dustwalker_briefing')) {
+          return [
+            `Vance's briefing echoes: <em>Don't eat anything. Don't sleep.</em> The rules feel more urgent here, where the air itself tastes like something you could live on.`,
+          ];
+        }
+        return [
+          `You feel watched. Not by eyes — by attention. A diffuse, encompassing awareness that registers your footsteps, your breathing, your body heat, and files each datum away with the patient thoroughness of a system designed to observe.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Follow the path toward the settlement', next: 'arcadia_perimeter' },
+      { label: 'Follow the Dustwalker approach vectors — avoid the main path', next: 'arcadia_perimeter_stealth', req: () => hasFlag('dustwalker_arcadia_map') || hasItem('ARCADIA APPROACH MAP'), reqNote: '[ Requires Arcadia Approach Map ]' },
+      { label: 'Follow the tracker signal from the Dustwalker truck', next: 'arcadia_intake', req: () => hasFlag('arcadia_tracker_planted'), reqNote: '[ Requires planted tracker ]' },
+      { label: 'The spore-lung resonance is overwhelming here — follow it', next: 'arcadia_spore_path', req: () => hasMutation('spore_lung'), reqNote: '[ Requires Spore-Lung mutation ]' },
+      { label: 'Put on the hazmat suit before going deeper', next: 'arcadia_perimeter', req: () => hasItem('HAZMAT SUIT'), reqNote: '[ Use Hazmat Suit ]', effect: () => { setFlag('arcadia_hazmat'); modStat('rad', 2); showNotif('HAZMAT SUIT — sealed environment // RAD +2'); } },
+      { label: 'Turn back — this place is wrong', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  arcadia_perimeter_stealth: {
+    title: 'The Safe Corridor',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Vance's approach vectors thread you through gaps in the root network — narrow corridors where the mycorrhizal density drops, blind spots in the organism's sensory grid. You move through the green landscape like a surgeon moving between nerves, aware that one wrong step could trigger a response you can't predict.`,
+      `The map is accurate. Every landmark matches — the split oak, the buried culvert, the clearing where the canopy opens to grey sky. Vance has been sending scouts here for years. Some of them came back. The ones that came back drew this map.`,
+      `You emerge at the commune's eastern edge. Below you: thirty structures, low-built, thatched with living plant matter. Smoke from cooking fires. The sound of voices — human voices, speaking normally, laughing once. From above, it looks like any frontier settlement.`,
+      `From above, with Vance's briefing in your head, it looks like bait.`,
+    ],
+    choices: [
+      { label: 'Enter the commune', next: 'arcadia_commune', effect: () => { modStat('dex', 1); showNotif('DEX +1 — stealth approach successful'); } },
+      { label: 'Bypass the commune — head for the core directly', next: 'arcadia_heart', req: () => skillCheck('ms', 13), reqNote: '[ Requires MS 13+ ]' },
+    ],
+  },
+
+  arcadia_intake: {
+    title: 'The Intake',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The tracker signal leads you off the main path, through undergrowth that parts for you in ways undergrowth shouldn't. The encrypted radio's frequency pulses stronger — closer — until you find it.`,
+      `The Dustwalker truck is parked in a clearing. Engine off. Cab empty. The canisters are gone — unloaded into a structure that looks like it grew rather than was built. Root-walls, living ceiling, a floor of compacted mycelium that yields slightly under your weight like standing on a mattress.`,
+      `Inside: the canisters, opened, contents gone. Absorbed. The lead-lined containers sit empty on racks made of living wood, arranged with the precision of a museum exhibit. The network consumed the radioactive material and kept the packaging. Neat. Organized. Intentional.`,
+      `And on the wall, written in bioluminescent secretions that glow faint green in the dim interior: coordinates. Your coordinates. Your current position, updated in real time, tracked to the centimeter.`,
+      `It knows you're here. It has always known you're here. The tracker was unnecessary. The network tracked <em>you</em>.`,
+    ],
+    choices: [
+      { label: 'Follow the bioluminescent trail deeper', next: 'arcadia_heart', effect: () => { modStat('ms', 1); setFlag('arcadia_intake_seen'); showNotif('MS +1 — network tracking capabilities confirmed'); } },
+      { label: 'Head for the commune first', next: 'arcadia_commune' },
+    ],
+  },
+
+  arcadia_spore_path: {
+    title: 'The Resonance',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The spore-lung mutation opens like a receiver tuning to a frequency it was designed for. The air here is saturated with spores — not the hostile, choking clouds of the ashlands, but something refined. Communication particles. Each breath carries data.`,
+      `You feel the network. Not as an abstraction — as a presence. Warm. Vast. Patient. It surrounds you the way water surrounds a diver, pressing on every surface simultaneously, and through the spore-lung interface it speaks. Not in words. In impressions.`,
+      `<em>Welcome. You carry our language in your lungs. You have been hearing us since your mutation stabilized. We have been waiting for you to arrive.</em>`,
+      `The path reveals itself — not visually, but sensorially. You know which way to go the way a compass knows north. The commune is to the left. The core is below. The network is showing you the architecture of itself, and through the spore-lung resonance, you can read it.`,
+    ],
+    choices: [
+      { label: 'Follow the resonance to the core', next: 'arcadia_heart', effect: () => { modRep('arcadia', 2); modStat('ms', 2); setFlag('arcadia_spore_contact'); showNotif('MS +2 — direct spore communication // Arcadia rep: TRUSTED'); } },
+      { label: 'Visit the commune first — with the network as your guide', next: 'arcadia_commune', effect: () => { modRep('arcadia', 1); modStat('ms', 1); } },
+    ],
+  },
+
+  arcadia_perimeter: {
+    title: 'The Green Wall',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The path narrows. The trees close in — not threatening, but attentive, branches adjusting in real time to channel you along a specific route. You're being guided. The network is a shepherd and the path is its crook, and the gentle pressure of living walls on either side says <em>this way</em> with a patience that doesn't need to be insistent because it has all the time in the world.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasFlag('arcadia_hazmat')) {
+          return [
+            `The hazmat suit filters the spore-saturated air. Your breathing stays your own. The trees seem to lean closer — not hostile, curious. Testing the barrier between you and the atmosphere they control. The suit holds. For now.`,
+          ];
+        }
+        return [
+          `The air is thick with spores. Each breath tastes like rain on soil — not unpleasant, almost comforting. Something in you relaxes. Something else in you notes the relaxation and files it under <em>suspicious</em>.`,
+        ];
+      })(),
+      `Ahead: a clearing. Structures. Smoke. People. The commune.`,
+    ],
+    choices: [
+      { label: 'Enter the commune', next: 'arcadia_commune' },
+      { label: 'Circle the perimeter — look for another way in', next: 'arcadia_heart', req: () => skillCheck('dex', 12), reqNote: '[ Requires DEX 12+ ]', effect: () => { modStat('hp', -2); showNotif('HP -2 — roots and thorns // bypassed commune'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

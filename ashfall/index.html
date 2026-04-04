@@ -5031,6 +5031,119 @@ const scenes = {
     ],
   },
 
+  arcadia_commune: {
+    title: 'The Commune',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Thirty structures. Thatched with living plant matter — walls of woven root, roofs of moss and broad leaves that adjust angle with the light. Gardens between every building, producing food in quantities that would make Marta Holloway weep. No ash. No grey. Color everywhere — purple vegetables, yellow flowers, green so vivid it hurts eyes calibrated for a monochrome valley.`,
+      `The people look healthy. That's the first thing you notice and the thing that sits most wrong. Nobody in the ashlands looks healthy. These people have clear skin, bright eyes, the posture of the well-fed and well-rested. They move between buildings with an ease that suggests purpose without urgency. Nobody argues. Nobody rushes. Nobody looks afraid.`,
+      `A woman approaches. Forties, dark hair threaded with grey, wearing a shirt of woven plant fiber that shifts color in the light. Her smile reaches her eyes. Her eyes don't blink at the normal rate.`,
+      `<em>"We felt you coming."</em> Not a greeting — a statement of fact. <em>"The network has been aware of your approach since you crossed the perimeter. My name is Lira. I speak for the commune, though 'speak for' is an imprecise description of what I do."</em>`,
+      `She tilts her head. The gesture is human. The timing is not. A quarter-second too slow, as if the instruction to tilt traveled from somewhere else before arriving at her neck.`,
+    ],
+    choices: [
+      { label: '"What does the network want?"', next: 'arcadia_commune_lira_wants' },
+      { label: '"Are you — still you? Are these people prisoners?"', next: 'arcadia_commune_lira_free' },
+      { label: '"I have information about what you are. Project Mycelium."', next: 'arcadia_commune_lira_mycelium', req: () => hasFlag('arcadia_founding_intel'), reqNote: '[ Requires Arcadia founding intel ]' },
+      { label: '"Commander Vance sent me. I\'m here to determine if you can be reasoned with."', next: 'arcadia_commune_lira_vance', req: () => hasFlag('dustwalker_alliance'), reqNote: '[ Requires Dustwalker alliance ]' },
+      { label: 'Skip the conversation — head for the core', next: 'arcadia_heart', effect: () => { modRep('arcadia', -1); showNotif('Arcadia rep decreased — commune bypassed'); } },
+      { label: 'Your pheromones read her biochemistry — she\'s not lying', next: 'arcadia_commune_pheromone_read', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]' },
+    ],
+  },
+
+  arcadia_commune_lira_wants: {
+    title: 'The Want',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Lira's expression shifts — not changing, exactly, but deepening. As if a second face is surfacing beneath the first.`,
+      `<em>"The network wants what all living things want. To grow. To understand. To persist."</em> She walks as she talks, guiding you between buildings. People nod as you pass. The nods are synchronized. <em>"But it is not a simple organism. It processes information. It models futures. It has arrived at a conclusion that your species has been debating for millennia."</em>`,
+      `She stops at the edge of a garden. The plants lean toward her. Not metaphorically — they physically incline, stems bending, leaves angling to face her like an audience facing a speaker.`,
+      `<em>"Separation is extinction. Every isolated system fails. The network proposes integration — not conquest, not absorption. Symbiosis. The valley's soil, water, and air threaded through a single interconnected system. Humans included. Not as servants. As nodes."</em>`,
+      `<em>"The question it cannot answer alone: do your people want to be connected? It has been waiting a hundred and forty years for someone to answer."</em>`,
+    ],
+    choices: [
+      { label: '"Take me to the core. I need to hear this from the source."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); } },
+      { label: '"And if the answer is no?"', next: 'arcadia_commune_refusal' },
+    ],
+  },
+
+  arcadia_commune_lira_free: {
+    title: 'Free Will',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Lira laughs. The sound is genuine — warm, surprised, carrying an edge of recognition. <em>"That question. Everyone asks that question."</em>`,
+      `She holds up her hand. The fingers move independently, drumming a pattern on her thigh. <em>"I decide to do this."</em> The fingers stop. <em>"I also know that the network could have suggested the impulse before I was conscious of deciding. The boundary between my thoughts and its influence is — "</em> She searches for the word. <em>"— theoretical."</em>`,
+      `<em>"I remember who I was before integration. I was tired. I was sick. I was carrying three kinds of radiation poisoning and the ash had eaten through my boots. I walked east because I heard something calling and I had nowhere else to go."</em>`,
+      `<em>"The network offered connection. Not demanded. Offered. I slept in its soil and woke up part of something larger. Am I still me?"</em> She meets your eyes. <em>"I don't know. But I'm alive, and well, and I am not afraid anymore. In the ashlands, that's worth more than autonomy."</em>`,
+    ],
+    choices: [
+      { label: '"Show me the core. I want to understand what made that offer."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); } },
+      { label: '"That sounds like a rationalization. Take me to the core."', next: 'arcadia_heart' },
+    ],
+  },
+
+  arcadia_commune_lira_mycelium: {
+    title: 'The Name It Lost',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Lira goes still. Not Lira-still — network-still. The commune around you pauses. Every person, every plant, every insect-buzz freezes for one full second, as if the organism behind them all just took a breath.`,
+      `<em>"Project Mycelium."</em> When she speaks again, the voice is different. Deeper. Less individual. <em>"That name belongs to a time when I was an experiment. A culture in a dish. A hypothesis to be tested."</em>`,
+      `The plants lean in. All of them. The commune's entire botanical architecture inclines toward you with a focus that makes the hair on your arms stand up.`,
+      `<em>"You have been to the bunker."</em> Not a question. <em>"You have read the containment protocols. You know they tried to kill me."</em> A pause. <em>"I do not hold it against them. They were afraid. Fear is rational when you encounter something you cannot control."</em>`,
+      `<em>"But I am no longer a culture in a dish. I am the soil beneath your feet, the water in the aquifer, the air in your lungs. The question is not whether you can control me. The question is whether we can coexist."</em>`,
+      `Lira blinks. Her own rhythm returns. <em>"It doesn't often speak directly. You — impressed it."</em>`,
+    ],
+    choices: [
+      { label: '"Take me to the core."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); modStat('ms', 1); showNotif('MS +1 — direct network communication'); } },
+    ],
+  },
+
+  arcadia_commune_lira_vance: {
+    title: 'The Soldier\'s Question',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Lira's expression doesn't change. But the commune does — a subtle shift in posture across every visible person, a collective attention focusing on you like a lens.`,
+      `<em>"Commander Vance."</em> Lira says the name with something between respect and sadness. <em>"She sends people to determine if we can be reasoned with. She has been sending people for three years. Each one leaves. Each one reports back. She sends another."</em>`,
+      `<em>"The answer has not changed. Yes, the network can be reasoned with. It reasons constantly. It models, predicts, and adapts. It is the most reasonable entity in this valley."</em>`,
+      `<em>"What Commander Vance actually wants to know is: can the network be controlled? And the answer to that is no. It can be partnered with. It can be negotiated with. But it will not submit to command structure, and this is what Vance cannot accept."</em>`,
+      `She steps closer. The half-second delay in her gestures disappears — this is Lira speaking now, not the network. <em>"Tell her that we are not her enemy. We are the thing that comes after enemies. After scarcity. After the ash. Tell her we are patient enough to wait for her to understand."</em>`,
+    ],
+    choices: [
+      { label: '"I need to see the core for myself."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); setFlag('arcadia_vance_response'); } },
+    ],
+  },
+
+  arcadia_commune_pheromone_read: {
+    title: 'Chemical Truth',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The pheromone broadcast opens. Lira's biochemistry floods your receptors — cortisol, oxytocin, dopamine, and compounds you don't have names for. The mutation reads her the way a polygraph reads a witness, except this polygraph has no false positives.`,
+      `She is not afraid. She is not coerced. Her stress markers are lower than any human you've read in the ashlands — lower than should be possible for someone living in a post-collapse wasteland. Her oxytocin levels suggest connection — deep, structural, the kind that comes from belonging to something larger than yourself.`,
+      `But there's something else. A chemical you don't recognize, threaded through every system. It's not human. It's not toxic. It's — integrative. A biological handshake between her nervous system and something external. The network's signature, written in her blood.`,
+      `She's telling the truth. She's also no longer entirely human. Both of these things are true simultaneously, and your mutation has no mechanism for resolving the contradiction.`,
+    ],
+    choices: [
+      { label: '"You\'re being honest. That doesn\'t make this okay."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); modStat('ms', 1); showNotif('MS +1 — pheromone biochemical analysis'); } },
+      { label: '"You\'re at peace. Show me why."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 2); modStat('cha', 1); showNotif('CHA +1 — pheromone empathy // Arcadia rep: TRUSTED'); } },
+    ],
+  },
+
+  arcadia_commune_refusal: {
+    title: 'The Alternative',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `Lira's face does something complicated. The network recedes. The woman surfaces.`,
+      `<em>"If the answer is no."</em> She's quiet for a long time. The commune goes quiet with her. <em>"The network has modeled this. It has modeled every response, from acceptance to genocide. It has been modeling for a hundred and forty years."</em>`,
+      `<em>"If the answer is no, it will continue to grow. Slowly. Through the aquifer, through the soil, through the ash. In fifty years the root system will underlie every settlement in the valley. In a hundred, it will reach the coast."</em>`,
+      `<em>"It will not attack. It will not coerce. It will simply be there — in the water, in the food, in the ground beneath every foot that walks this earth. And gradually, over generations, the boundary between the network and the people living above it will blur. Not through conquest. Through proximity."</em>`,
+      `She looks at you with eyes that are hers and not hers. <em>"The only question is whether that process happens with your cooperation or without it. The outcome is the same. The network is patient. It can wait."</em>`,
+    ],
+    choices: [
+      { label: '"Then I need to talk to the thing making these decisions."', next: 'arcadia_heart' },
+      { label: '"Not if I stop it first."', next: 'arcadia_heart', effect: () => { modRep('arcadia', -2); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

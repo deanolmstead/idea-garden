@@ -4266,6 +4266,49 @@ const scenes = {
     ],
   },
 
+  dustwalker_gate: {
+    title: 'The Gate',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You walk the approach road. Hands visible. Slow. The rifles track you from the tower — you can feel the crosshairs like a physical pressure between your shoulder blades.`,
+      `The gate guard is a woman in her forties. Sun-cracked skin, military crop, eyes that have cataloged a thousand strangers and filed most of them under <em>expendable</em>. She holds up a hand at ten meters. You stop.`,
+      `<em>"Name. Affiliation. Purpose."</em> Three words. No warmth. No hostility. Just procedure, applied with the mechanical patience of someone who does this forty times a day.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasItem('TRADE SCRIP')) {
+          return [
+            `You hold up Voss's trade scrip. Her eyes flick to it — recognition, not surprise. <em>"Ironmarket paper."</em> She turns it over once. <em>"Voss still signing these?"</em> A question that isn't really a question. She pockets the scrip and jerks her chin toward the gate. <em>"Commander Vance. Central building. Don't touch anything on the way."</em>`,
+          ];
+        }
+        if (typeof state !== 'undefined' && hasFlag('dustwalker_leverage')) {
+          return [
+            `You mention the patrol rotations. The timing. The gap. Her expression doesn't change, but something behind her eyes recalculates. <em>"You know things you shouldn't."</em> A beat. <em>"Commander Vance will want to know how."</em> She steps aside. The gate groans open. <em>"Central building. Stay on the path."</em>`,
+          ];
+        }
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Follow the guard\'s directions to Commander Vance', next: 'dustwalker_interior', effect: () => { if (hasItem('TRADE SCRIP')) { removeItem('TRADE SCRIP'); modRep('dustwalker', 1); } else { modRep('dustwalker', 1); } showNotif('Dustwalker Fort — entry granted'); } },
+    ],
+  },
+
+  dustwalker_gate_cha: {
+    title: 'The Pitch',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You walk the approach road the way you walk into every negotiation — unhurried, certain, radiating the quiet confidence of someone who belongs wherever they are. The rifles track you. You let them.`,
+      `The gate guard holds up a hand. You stop at exactly the right distance — close enough for conversation, far enough to show respect for the rifle. Her eyes narrow.`,
+      `<em>"Name. Affiliation. Purpose."</em>`,
+      `You give her your name. For affiliation, you say <em>"independent"</em> — the word that means <em>I don't owe anyone</em> and <em>nobody owes me</em> in the same breath. For purpose, you lean in just slightly.`,
+      `<em>"I have intelligence your commander can't get from patrols. Eastern route conditions. Sigma Relay status. Arcadia signal analysis."</em> You let the words settle. <em>"The kind of information that's worth more than a closed gate."</em>`,
+      `Her jaw works. She's weighing the risk of letting you in against the risk of being the guard who turned away actionable intel. The math resolves in your favor.`,
+      `<em>"Central building. Commander Vance. You get twenty minutes."</em>`,
+    ],
+    choices: [
+      { label: 'Twenty minutes is plenty', next: 'dustwalker_interior', effect: () => { modRep('dustwalker', 1); modStat('cha', 1); showNotif('CHA +1 — talked your way in // Dustwalker rep: KNOWN'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

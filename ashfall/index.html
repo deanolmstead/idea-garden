@@ -4309,6 +4309,44 @@ const scenes = {
     ],
   },
 
+  dustwalker_assault: {
+    title: 'Hostile Approach',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You don't slow down. The approach road is two hundred meters of exposed ground with no cover and three rifles pointed at you, and you eat the distance in a dead sprint that says everything negotiations would take twenty minutes to communicate.`,
+      `The first shot kicks dirt at your heels. Warning. The second passes close enough to part the air beside your ear — a sound like a whip crack compressed into a single syllable. Not a warning.`,
+      `You hit the concrete barrier at the gate perimeter and roll behind it. Two heartbeats to breathe. Then the gate guard is there — she came around the barrier instead of waiting, which means she's either brave or she's done this before. Probably both.`,
+    ],
+    choices: [
+      { label: 'Fight the gate guard', next: 'dustwalker_assault_result', effect: () => { renderCombatScene('dustwalker_scout', 'dustwalker_assault_result', 'She moves like training — economical, precise, the kind of violence that comes from drilling the same sequences until they live in the muscle memory. Her rifle is slung. Sidearm drawn. She\'s already inside the range where a rifle is a liability and a handgun is a conversation ender.'); } },
+    ],
+  },
+
+  dustwalker_assault_result: {
+    title: 'Aftermath',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      ...(function() {
+        if (typeof state !== 'undefined' && state.hp > 10) {
+          return [
+            `The gate is open — she left it open when she came for you, and the backup hasn't arrived yet. You have maybe ninety seconds before the tower guard repositions and the barracks empties.`,
+            `You move. Through the gate. Past the motor pool. The compound is larger than it looked from outside — prefab buildings arranged in a grid, a parade ground of packed earth, and in the center: the command building, concrete, serious, with a radio antenna on the roof that's still transmitting.`,
+            `Shouts behind you. They're organizing. But you're inside, and inside is where the answers are.`,
+          ];
+        }
+        return [
+          `You're bleeding from places you haven't cataloged yet. The gate is open. You stumble through it, adrenaline papering over damage your body will invoice you for later.`,
+          `The compound blurs — prefab buildings, packed earth, the command building in the center. You need to move fast. The shouts behind you are getting organized, and organized shouts become organized bullets very quickly.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Head for the command building', next: 'dustwalker_commander', effect: () => { modRep('dustwalker', -2); setFlag('dustwalker_hostile_entry'); showNotif('Dustwalker rep: HOSTILE — forced entry'); } },
+      { label: 'Check the vehicle bay first — those rad canisters', next: 'dustwalker_transport', effect: () => { modRep('dustwalker', -2); setFlag('dustwalker_hostile_entry'); showNotif('Dustwalker rep: HOSTILE — forced entry'); } },
+      { label: 'You\'re too hurt — grab what you can and get out', next: null, hidden: () => state.hp > 10, effect: () => { modRep('dustwalker', -2); setFlag('dustwalker_hostile_entry'); addItem('DUSTWALKER PATROL MAP'); showNotif('Dustwalker rep: HOSTILE // Found: PATROL MAP — retreating'); toggleMap(); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

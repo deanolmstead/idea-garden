@@ -4642,6 +4642,80 @@ const scenes = {
     ],
   },
 
+  // ──────────────────────────────────────────────────
+  //  BUNKER PYXIS
+  // ──────────────────────────────────────────────────
+
+  bunkerpyxis_arrive: {
+    title: 'Bunker Pyxis',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The ridgeline trail dies at a concrete face set into the hillside like a fist pushed into clay. The blast door is three meters wide, half a meter thick, and decorated with exactly one piece of art: the Pyxis constellation, etched into the steel in lines that have survived a hundred and forty years of weather without dulling. Pre-Fall craftsmanship. The kind that assumed it was building for eternity and turned out to be right.`,
+      `The beacon antenna on the roof turns with a patience that borders on devotion. Three clicks, pause, three clicks. The signal that brought you here, still broadcasting to a world that forgot how to listen.`,
+      `The blast door is sealed. A keypad beside it — military-grade, alphanumeric, the screen cracked but functional. A steady green cursor blinks on the display: <em>ENTER AUTHORIZATION CODE.</em>`,
+      `The hillside around the entrance is scarred with failed attempts. Drill marks. Torch burns. Someone tried to cut through the door with an acetylene rig and gave up after removing approximately zero percent of it. This bunker was built to keep people out, and it has been performing that function with quiet excellence.`,
+    ],
+    choices: [
+      { label: 'Enter the access code from WARDEN-3', next: 'bunkerpyxis_descent', req: () => hasFlag('warden_alliance'), reqNote: '[ Requires WARDEN-3 alliance ]', effect: () => { showNotif('WARDEN access code accepted — blast door cycling'); } },
+      { label: 'Use the Dustwalker logbook codes', next: 'bunkerpyxis_descent', req: () => hasItem('DUSTWALKER LOGBOOK'), reqNote: '[ Use Dustwalker Logbook ]', effect: () => { showNotif('Dustwalker override code accepted — blast door cycling'); } },
+      { label: 'Cut through the ventilation shaft with the welding torch', next: 'bunkerpyxis_ventshaft', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]' },
+      { label: 'Bypass the keypad electronics', next: 'bunkerpyxis_descent', req: () => skillCheck('ms', 13), reqNote: '[ Requires MS 13+ ]', effect: () => { modStat('ms', 1); showNotif('MS +1 — keypad bypass // blast door cycling'); } },
+      { label: 'The tunnel entrance the trader described — around the north face', next: 'bunkerpyxis_tunnel_entry', req: () => hasFlag('enc_bunkerpyxis_tunnel'), reqNote: '[ Requires tunnel coordinates ]' },
+      { label: 'Your echo-sense maps the structure beyond the door', next: 'bunkerpyxis_echosense', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]' },
+      { label: 'Leave — you can\'t get in', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  bunkerpyxis_ventshaft: {
+    title: 'Ventilation Shaft',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The ventilation grate on the hillside is a meter square — big enough, barely. The welding torch cuts through the steel mesh in blue-white arcs, molten metal dripping into the darkness below. The smell of hot steel and stale air billows up — the bunker exhaling for the first time in a century.`,
+      `The shaft descends at a thirty-degree angle. Smooth concrete walls, no handholds. You brace your back against one side and your boots against the other, inching downward in the dark. The torch light catches dust motes spinning in air that hasn't moved since before you were born.`,
+      `Fifty meters down, the shaft opens into a ceiling vent in a corridor. You drop — controlled, mostly — onto a floor that's still clean. Sealed environment. Whatever the bunker was designed to preserve, it's been preserving it.`,
+    ],
+    choices: [
+      { label: 'Explore the corridor', next: 'bunkerpyxis_descent', effect: () => { modStat('dex', 1); showNotif('DEX +1 — ventilation shaft descent'); } },
+    ],
+  },
+
+  bunkerpyxis_tunnel_entry: {
+    title: 'The Service Tunnel',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The coordinates lead you around the north face to a collapsed drainage channel. Behind the rubble: a service tunnel, pre-Fall construction, the kind built for maintenance access and promptly forgotten by everyone except the people who build maintenance tunnels for a living.`,
+      `It's narrow. It's dark. The floor is covered in a century of accumulated grit that crunches under your boots like fresh snow. But the structural integrity is sound — the concrete hasn't shifted, the rebar hasn't corroded. This tunnel was built to the same standard as the bunker itself.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasItem('SOLAR LANTERN')) {
+          return [
+            `The solar lantern throws clean white light down the passage. Every surface is visible. Every shadow has an explanation. You move quickly, confidently, reading the tunnel's story in its walls.`,
+          ];
+        }
+        return [
+          `The darkness is total. You navigate by touch — one hand on the wall, feet testing each step before committing weight. The tunnel branches twice. You choose by air movement, following the faintest draft toward the bunker's interior.`,
+        ];
+      })(),
+      `The tunnel terminates at a service hatch. Unlocked from this side. You push it open and step into a corridor lit by emergency strips that have been running on backup power for longer than most civilizations last.`,
+    ],
+    choices: [
+      { label: 'Enter the bunker', next: 'bunkerpyxis_descent', effect: () => { if (!hasItem('SOLAR LANTERN')) { modStat('hp', -2); showNotif('HP -2 — navigating blind'); } } },
+    ],
+  },
+
+  bunkerpyxis_echosense: {
+    title: 'Subsonic Map',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `You press your palm flat against the blast door and let the echo-sense unfurl. Sound becomes architecture. The subsonic frequencies bounce through the concrete and steel, returning to your hand as a three-dimensional map of the interior.`,
+      `Three levels. The top level is storage — large open spaces, regular shapes, shelving. The middle level is residential — smaller compartments, beds, a communal area. The lowest level is where the power draw concentrates. Server racks, maybe. Or something else that hums at a frequency you can feel in your molars.`,
+      `And on the middle level — movement. Not human movement. Too many legs. Too rhythmic. Something large, segmented, patrolling the corridors with the mechanical patience of a guard dog that never sleeps and never forgets.`,
+      `You map its route. Seven-minute patrol loop. A sixty-second gap at the junction between the residential wing and the stairwell. Tight, but knowable.`,
+    ],
+    choices: [
+      { label: 'Find the service tunnel and enter — you have the map now', next: 'bunkerpyxis_descent', effect: () => { setFlag('bunkerpyxis_mapped'); modStat('ms', 1); showNotif('MS +1 — bunker interior mapped // crawler patrol route identified'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

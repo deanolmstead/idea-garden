@@ -4572,6 +4572,76 @@ const scenes = {
     ],
   },
 
+  dustwalker_transport: {
+    title: 'The Shipment',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The canisters are warm. Not hot — warm, the way a living thing is warm. Each one is lead-lined, hazard-yellow, stamped with pre-Fall radiation trefoils and a serial number that belongs to a government that stopped existing a century and a half ago. They've been recycling the same containers. Some of these labels have been reapplied three, four times.`,
+      `You press your hand flat against one. Through the lead shielding, through the ceramic inner wall, you feel it: a low vibration, subsonic, rhythmic. Not mechanical. Not decay. Something metabolic.`,
+      ...(function() {
+        if (typeof state !== 'undefined' && hasItem('GEIGER COUNTER')) {
+          return [
+            `The Geiger counter confirms what your hands suspected. These aren't standard radioactive materials — the decay signature is wrong. Too regular. Too patterned. The isotopes inside these canisters are being organized by something. Structured. Arranged into configurations that don't occur in nature.`,
+            `<em>Biological enrichment.</em> The phrase surfaces from a pre-Fall technical manual you read once. Certain organisms can concentrate radioactive material. Fungi do it. Mushrooms in exclusion zones. The mycorrhizal network isn't just eating this — it's refining it.`,
+          ];
+        }
+        return [
+          `The manifest clipboard hanging from the truck's tailgate tells the story in shorthand. Origin: BUNKER PYXIS CACHE 7. Destination: ARCADIA-PRIME — INTEGRATION BAY. Cargo: ENRICHED SUBSTRATE — BIO-REACTIVE. Handler protocol: NO DIRECT CONTACT. NO CONSUMPTION. FULL RAD SHIELDING MANDATORY.`,
+          `Whatever is inside these canisters, it's not fuel. It's not weapons material. It's food. And whatever it feeds has been eating for six years.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Take the manifest and confront Commander Vance', next: 'dustwalker_commander', effect: () => { addItem('TRANSPORT MANIFEST'); setFlag('arcadia_signal'); showNotif('Found: TRANSPORT MANIFEST — Arcadia connection confirmed'); } },
+      { label: 'Sabotage the shipment', next: 'dustwalker_sabotage', danger: true },
+      { label: 'Plant your encrypted radio on the truck — let it ride to Arcadia', next: 'dustwalker_tracker', req: () => hasItem('ENCRYPTED RADIO'), reqNote: '[ Use Encrypted Radio ]' },
+      { label: 'Your rad-sponge mutation absorbs the canister\'s emissions — you feel what the network feels', next: 'dustwalker_radsponge_vision', req: () => hasMutation('rad_sponge'), reqNote: '[ Requires Rad-Sponge mutation ]' },
+    ],
+  },
+
+  dustwalker_sabotage: {
+    title: 'Sabotage',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You work fast. The canister seals are designed to prevent accidental breach, not intentional sabotage — a wrench and three minutes of focused violence open the containment on six of them. The material inside is granular, dark, and it glows with a faint bioluminescence that makes your skin crawl.`,
+      `You scatter it. Gravel, dirt, drainage grate. Dispersed beyond recovery. Six canisters of whatever Arcadia eats, rendered useless.`,
+      `The alarm goes before you finish the seventh. Shouts. Running boots. Rifle safeties clicking off in sequence like a percussion instrument designed to play one note.`,
+      `You run. The east wall has a gap where a drainage pipe exits the compound — you spotted it coming in, or you didn't, and the difference between those two things is the difference between escape and a very short conversation with Dustwalker ammunition.`,
+    ],
+    choices: [
+      { label: 'Escape through the drainage gap', next: null, effect: () => { modRep('dustwalker', -3); modRep('arcadia', -1); setFlag('dustwalker_sabotaged'); setFlag('arcadia_signal'); modStat('hp', -4); modStat('dex', 1); showNotif('Shipment sabotaged — Dustwalker rep: ENEMY // HP -4, DEX +1'); toggleMap(); } },
+    ],
+  },
+
+  dustwalker_tracker: {
+    title: 'The Tracker',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You wedge the encrypted radio behind the truck's rear axle housing — a cavity designed for maintenance access, deep enough to hide the unit from casual inspection. The frequency is set. The battery will last seventy-two hours.`,
+      `When this truck rolls east, the radio goes with it. And wherever it stops — wherever Arcadia's intake point is — you'll be able to find it. Not from a map. Not from a briefing. From a live signal, broadcasting from inside the network's supply chain.`,
+      `You slip back into the compound's rhythm. Nobody noticed. Nobody checks the undercarriage of trucks they load every week.`,
+    ],
+    choices: [
+      { label: 'Head for Commander Vance — play it straight', next: 'dustwalker_commander', effect: () => { removeItem('ENCRYPTED RADIO'); setFlag('arcadia_tracker_planted'); setFlag('arcadia_signal'); showNotif('Encrypted radio planted on transport — Arcadia tracker active'); } },
+      { label: 'Slip out before anyone notices you were near the trucks', next: null, effect: () => { removeItem('ENCRYPTED RADIO'); setFlag('arcadia_tracker_planted'); setFlag('arcadia_signal'); showNotif('Encrypted radio planted — exfiltrating'); toggleMap(); } },
+    ],
+  },
+
+  dustwalker_radsponge_vision: {
+    title: 'The Network\'s Appetite',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `Your mutation opens like a valve. The radiation from the canister flows into you — not damaging, not this time, but informational. Your rad-sponge biology interprets the isotope patterns the way a tongue interprets flavor.`,
+      `And through that interpretation, you taste what the network tastes. Hunger. Not the desperate hunger of starvation — the focused hunger of growth. The network is building something. Cell by cell, isotope by isotope, arranging radioactive material into structures that serve a purpose you can almost — almost — comprehend.`,
+      `A cathedral. The word arrives uninvited. The network is building a cathedral. Not of stone. Of living tissue, irradiated and organized, a biological architecture that uses gamma radiation the way a plant uses sunlight. Photosynthesis in reverse. Growth toward darkness instead of light.`,
+      `You pull your hand away. The vision fades. But the understanding doesn't. Whatever Arcadia is becoming, it's not an accident. It's a design. And it's almost finished.`,
+    ],
+    choices: [
+      { label: 'You need to see this through — head for Arcadia', next: null, effect: () => { setFlag('arcadia_signal'); setFlag('arcadia_vision'); modStat('ms', 2); modStat('rad', -1); modRep('arcadia', 1); showNotif('MS +2, RAD -1 — network vision // Arcadia rep: KNOWN'); toggleMap(); } },
+      { label: 'Report this to Commander Vance', next: 'dustwalker_commander', effect: () => { setFlag('arcadia_signal'); setFlag('arcadia_vision'); modStat('ms', 2); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

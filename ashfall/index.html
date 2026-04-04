@@ -993,12 +993,13 @@ const state = {
   weapon: null,
   inventory: ['CANTEEN (HALF)', 'RAD TABS x3', 'CRACKED COMPASS'],
   flags: {},
+  reputation: { ironmarket: 0, dustwalker: 0, arcadia: 0 }, // -3 hostile … 0 neutral … +3 allied
   currentScene: 'ironmarket_gate',
   currentLocation: 'ironmarket',
   visitedLocations: ['ironmarket'],
 };
 
-const SAVE_KEY = 'ashfall_v5';
+const SAVE_KEY = 'ashfall_v6';
 
 // ── HELPERS ──
 function hasItem(i)     { return state.inventory.includes(i); }
@@ -1012,6 +1013,14 @@ function modStat(s, n)  {
   if (s === 'hp' && state[s] <= 0) { setTimeout(() => renderScene('death'), 100); }
 }
 function skillCheck(stat, threshold) { return state[stat] >= threshold; }
+
+// ── FACTION REPUTATION ──
+function modRep(faction, n) {
+  if (!state.reputation) state.reputation = { ironmarket: 0, dustwalker: 0, arcadia: 0 };
+  state.reputation[faction] = Math.max(-3, Math.min(3, (state.reputation[faction] || 0) + n));
+}
+function getRep(faction) { return (state.reputation && state.reputation[faction]) || 0; }
+function repCheck(faction, min) { return getRep(faction) >= min; }
 
 // ── ITEM CONTEXT BONUSES ──
 // Items grant situational bonuses to skill checks and combat
@@ -2048,9 +2057,21 @@ function updateSidebar() {
     meridian_quest: 'Meridian — seed stock quest',
   };
   const active = Object.keys(state.flags).filter(f => state.flags[f] && flagLabels[f]);
-  flagEl.innerHTML = active.length
-    ? active.map(f => `<div class="flag-item">▸ ${flagLabels[f]}</div>`).join('')
-    : '<div class="flag-item" style="color:var(--ink-border)">No intel</div>';
+  // Reputation display
+  const repNames = { ironmarket: 'Ironmarket', dustwalker: 'Dustwalkers', arcadia: 'Arcadia' };
+  const repLabels = { '-3': 'ENEMY', '-2': 'HOSTILE', '-1': 'DISTRUSTED', '0': 'UNKNOWN', '1': 'KNOWN', '2': 'TRUSTED', '3': 'ALLIED' };
+  const repColors = { '-3': 'var(--blood)', '-2': 'var(--blood)', '-1': 'var(--sienna)', '0': 'var(--ash-faint)', '1': 'var(--ash-dim)', '2': 'var(--olive)', '3': 'var(--olive)' };
+  let repHtml = '';
+  if (state.reputation) {
+    for (const [fac, val] of Object.entries(state.reputation)) {
+      if (val !== 0 || state.visitedLocations.includes(fac === 'ironmarket' ? 'ironmarket' : fac === 'dustwalker' ? 'dustwalker' : 'arcadia')) {
+        repHtml += `<div class="flag-item" style="color:${repColors[val]}">◆ ${repNames[fac]}: ${repLabels[String(val)]}</div>`;
+      }
+    }
+  }
+  flagEl.innerHTML = (repHtml || '') +
+    (active.length ? active.map(f => `<div class="flag-item">▸ ${flagLabels[f]}</div>`).join('') : '') +
+    (!repHtml && !active.length ? '<div class="flag-item" style="color:var(--ink-border)">No intel</div>' : '');
 }
 
 // ── RENDER SCENE ──
@@ -2214,28 +2235,33 @@ const mapNodeData = {
   },
   dustwalker: {
     name: 'Dustwalker Fort',
-    desc: 'A Dustwalker faction stronghold. Entry is restricted to those with leverage, trade goods, or an invitation. Unknown what they want with the eastern routes. Approach only if prepared.',
+    desc: 'A Dustwalker faction stronghold built into a highway overpass. Guard towers, razor wire, disciplined patrols. They control the eastern routes and they\'re moving something radioactive toward Arcadia. Approach only if prepared.',
     threat: [{ label: 'Hostile', type: 'high' }, { label: 'Faction', type: 'high' }],
-    passage: null,
+    passage: `The road narrows. Concrete barriers funnel traffic — what traffic remains — into a single lane flanked by razor wire and the burned-out husks of vehicles arranged as deliberate obstacles. The fort resolves in stages: guard tower first, then the overpass structure reinforced with sandbags and sheet metal, then the gate — welded steel, painted with the Dustwalker emblem: a boot print in grey ash.`,
     radExposure: 3,
+    scene: 'dustwalker_arrive',
     locked: true,
     lockedReason: 'You need leverage before approaching the Dustwalkers.',
     connected: true,
   },
   arcadia: {
     name: 'Arcadia',
-    desc: 'Signal origin unknown. Voss mentioned it. The Noticeboard card referenced it. WARDEN-3 has data on it. Nobody goes there. Nobody comes back with answers.',
-    threat: [{ label: 'Unknown', type: 'unknown' }],
-    passage: null,
+    desc: 'Signal origin unknown. The mycorrhizal network. The thing that calls. The thing that remembers. Nobody goes there by accident. Nobody comes back unchanged.',
+    threat: [{ label: 'Unknown', type: 'unknown' }, { label: 'Biological', type: 'high' }],
+    passage: `The ash thins. That\'s the first wrong thing. For the first time in days, you can see the ground beneath it — dark earth, almost black, threaded with pale filaments that catch the grey light like spider silk. The air tastes different here. Humid. Alive. Something is growing and it is not subtle about it.`,
+    radExposure: 1,
+    scene: 'arcadia_arrive',
     locked: true,
     lockedReason: 'You need more information before traveling to Arcadia.',
     connected: false,
   },
   bunkerpyxis: {
     name: 'Bunker Pyxis',
-    desc: 'Pre-Fall monitoring bunker. Sealed. The entrance is on the northeast ridgeline above the Sigma Relay approach road. Whatever is inside has not been touched. Whatever is inside is still drawing power.',
-    threat: [{ label: 'Sealed', type: 'unknown' }, { label: 'Powered', type: 'unknown' }],
-    passage: null,
+    desc: 'Pre-Fall monitoring bunker. Sealed for a hundred and forty years. The beacon is still transmitting. The power draw suggests something inside is still running. Whatever it is, it hasn\'t needed maintenance. That should worry you.',
+    threat: [{ label: 'Sealed', type: 'unknown' }, { label: 'Automated', type: 'medium' }],
+    passage: `The ridgeline trail switchbacks through scrub and loose shale. The bunker entrance is set into the hillside like a socket — reinforced concrete, blast door, the Pyxis constellation etched above the frame in letters that predate the collapse by decades. The beacon antenna on the roof turns slowly, broadcasting to nobody. To you, now.`,
+    radExposure: 2,
+    scene: 'bunkerpyxis_arrive',
     locked: true,
     lockedReason: 'The bunker is sealed. You need a way in.',
     connected: false,
@@ -3021,19 +3047,45 @@ const scenes = {
     title: 'Sigma Relay',
     chapter: 'Chapter I — Sigma Relay',
     text: [
-      `Eighteen kilometers east, and the ash changes character. Not thicker — denser. It settles into your collar, grinds between your teeth, carries a faint mineral taste that wasn't there closer to Ironmarket.`,
-      `The relay tower punctures the horizon an hour out. Rusted lattice climbing from a squat concrete bunker, like a skeletal hand reaching out of a grave. No fence. No guards. But the approach road is clear — cracked asphalt, swept clean of debris. Someone has been maintaining this. Something.`,
-      `A speaker above the entrance pops with static. Then, in a voice built from synthesized consonants and something that might be hope: <em class="warden-text">VISITOR DETECTED. THIS INSTALLATION IS OPERATIONAL BUT NOT CURRENTLY STAFFED BY HUMAN PERSONNEL. I AM WARDEN-3. PLEASE STATE YOUR PURPOSE.</em>`,
+      ...(function() {
+        if (typeof state !== 'undefined' && state.flags && state.flags.sigma_destroyed) {
+          return [
+            `The relay tower is dark. No amber glow. No hum in the concrete. The lattice structure stands against the grey sky like a monument to a decision you already made.`,
+            `The entrance is open — the blast door you left ajar still hanging at the same angle. Inside, silence. The kind that used to have a voice in it. The servers are cold. The terminal screen is black. Dust has already begun to settle on surfaces that were clean when you left.`,
+            `<span class="whisper">There is nothing here. You made sure of that.</span>`,
+          ];
+        }
+        return [
+          `Eighteen kilometers east, and the ash changes character. Not thicker — denser. It settles into your collar, grinds between your teeth, carries a faint mineral taste that wasn't there closer to Ironmarket.`,
+          `The relay tower punctures the horizon an hour out. Rusted lattice climbing from a squat concrete bunker, like a skeletal hand reaching out of a grave. No fence. No guards. But the approach road is clear — cracked asphalt, swept clean of debris. Someone has been maintaining this. Something.`,
+          `A speaker above the entrance pops with static. Then, in a voice built from synthesized consonants and something that might be hope: <em class="warden-text">VISITOR DETECTED. THIS INSTALLATION IS OPERATIONAL BUT NOT CURRENTLY STAFFED BY HUMAN PERSONNEL. I AM WARDEN-3. PLEASE STATE YOUR PURPOSE.</em>`,
+        ];
+      })(),
     ],
     choices: [
-      { label: '"I\'m a researcher. Survey team follow-up."', next: 'sigma_entry_researcher' },
-      { label: '"I heard you might be able to help me."', next: 'sigma_entry_honest' },
-      { label: 'Say nothing', next: 'sigma_entry_silent' },
-      { label: 'Show the Survey Badge', next: 'sigma_entry_badge', req: () => hasItem('SURVEY BADGE'), reqNote: '[ Use Survey Badge ]' },
-      { label: 'Study the power grid before entering', next: 'sigma_power_grid', req: () => skillCheck('ms', 12), reqNote: '[ Requires MS 12+ ]' },
-      { label: 'Scan for radiation hotspots with the Geiger counter', next: 'sigma_geiger_scan', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
-      { label: 'Cut through the maintenance hatch with the welding torch', next: 'sigma_torch_breach', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]' },
-      { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]' },
+      { label: '"I\'m a researcher. Survey team follow-up."', next: 'sigma_entry_researcher', hidden: () => hasFlag('sigma_destroyed') },
+      { label: '"I heard you might be able to help me."', next: 'sigma_entry_honest', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Say nothing', next: 'sigma_entry_silent', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Show the Survey Badge', next: 'sigma_entry_badge', req: () => hasItem('SURVEY BADGE'), reqNote: '[ Use Survey Badge ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Study the power grid before entering', next: 'sigma_power_grid', req: () => skillCheck('ms', 12), reqNote: '[ Requires MS 12+ ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Scan for radiation hotspots with the Geiger counter', next: 'sigma_geiger_scan', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Cut through the maintenance hatch with the welding torch', next: 'sigma_torch_breach', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Search the wreckage for salvageable data', next: 'sigma_destroyed_salvage', hidden: () => !hasFlag('sigma_destroyed') },
+      { label: 'Leave — there\'s nothing here anymore', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('sigma_destroyed') },
+    ],
+  },
+
+  sigma_destroyed_salvage: {
+    title: 'Wreckage',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You pick through the remains. Server racks gutted. Cables melted into polymer stalactites. The terminal screen is cracked straight across — a clean line, like the valley drew a boundary through it.`,
+      `In the rubble: a single data chip, ejected from a secondary drive during the cascade failure. The casing is warm. Whatever's on it, it's incomplete — a fragment of WARDEN-3's century-long observation, compressed and corrupted by the shutdown.`,
+      `Enough to read. Not enough to trust. But in the ashlands, partial data is still data.`,
+    ],
+    choices: [
+      { label: 'Take the chip and leave', next: null, effect: () => { addItem('CORRUPTED DATA CHIP'); setFlag('sigma_data_taken'); modStat('ms', 1); showNotif('Found: CORRUPTED DATA CHIP // MS +1'); toggleMap(); } },
     ],
   },
 

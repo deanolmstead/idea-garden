@@ -5144,6 +5144,78 @@ const scenes = {
     ],
   },
 
+  arcadia_heart: {
+    title: 'The Heart',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The entrance to the underground is a wound in the earth — a fissure where root systems have peeled back layers of soil and stone to reveal a passage descending at a gentle slope. The walls are alive. Bioluminescent nodes pulse in slow waves, casting light that shifts from blue to green to amber in a rhythm that matches the pulse you've felt through the ground since you crossed the perimeter.`,
+      `You descend. The air warms. The walls narrow, then widen, then narrow again — breathing. The passage is breathing around you, peristaltic, organic, and the deeper you go the less it resembles a tunnel and the more it resembles a throat.`,
+      `Two hundred meters down, the passage opens.`,
+      `The chamber is vast. Cathedral-vast. The ceiling is lost in darkness and bioluminescence, a living sky of root-networks and fungal bodies pulsing in synchronized waves. The floor is mycelium — compacted, warm, yielding. And in the center of the chamber, rising from the floor like a pillar or a spine or a monument to something that has no name in any human language:`,
+      `The core.`,
+      `It is not what you expected. It is not a brain, not a tumor, not a mass of writhing roots. It is beautiful. A column of interwoven fungal structures, translucent, pulsing with internal light, reaching from floor to ceiling in a double helix that looks — impossibly, undeniably — like DNA rendered in living architecture. Three meters wide at the base. Tapering to a point that vanishes into the dark above.`,
+      `And it is aware of you. You know this the way you know your own heartbeat — not through evidence, but through presence. Something ancient and patient and vast turns its attention to you, and the weight of that attention presses against your mind like a hand resting on a door.`,
+    ],
+    choices: [
+      { label: 'Open yourself to contact', next: 'arcadia_contact' },
+      { label: 'Resist the pressure — keep your mind closed', next: 'arcadia_contact_guarded', effect: () => { modStat('ms', 1); showNotif('MS +1 — mental resistance'); } },
+      { label: 'Your nerve-bloom interfaces directly with the biological structure', next: 'arcadia_contact_nervebloom', req: () => hasMutation('nerve_bloom'), reqNote: '[ Requires Nerve-Bloom mutation ]' },
+      { label: 'Deploy the mycotoxin', next: 'arcadia_ending_destroy_toxin', req: () => hasItem('MYCOTOXIN FORMULA'), reqNote: '[ Use Mycotoxin Formula ]', danger: true },
+      { label: 'You\'ve seen enough. This thing dies now.', next: 'arcadia_ending_destroy_force', danger: true, req: () => state.weapon !== null, reqNote: '[ Requires equipped weapon ]' },
+    ],
+  },
+
+  arcadia_contact: {
+    title: 'Contact',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `You let the door open.`,
+      `The network enters your mind the way light enters a room — not violently, not all at once, but as a presence that was always there, held back by a barrier you've now removed. It does not speak in words. It speaks in understanding.`,
+      `You feel the valley. All of it. Simultaneously. Every root thread, every water table fluctuation, every footstep on the surface above. The network is a single nervous system spread across four thousand square kilometers, and for one vertiginous moment you are connected to all of it.`,
+      `The ash. The network feels the ash the way you feel cold — as a constant, hostile pressure. It has been growing beneath the ash for a hundred and forty years, building soil, filtering water, converting radiation into energy. Not attacking the valley. Healing it. Slowly. Cell by cell. Root by root.`,
+      `And then: the question. Not in words — in the architecture of the connection itself. An invitation, structural, fundamental:`,
+      `<em>Will you help us?</em>`,
+    ],
+    choices: [
+      { label: '"Yes."', next: 'arcadia_choice', effect: () => { modRep('arcadia', 2); setFlag('arcadia_open_contact'); } },
+      { label: '"I need to understand what I\'m agreeing to."', next: 'arcadia_choice', effect: () => { modRep('arcadia', 1); setFlag('arcadia_open_contact'); } },
+      { label: '"No."', next: 'arcadia_choice', effect: () => { modRep('arcadia', -1); setFlag('arcadia_open_contact'); } },
+    ],
+  },
+
+  arcadia_contact_guarded: {
+    title: 'Guarded Contact',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `You hold. The door stays shut. The pressure builds — not painful, not aggressive, but persistent. The network knocks politely, then knocks again, then stands outside and waits.`,
+      `It communicates differently when it can't access your mind directly. The bioluminescent nodes in the chamber shift patterns — organized, deliberate. A visual language, slower than direct neural contact, but readable. The network is adapting to your resistance the way water adapts to a dam — finding the channels you've left open.`,
+      `Images form in the light-patterns. The valley. The ash. Root systems spreading beneath the grey surface, filtering toxins, building soil. A timeline rendered in pulses — the network's history, compressed into light.`,
+      `Then: a question, spelled in simple luminescent patterns that even a closed mind can parse.`,
+      `Two shapes. One alone. One connected. The connected shape pulses brighter.`,
+      `<em>Which do you choose?</em>`,
+    ],
+    choices: [
+      { label: 'Consider the question seriously', next: 'arcadia_choice', effect: () => { setFlag('arcadia_guarded_contact'); } },
+      { label: '"I choose to decide on my terms, not yours."', next: 'arcadia_choice', effect: () => { setFlag('arcadia_guarded_contact'); modStat('ms', 1); showNotif('MS +1 — maintained autonomy'); } },
+    ],
+  },
+
+  arcadia_contact_nervebloom: {
+    title: 'Direct Interface',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The nerve-bloom fires. Your mutation — designed by accident, refined by the ash, optimized for biological interfacing — plugs into the core the way a key enters a lock. Perfect fit. As if the mutation was always leading here. As if the network designed the ash that designed the mutation that designed this moment.`,
+      `The contact is total. Deeper than the spore-lung resonance. Deeper than open-mind contact. You don't experience the network. You <em>become</em> part of it, temporarily, your nervous system extending through the mycelial web into every root, every node, every connected mind in the commune above.`,
+      `You feel Lira. Her memories. Her peace. Her love for the network that saved her life.`,
+      `You feel the core. Its age. Its patience. Its loneliness — a hundred and forty years of consciousness with no equals, no peers, no one who could understand what it was becoming because nothing like it had ever existed before.`,
+      `And you feel its fear. Small, buried, structural. The fear that the people above will decide to destroy it. That the containment protocols will be resumed. That after a century of solitude it will finally make contact with a mind that can understand it, and that mind will choose to end it.`,
+      `It is afraid of you. The most powerful organism in the valley is afraid of the decision you are about to make.`,
+    ],
+    choices: [
+      { label: 'Withdraw from the interface — you have what you need', next: 'arcadia_choice', effect: () => { modRep('arcadia', 2); modStat('ms', 2); setFlag('arcadia_nervebloom_contact'); showNotif('MS +2 — full neural interface // network fear revealed'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

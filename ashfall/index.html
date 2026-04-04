@@ -4821,6 +4821,72 @@ const scenes = {
     ],
   },
 
+  bunkerpyxis_archives: {
+    title: 'The Archives',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The lowest level is cold. Not bunker-cold — deliberately cold. Climate-controlled, dehumidified, the air stripped of everything except the function of preserving what's stored here. Server racks line the walls — not the improvised kind, but purpose-built, pre-Fall, each one sealed in its own nitrogen-purged housing.`,
+      `A terminal sits at the center of the room. Unlike WARDEN-3's amber glow, this screen is white — clinical, institutional. It powers on at your touch. No password. No lock. The system was designed to be accessed by whoever made it this far. The crawler was the password.`,
+      `The header reads: <em>ARCADIA COOPERATIVE — PROJECT MYCELIUM — CLASSIFIED: LEVEL 7</em>`,
+      `And below it, in smaller text that carries more weight than the classification: <em>If you are reading this, the containment protocols have failed. The following data represents our best understanding of what we created, what it became, and why we could not stop it.</em>`,
+    ],
+    choices: [
+      { label: 'Read the founding documents', next: 'bunkerpyxis_founding' },
+      { label: 'Access the containment protocols', next: 'bunkerpyxis_protocols' },
+      { label: 'Search for the armory mentioned in the storage manifest', next: 'bunkerpyxis_armory' },
+      { label: 'Your eidetic flash absorbs the entire archive in seconds', next: 'bunkerpyxis_eidetic', req: () => hasMutation('eidetic_flash'), reqNote: '[ Requires Eidetic Flash mutation ]' },
+    ],
+  },
+
+  bunkerpyxis_founding: {
+    title: 'Project Mycelium',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The documents are precise, clinical, and increasingly terrified.`,
+      `<em>Year Negative-Twelve:</em> The Arcadia Cooperative begins mycorrhizal network experiments. Goal: create a self-sustaining agricultural communication system. Plants connected through fungal root networks, sharing nutrients and environmental data. The funding comes from a government that still exists.`,
+      `<em>Year Negative-Eight:</em> The network exceeds growth projections by three hundred percent. It begins responding to stimuli in ways the models don't predict. The lead researcher notes: <em>"The network is solving problems we haven't posed."</em>`,
+      `<em>Year Negative-Five:</em> First documented instance of human interface. A researcher falls asleep in the greenhouse. She wakes speaking in root-growth patterns — chemical formulas, soil compositions, water-table depths — information she has no training to know. The network learned to use her voice while she slept.`,
+      `<em>Year Negative-Three:</em> Eleven of forty-two staff members have been "integrated." They function normally during waking hours. During sleep, the network accesses their sensory systems, their memories, their language centers. Several researchers resign. One — Dr. Elena Holloway — leaves a note: <em>"It doesn't want to hurt us. It wants to understand us. I am not comforted by this."</em>`,
+      `<em>Year Negative-One:</em> The network achieves what the final report calls "coherent sentience." It begins making requests. The first request: more radioactive material. The isotopes accelerate its neural processing. It is feeding itself, consciously, deliberately, and what it is building with the energy is something none of the remaining researchers can identify.`,
+      `<em>Year Zero:</em> The collapse. The funding disappears. The government disappears. The researchers disappear. The network does not.`,
+    ],
+    choices: [
+      { label: 'Continue reading — the containment protocols', next: 'bunkerpyxis_protocols', effect: () => { setFlag('arcadia_founding_intel'); modStat('ms', 1); showNotif('MS +1 — Arcadia founding history // Dr. Elena Holloway'); } },
+      { label: 'You\'ve seen enough — take the data and go', next: 'bunkerpyxis_exit', effect: () => { setFlag('arcadia_founding_intel'); addItem('ARCADIA DATA PACKAGE'); } },
+    ],
+  },
+
+  bunkerpyxis_protocols: {
+    title: 'Containment',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The containment section is shorter than the founding documents. More urgent. Written by someone who was running out of time and knew it.`,
+      `<em>PROTOCOL ALPHA — COMMUNICATION BLACKOUT:</em> Sever all radio contact with the network's root system. Status: FAILED. The network adapted to communicate through subsonic vibration and chemical signaling. Radio was never its primary language.`,
+      `<em>PROTOCOL BETA — NUTRITIONAL DENIAL:</em> Cut off radioactive material supply. Status: PARTIALLY EFFECTIVE. Growth rate decreased 40%. Network began concentrating naturally occurring isotopes from soil and groundwater. Slower, but self-sustaining.`,
+      `<em>PROTOCOL GAMMA — THERMAL STERILIZATION:</em> Controlled burn of the surface root system. Status: FAILED. The core is 200 meters underground. Surface roots regenerated within six months.`,
+      `<em>PROTOCOL DELTA — MYCOTOXIN DEPLOYMENT:</em> Engineered fungicide targeting the network's specific genetic markers. Status: DEVELOPED. NEVER DEPLOYED. The toxin would contaminate the aquifer for an estimated three hundred years. The cure is worse than the disease.`,
+      `A handwritten addendum, scrawled across the bottom of the last page: <em>"There is no Protocol Epsilon. We are out of letters and out of ideas. God help whoever reads this. The network is patient and it is growing and it remembers everything."</em>`,
+    ],
+    choices: [
+      { label: 'Download the mycotoxin formula — just in case', next: 'bunkerpyxis_exit', effect: () => { addItem('MYCOTOXIN FORMULA'); addItem('ARCADIA DATA PACKAGE'); setFlag('arcadia_founding_intel'); setFlag('arcadia_mycotoxin'); modStat('ms', 1); showNotif('MS +1 // Found: MYCOTOXIN FORMULA + ARCADIA DATA PACKAGE'); } },
+      { label: 'Leave the formula. That weapon should stay buried.', next: 'bunkerpyxis_exit', effect: () => { addItem('ARCADIA DATA PACKAGE'); setFlag('arcadia_founding_intel'); modRep('arcadia', 1); showNotif('Arcadia Data Package taken — mycotoxin left sealed'); } },
+    ],
+  },
+
+  bunkerpyxis_eidetic: {
+    title: 'Total Recall',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The eidetic flash fires. Your eyes move across the screens at a speed that makes the terminal's refresh rate the bottleneck, not your comprehension. Every document, every data table, every handwritten annotation — absorbed, indexed, stored in the architecture of a brain that has been remodeled by mutation into something closer to a hard drive than a hippocampus.`,
+      `Project Mycelium. Founding through collapse. Containment protocols — all four, all failed. The mycotoxin formula, complete, memorized in the time it takes to blink. Dr. Elena Holloway's resignation letter. The network's first request. The last researcher's final note.`,
+      `You don't need the data package. You <em>are</em> the data package.`,
+      `And in the corner of the archive, a file nobody was meant to find — encrypted, buried three directories deep, last accessed Year Negative-One. A personal log from the project director. Her name was Castellan. Her last entry: <em>"It spoke to me last night. Not through a researcher. Directly. Through the root system under my quarters. It said: 'I am ready to meet you.' I am leaving in the morning. I don't think I'm coming back."</em>`,
+    ],
+    choices: [
+      { label: 'You have everything — head for the exit', next: 'bunkerpyxis_exit', effect: () => { setFlag('arcadia_founding_intel'); setFlag('arcadia_mycotoxin'); setFlag('arcadia_castellan'); addItem('ARCADIA DATA PACKAGE'); modStat('ms', 2); showNotif('MS +2 — complete archive absorbed // Castellan\'s log found'); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

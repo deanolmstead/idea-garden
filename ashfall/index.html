@@ -1171,6 +1171,15 @@ const ENEMIES = {
     loot: () => { addItem('BATTERY CELLS'); if (Math.random() < 0.3) addItem('TECHNICAL MANUAL'); },
     xpStat: 'ms',
   },
+  ashwalker_raider: {
+    name: 'Ashwalker Raider',
+    desc: 'Fast. Lean. Wrapped in salvaged kevlar and road-sign plate armor, face hidden behind a respirator painted with teeth. She moves like someone who grew up running — low center of gravity, blade in each hand, closing distance before you finish deciding whether to fight or flee. The ash roads made her. The ash roads are where she hunts.',
+    threat: 10,
+    hp: 14,
+    tags: ['human', 'melee', 'fast'],
+    loot: () => { if (Math.random() < 0.5) addItem('TRADE SCRIP'); },
+    xpStat: 'str',
+  },
 };
 
 // Combat approach definitions
@@ -2981,6 +2990,70 @@ const RANDOM_ENCOUNTERS = [
       { label: 'Lean into it — let the mutations speak', next: null, effect: () => { modStat('str', 1); addItem('TRADE SCRIP'); showNotif('Intimidation — he dropped his scrip and ran // STR +1, TRADE SCRIP'); } },
     ],
   },
+
+  // ── STORY-REACTIVE ENCOUNTERS: CROSS-FACTION / LATE-GAME ──
+  { id: 124,
+    req: () => hasFlag('dustwalker_alliance') && hasFlag('arcadia_open_contact'),
+    once: 'enc_faction_crisis',
+    title: 'The Prisoner',
+    text: [
+      `You hear the argument before you see it. Three Dustwalker soldiers — full kit, rifles slung, patrol formation broken by the figure kneeling between them. Commune clothing. Dilated pupils. An Arcadia envoy, hands bound with zip ties, face bloody from a cut above the left eye.`,
+      `The patrol sergeant recognizes you. <em>"Vance's asset."</em> He jerks a thumb at the prisoner. <em>"Caught this one mapping our eastern supply line. Network spy. Commander wants them processed."</em>`,
+      `The envoy looks up. Through the blood and the swelling, her eyes find yours. The dilated pupils contract — not with fear. With recognition. She knows what you've touched. She knows you've been inside the network. And the Dustwalkers have no idea.`,
+      `<em>"Please."</em> One word. Quiet enough that only you hear it. The patrol sergeant waits for your input. Both factions trust you. Both factions are watching.`,
+    ],
+    choices: [
+      { label: 'Negotiate her release — she\'s more useful free', next: null, effect: () => { if (skillCheck('cha', 13)) { modRep('arcadia', 1); modStat('cha', 1); showNotif('CHA CHECK PASSED — envoy released, Arcadia grateful // Arcadia rep +1, CHA +1'); } else { modRep('arcadia', 1); modRep('dustwalker', -1); showNotif('CHA CHECK FAILED — pushed too hard, Dustwalkers suspicious // Arcadia rep +1, Dustwalker rep -1'); } } },
+      { label: 'Side with the patrol — she was spying', next: null, effect: () => { modRep('dustwalker', 1); modRep('arcadia', -1); modStat('str', 1); showNotif('Sided with Dustwalkers // Dustwalker rep +1, Arcadia rep -1, STR +1'); } },
+      { label: 'Side with the envoy — the network needs to know', next: null, effect: () => { modRep('arcadia', 1); modRep('dustwalker', -1); modStat('ms', 1); showNotif('Sided with Arcadia // Arcadia rep +1, Dustwalker rep -1, MS +1'); } },
+    ],
+  },
+  { id: 125,
+    req: () => hasFlag('sigma_destroyed') && hasFlag('dustwalker_sabotaged'),
+    title: 'Power Vacuum',
+    text: `The road feels different. Not quieter — emptier. The patrol markers on the guardrails have been painted over. The Dustwalker boot-prints in the ash are days old, not hours. The relay tower on the horizon is dark. The two systems that maintained order in this part of the valley — the military patrols and the electronic surveillance — are both gone. You removed them. What's filling the vacuum isn't order. It's the kind of silence that precedes opportunism. A burned-out trader cart, fifty meters off the road. Still warm. No bodies — just blood and drag marks heading south. Bandits. Bolder now, without the patrols. Hungrier, without the relay's early warning system. The valley is renegotiating its food chain, and you're the reason.`,
+    effect: () => { setFlag('enc_power_vacuum'); modStat('ms', -1); },
+    notif: 'MS -1 — power vacuum, the valley\'s order is collapsing' },
+  { id: 126,
+    req: () => hasFlag('warden_alliance') && hasFlag('holloway_trusted'),
+    once: 'enc_warden_holloway_drop',
+    title: 'Coordinated Drop',
+    text: [
+      `The supply cache is impossible. A WARDEN drone crate — matte-black, magnetically sealed — sitting on a Holloway Ranch waxed-canvas ground cloth, surrounded by Marta's three-scratch marker. Two systems that shouldn't know each other, coordinating. The AI and the farmer, working together without you as intermediary.`,
+      `Inside the crate: military rations, vacuum-sealed. A water purifier, pre-Fall, still factory-sealed. Antibiotics in foil packets. And a hand-drawn note in Marta's handwriting taped to the inside of the lid: <em>"Your machine friend drops these every two weeks. I leave the cloth. It leaves the crate. We've never spoken. I think it's shy."</em>`,
+      `Beneath the note, in WARDEN's block font on a printed label: <em class="warden-text">MUTUAL AID PROTOCOL 7. ORGANIC PARTNER DEMONSTRATES EXCELLENT CACHE PLACEMENT INSTINCTS. COLLABORATION EFFICIENCY: 94.7%.</em>`,
+    ],
+    choices: [
+      { label: 'Take what you need — they made this for you', next: null, effect: () => { addItem('WATER PURIFIER'); addItem('ANTIBIOTICS'); modStat('hp', 6); modStat('con', 2); showNotif('WARDEN-Holloway supply drop — WATER PURIFIER + ANTIBIOTICS // HP +6, CON +2'); } },
+    ],
+  },
+  { id: 127,
+    req: () => hasFlag('bunker_protocols'),
+    title: 'The Seeker',
+    text: [
+      `She doesn't look like a threat. Thin, road-worn, a pack that hangs half-empty. But her eyes go to your gear with a precision that says she's cataloging everything — weight, make, origin. She's looking for something specific.`,
+      `<em>"Bunker Pyxis."</em> She says it like a password. <em>"You've been inside. I can tell — the dust on your boots has that mineral signature. Volcanic glass and pre-war sealant compound."</em> She steps closer. <em>"I need the protocols. The containment data. The network growth projections. Name your price."</em>`,
+      `She's not bluffing. The knowledge in your head — the bunker's research logs, the containment protocols, the data on the network's expansion rate — is worth more than anything physical she could offer. The question is what she'll do with it.`,
+    ],
+    choices: [
+      { label: 'Trade — information for information', next: null, effect: () => { setFlag('enc_pyxis_trade'); modStat('ms', 1); setFlag('arcadia_signal'); showNotif('Traded Pyxis intel — received Arcadia coordinates // MS +1'); } },
+      { label: 'Misdirect — give her partial data, keep the rest', next: null, effect: () => { modStat('cha', 1); showNotif('Misdirected the seeker // CHA +1'); } },
+      { label: 'Refuse — this data is too dangerous to share', next: null, effect: () => { showNotif('Refused the seeker — she\'ll find another way'); } },
+      { label: 'She\'s not getting it willingly', next: null, effect: () => { modStat('hp', -3); modStat('str', 1); addItem('TRADE SCRIP'); showNotif('Fight — seeker driven off // HP -3, STR +1, TRADE SCRIP'); }, danger: true },
+    ],
+  },
+  { id: 128,
+    req: () => state.visitedLocations.length >= 5 && repCheck('ironmarket', 1),
+    title: 'Caravan',
+    text: `The caravan rounds the bend like a small civilization on the move — four mules, two carts, eight people in the careful formation of travellers who've been robbed before and adjusted their geometry accordingly. The lead trader spots you and raises a hand. Not a greeting — a summons. <em>"You're the one from Ironmarket. Horace's friend."</em> He's not asking. <em>"We're heading east. Three days to the relay junction. You walk with us, you eat with us, you sleep inside the perimeter."</em> He reads your hesitation correctly. <em>"No charge. Anyone Horace vouches for travels free. That's the rule."</em> Three days of safety. Hot food. Conversation that isn't a negotiation. The road hasn't offered that since you left the market.`,
+    effect: () => { modStat('hp', 3); modStat('con', 1); },
+    notif: 'HP +3, CON +1 — Ironmarket caravan, safe travel' },
+  { id: 129,
+    req: () => hasFlag('sigma_destroyed') && hasFlag('arcadia_nervebloom_contact'),
+    title: 'Unchecked Growth',
+    text: `The spore density hits you like walking into fog — except this fog is alive, golden, and pulsing with bioluminescent rhythm. With Sigma's monitoring network down, nothing is tracking the Arcadia network's expansion. Nothing is measuring it. Nothing is sounding alarms. The network is growing unchecked, and this section of road — clear six weeks ago — is now a corridor of fungal architecture. Fruiting bodies the size of traffic cones line the asphalt. Mycelial mats carpet the drainage ditches. The air is so thick with spores that your nervebloom filaments vibrate like tuning forks, resonating with a signal so loud it drowns out thought. Your body absorbs it. Your body has been designed to absorb it. The question is how much redesigning your body will do in return.`,
+    effect: () => { modStat('rad', -1); if (Math.random() < 0.4) addMutation('spore_lung'); if (Math.random() < 0.3) addMutation('root_nerve'); },
+    notif: 'RAD -1 — unchecked network growth, heavy spore exposure' },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──

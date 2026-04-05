@@ -5386,6 +5386,64 @@ const scenes = {
     ],
   },
 
+  arcadia_ending_negotiate: {
+    title: 'ENDING — THE ACCORD',
+    text: [
+      `You step back from the core organism and turn to Lira. "I'm not joining. And I'm not destroying it. But this—" you gesture at the pulsing chamber, the commune above, the network below — "this can't stay hidden forever."`,
+      `Lira's eyes narrow. "What are you proposing?"`,
+      `"Terms. Boundaries. A deal the valley can live with."`,
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `You speak with authority no outsider has ever had — you've touched the network's mind directly. You know its limits, its fears, its capacity for restraint. When you describe the network's willingness to negotiate, Lira believes you. She has no choice. You know more about the core than she does.`,
+        ];
+        if (hasFlag('arcadia_open_contact')) return [
+          `The residual connection helps. You can feel the network's willingness — tentative, cautious, but real. When you speak for it, you're not guessing. You're translating.`,
+        ];
+        return [
+          `You're working from limited understanding — you touched the network only through light and pattern. But sometimes an outsider's perspective is exactly what's needed. You see what the commune can't: how this looks from the outside.`,
+        ];
+      })(),
+      ...(function() {
+        const lines = [];
+        if (getRep('ironmarket') >= 1) {
+          lines.push(`You send word to Ironmarket first. Your reputation there opens doors — the trade council agrees to a summit. They're pragmatists. If the network can offer something valuable, they'll deal.`);
+        }
+        if (getRep('dustwalker') >= 1) {
+          lines.push(`The Dustwalkers are harder. ${hasFlag('dustwalker_alliance') ? 'Vance feels betrayed — you promised him containment, not coexistence. But he\'s a soldier, not a fool. When you lay out the tactical advantages of a network alliance, he listens.' : 'Commander Vance sends a delegation, not an army. That\'s a start.'}`);
+        }
+        if (getRep('ironmarket') < 1 && getRep('dustwalker') < 1) {
+          lines.push(`It's harder without strong faction ties. You broker through intermediaries, traders, wanderers who owe you favors. Slower, messier, but it works. The valley's survivors are practical people — they'll deal with the devil if the terms are right.`);
+        }
+        return lines;
+      })(),
+      ...(function() {
+        if (state.cha >= 14) return [
+          `The negotiations take three days. You're good at this — reading the room, finding the overlap between what each side needs and what they'll accept. By the second day, people are talking to each other instead of through you. That's when you know it's going to work.`,
+        ];
+        return [
+          `The negotiations take two weeks. There are walkouts, threats, a fistfight between a Dustwalker scout and a commune farmer over water rights. You mediate, cajole, threaten when you have to. It's ugly, exhausting work.`,
+          `But it works.`,
+        ];
+      })(),
+      `The terms are simple: the network stays underground. It provides early warning for rad-storms, monitors water contamination, and shares its century of soil data with valley farmers. In exchange, the commune is recognized as sovereign territory, and no faction attempts containment or destruction.`,
+      `It's not trust. Not yet. But it's a framework trust can grow in.`,
+      ...(function() {
+        if (hasFlag('bunker_protocols')) return [
+          `You draft the accord on the back of a Pyxis containment protocol — the old researchers' fears repurposed as the foundation for something they never imagined. Coexistence. It would have terrified them. It should probably terrify you.`,
+        ];
+        return [];
+      })(),
+      `Lira signs for Arcadia. The network ratifies through a pulse of bioluminescence that bathes the signing chamber in gold. For one moment, everyone in the room — Dustwalker, trader, commune farmer, mutant wanderer — stands in the same warm light.`,
+      `You leave Arcadia the next morning. The valley looks different from the ridge — not safer, not gentler, but more coherent. Like a sentence that finally found its verb.`,
+      `Behind you, the network hums. Beneath you, the mycelium carries news of the accord to every corner of the valley, a slow pulse of information traveling through root and stone and the ancient bones of the earth.`,
+      `The wasteland endures. But for the first time in a hundred and forty years, it endures together.`,
+      `— THE ACCORD —`,
+    ],
+    choices: [
+      { label: '[ NEW GAME ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

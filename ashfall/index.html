@@ -1162,6 +1162,15 @@ const ENEMIES = {
     loot: () => { if (Math.random() < 0.4) addItem('AMMUNITION BOX'); },
     xpStat: 'dex',
   },
+  warden_drone: {
+    name: 'WARDEN Security Drone',
+    desc: 'Pre-Fall aerial platform, matte-black carapace still pristine under a century of dust. It hovers on magnetic repulsion, camera turret tracking with the mechanical patience of something that never blinks. The taser array unfolds like a metal flower. No stand-down codes. No negotiation protocols. Just target acquisition and voltage.',
+    threat: 12,
+    hp: 20,
+    tags: ['machine', 'armored', 'electric'],
+    loot: () => { addItem('BATTERY CELLS'); if (Math.random() < 0.3) addItem('TECHNICAL MANUAL'); },
+    xpStat: 'ms',
+  },
 };
 
 // Combat approach definitions
@@ -2790,6 +2799,57 @@ const RANDOM_ENCOUNTERS = [
       { label: 'Take the field medkit', next: null, effect: () => { addItem('FIELD MEDKIT'); modStat('hp', 4); showNotif('Arcadia supply drop — FIELD MEDKIT // HP +4'); } },
     ],
   },
+
+  // ── STORY-REACTIVE ENCOUNTERS: WARDEN-3 / SIGMA ──
+  { id: 106,
+    req: () => hasFlag('warden_alliance'),
+    title: 'WARDEN Delivery',
+    text: [
+      `The drone descends from the overcast like a dropped stone — then decelerates to a hover two meters above the road, magnetic repulsion humming at a frequency you feel in your teeth. Matte-black. No markings. WARDEN-3's eyes in the sky, and right now they're looking at you.`,
+      `A panel opens on the drone's belly and a sealed package lowers on a cable. The casing is stamped with Sigma Relay coordinates and a message in WARDEN's precise block font: <em>SUPPLY CACHE — COORDINATES FOLLOW — 2.4 KM BEARING 047. CONTENTS: FIELD RATIONS, RAD MEDICATION, AMMUNITION. CACHE WILL SELF-SEAL IN 72 HOURS.</em>`,
+      `The drone lingers for three seconds after you take the package. The camera turret tracks your face. Then it climbs vertically and disappears into the grey ceiling. WARDEN is watching. WARDEN is providing.`,
+    ],
+    choices: [
+      { label: 'Follow the coordinates to the cache', next: null, effect: () => { addItem('AMMUNITION BOX'); modStat('hp', 4); modStat('con', 1); showNotif('WARDEN cache — AMMUNITION BOX + HP +4, CON +1'); } },
+      { label: 'Pocket the coordinates for later', next: null, effect: () => { setFlag('enc_warden_cache_coords'); showNotif('WARDEN cache coordinates saved'); } },
+    ],
+  },
+  { id: 107,
+    req: () => hasFlag('warden_alliance'),
+    title: 'Automated Triage',
+    text: `A roadside utility box — the kind that once housed telecom equipment — clicks open as you pass. Not wind. Not corrosion. The lock disengages with the precise mechanical action of a system responding to a signal. Inside: a medical station, compact, military-grade, powered by a solar cell no bigger than your palm. The display reads: <em class="warden-text">ALLIED PERSONNEL DETECTED. INITIATING TRIAGE PROTOCOL. PLEASE REMAIN STILL.</em> Robotic arms — two of them, thin as pencils, steady as surgical instruments — emerge from the housing. Antiseptic spray. Wound closure. A vitamin injection that hits your bloodstream like cold electricity. The arms retract. The box seals. The display adds: <em class="warden-text">YOU ARE WELCOME.</em>`,
+    effect: () => { modStat('hp', 5); },
+    notif: 'HP +5 — WARDEN automated medical station' },
+  { id: 108,
+    req: () => hasFlag('sigma_destroyed') && !hasFlag('warden_alliance'),
+    combat: 'warden_drone',
+    text: `You hear the hum before you see it — magnetic repulsion, high-frequency, coming from the relay tower you can no longer reach. The drone drops from behind a concrete overpass and locks on. Camera turret. Taser array. The red targeting LED paints a dot on your sternum. Without Sigma Relay's command structure, without the stand-down codes that WARDEN-3 would have broadcast to its security grid, the drone is running on base protocol. Base protocol is simple: this airspace is restricted. You are in it. The taser array charges with a sound like tearing silk.` },
+  { id: 109,
+    req: () => hasFlag('sigma_destroyed'),
+    title: 'Dead Air',
+    text: `The electromagnetic dead zone hits without warning. Your compass needle spins — not drifting, spinning, like a propeller. Static floods every frequency. The air tastes of ozone and hot metal, and for thirty seconds the world sounds like it's being broadcast through a broken speaker. Sigma's ghost. The relay's destruction left a scar in the local spectrum — an electromagnetic wound that hasn't healed and may not heal for years. The instruments that once maintained the valley's signal infrastructure are gone. What remains is noise, chaos, and the digital equivalent of a phantom limb.`,
+    effect: () => { modStat('ms', -1); },
+    notif: 'MS -1 — electromagnetic dead zone, Sigma\'s scar' },
+  { id: 110,
+    req: () => hasFlag('sigma_data_taken'),
+    once: 'enc_data_chip_buyer',
+    title: 'The Buyer',
+    text: [
+      `He falls into step beside you without introduction — lean, weathered, a scavenger's pack riding high on his shoulders. His eyes go to your belt pouch with the precision of someone who knows exactly what they're looking for.`,
+      `<em>"You're carrying Sigma data. I can smell the radiation signature from here."</em> He taps a device on his wrist — Geiger counter, modified, the needle twitching in the direction of your pocket. <em>"I represent interests who will pay well. Trade scrip. Enough to buy passage anywhere in the valley."</em>`,
+      `His eyes are steady. His offer is real. But the data in your pocket is the only copy of whatever WARDEN-3 was recording before you pulled the plug.`,
+    ],
+    choices: [
+      { label: 'Sell — scrip is survival', next: null, effect: () => { removeItem('CORRUPTED DATA CHIP'); addItem('TRADE SCRIP'); addItem('TRADE SCRIP'); modStat('cha', 1); showNotif('Data chip sold — 2x TRADE SCRIP + CHA +1'); } },
+      { label: 'Refuse — the data stays with you', next: null, effect: () => { showNotif('Buyer — refused'); } },
+      { label: 'Trade for intel instead', next: null, effect: () => { removeItem('CORRUPTED DATA CHIP'); setFlag('enc_buyer_intel'); setFlag('arcadia_signal'); modStat('ms', 1); showNotif('Data chip traded for eastern intel — MS +1 // Arcadia signal'); } },
+    ],
+  },
+  { id: 111,
+    req: () => hasFlag('met_warden') && !hasFlag('warden_alliance'),
+    title: 'Observed',
+    text: `A camera. Mounted on a rusted utility pole at a highway junction you've passed twice before — and it wasn't there either time. The housing is new. Pre-Fall manufacture, yes, but recently installed: the mounting bolts are bright against the weathered steel, and the cable running down the pole disappears into a freshly dug trench. The lens tracks you with the smooth, servo-driven precision of equipment maintained by something that doesn't sleep. WARDEN-3 is extending its sensor grid. It knows you visited. It knows you left without committing. And now it's watching to see what you do next. The camera doesn't blink. You do.`,
+    notif: 'WARDEN-3 — observation post detected' },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──
@@ -2802,6 +2862,7 @@ const COMBAT_ITEM_EFFECTS = {
   'BINOCULARS':     { enemies: ['dustwalker_scout', 'bandit_pair', 'dustwalker_patrol'], bonus: 1, desc: 'Spotted them before they set the ambush' },
   'ENCRYPTED RADIO': { enemies: ['dustwalker_patrol'], bonus: 2, desc: 'Dustwalker frequencies — you hear them coming' },
   'RAD-SHIELDED CONTAINER': { enemies: ['nervebloom_beast'], bonus: 1, desc: 'The spores recoil from the shielding' },
+  'TECHNICAL MANUAL':  { enemies: ['warden_drone', 'scrap_automaton'], bonus: 2, desc: 'WARDEN maintenance codes — you know the shutdown sequence' },
 };
 
 function triggerRandomEncounter() {

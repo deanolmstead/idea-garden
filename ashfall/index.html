@@ -5444,6 +5444,59 @@ const scenes = {
     ],
   },
 
+  arcadia_ending_walk: {
+    title: 'ENDING — THE LONG ROAD',
+    text: [
+      `You step back from the core organism. The bioluminescence pulses once — a question, an invitation, a plea — and you shake your head.`,
+      `"No."`,
+      `Lira moves to block the exit. "You've seen the heart. You've touched the network. You can't just leave."`,
+      `"Watch me."`,
+      ...(function() {
+        if (hasFlag('arcadia_nervebloom_contact')) return [
+          `The Nerve-Bloom aches as you walk away — a phantom limb sensation, the network reaching for a mind that's already gone. It fades by the time you reach the surface. Almost.`,
+        ];
+        if (hasFlag('arcadia_open_contact')) return [
+          `You feel the connection thin and stretch as you climb toward the surface. By the time you reach open air, it's barely a whisper. By the time you reach the ridge, it's gone.`,
+        ];
+        return [];
+      })(),
+      ...(function() {
+        if (getRep('arcadia') >= 2) return [
+          `Lira follows you to the perimeter. "You could have changed everything," she says. There's no anger in her voice. Just exhaustion. She's had this conversation before, with other wanderers who saw the truth and chose to keep walking.`,
+          `"Maybe that's not my job," you say.`,
+        ];
+        if (getRep('arcadia') <= -1) return [
+          `Lira lets you go without another word. She never trusted you. She was right not to.`,
+        ];
+        return [
+          `Lira steps aside. She reads it in your face — not hostility, not fear. Just the bone-deep stubbornness of someone who's survived the wasteland by trusting their own judgment and no one else's.`,
+        ];
+      })(),
+      `You climb the ridge above Arcadia as the sun drops toward the western mountains. The valley spreads below you — Ironmarket's smoke, the Dustwalker perimeter lights flickering on, the dark smear of the rad-zones, and behind you the faint green glow of a commune built on the back of something ancient and strange.`,
+      ...(function() {
+        const lines = [];
+        if (hasFlag('sigma_destroyed')) lines.push(`Sigma Station's wreckage catches the last light. You did that. It already feels like a lifetime ago.`);
+        if (hasFlag('dustwalker_alliance')) lines.push(`Vance's radio frequency crackles in your pocket. You could call in the alliance, point the Dustwalkers at Arcadia. You switch the radio off.`);
+        if (hasFlag('bunker_protocols')) lines.push(`The Pyxis data weighs heavy in your pack. Someone will want it eventually — the protocols, the research, the warnings. But not today.`);
+        return lines;
+      })(),
+      `The road stretches north and south. You've been through this valley — bled for it, fought for it, irradiated yourself for it — and you're leaving it exactly as you found it. Broken, beautiful, and stubbornly alive.`,
+      ...(function() {
+        if (state.mutations.length >= 3) return [
+          `Your mutations pulse and shift beneath your skin. Whatever the valley made you, you're taking it with you. The wasteland is wide. There are other places, other ruins, other buried things waiting to be found — or left alone.`,
+        ];
+        return [
+          `The wasteland is wide. This valley isn't the only place with secrets buried under the dust. There are other roads, other ruins, other choices waiting to be made by someone stubborn enough to walk away from the easy ones.`,
+        ];
+      })(),
+      `You don't look back. The road only goes forward.`,
+      `— THE LONG ROAD —`,
+    ],
+    choices: [
+      { label: '[ NEW GAME ]', next: 'ironmarket_gate', effect: () => { localStorage.removeItem(SAVE_KEY); location.reload(); } },
+    ],
+  },
+
 }; // end scenes
 
 // Init

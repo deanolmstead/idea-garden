@@ -5135,28 +5135,78 @@ const scenes = {
     title: 'Arcadia',
     chapter: 'Chapter III — Arcadia',
     text: [
-      `The ash stops falling.`,
-      `Not gradually — it stops, as if an invisible wall separates the grey valley from whatever exists beyond this point. The air changes. Humid. Warm. Carrying a smell that takes you a full minute to identify because you've never encountered it at this concentration: <em>growth.</em>`,
-      `The ground beneath your boots is dark — almost black — and threaded with pale filaments that catch the dim light like veins beneath skin. They pulse. Not visibly, not quite, but you feel it through your soles — a rhythm, deep and slow, like the heartbeat of something enormous sleeping beneath you.`,
-      `Trees. Not the dead orchard husks of the ashlands — living trees, bark slick with moisture, leaves so green they look artificial. But wrong. The branches grow in patterns that are too regular, too geometric. Hexagonal canopies. Roots that surface and dive in perfect arcs. Nature doesn't make right angles. Something is editing the growth.`,
       ...(function() {
-        if (typeof state !== 'undefined' && hasFlag('dustwalker_briefing')) {
-          return [
-            `Vance's briefing echoes: <em>Don't eat anything. Don't sleep.</em> The rules feel more urgent here, where the air itself tastes like something you could live on.`,
-          ];
-        }
+        // Revisit — already been to the commune
+        if (state.visitedLocations.includes('arcadia')) return [
+          `The border again — ash to green, dead to alive, the valley's sharpest line. The air hits you the same way: humid, warm, thick with growth. But this time you know what's growing.`,
+          ...(function() {
+            if (hasFlag('arcadia_nervebloom_contact')) return [
+              `The network recognizes you before you've taken three steps. You feel it — a warmth behind your eyes, a whisper of attention that isn't hostile. The trees shift their canopies overhead, opening a path. A corridor of dappled light, laid out specifically for you. The organism remembers the mind that touched it.`,
+            ];
+            if (hasFlag('arcadia_open_contact')) return [
+              `The network stirs as you cross the border. Faint — like hearing your name called from far away. The trees don't move, but the light changes, shifting through the canopy in patterns you almost recognize. It knows you're here. It's glad.`,
+            ];
+            if (hasFlag('arcadia_guarded_contact')) return [
+              `The trees observe you. Their bioluminescent markers pulse in slow sequences — the visual language you learned in the heart chamber. You can't read it fluently, but the pattern feels like a question: <em>why did you come back?</em>`,
+            ];
+            return [
+              `The geometric trees watch your approach with the same diffuse attention as before. But you know the commune now. You know Lira. The strangeness hasn't faded, but the fear has.`,
+            ];
+          })(),
+          ...(function() {
+            if (hasFlag('sigma_destroyed')) return [
+              `Something is different in the network's rhythm. Faster. More alert. You destroyed WARDEN-3 — another intelligence, another century-old mind. The network felt it die. Whether it grieves or celebrates, you can't tell. But it noticed.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('bunker_protocols')) return [
+              `The spore patterns in the bark make sense now. You've read the Pyxis researchers' notes — their careful taxonomies, their signal classifications, their growing alarm as the organism exceeded every parameter. What they cataloged as anomalies, you recognize as language.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_alliance')) return [
+              `Vance's radio sits heavy in your pocket. Every step deeper into Arcadia is a step further from the alliance's expectations. He sent you here for containment data. What you found was something else entirely.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_sabotaged')) return [
+              `Word travels through the valley — through traders, through travelers, through root networks you're only beginning to understand. The commune has heard about the Dustwalker sabotage. As you approach, the trees seem to lean toward you rather than away. The enemy of their enemy, at least for now.`,
+            ];
+            return [];
+          })(),
+        ];
+        // First visit
         return [
-          `You feel watched. Not by eyes — by attention. A diffuse, encompassing awareness that registers your footsteps, your breathing, your body heat, and files each datum away with the patient thoroughness of a system designed to observe.`,
+          `The ash stops falling.`,
+          `Not gradually — it stops, as if an invisible wall separates the grey valley from whatever exists beyond this point. The air changes. Humid. Warm. Carrying a smell that takes you a full minute to identify because you've never encountered it at this concentration: <em>growth.</em>`,
+          `The ground beneath your boots is dark — almost black — and threaded with pale filaments that catch the dim light like veins beneath skin. They pulse. Not visibly, not quite, but you feel it through your soles — a rhythm, deep and slow, like the heartbeat of something enormous sleeping beneath you.`,
+          `Trees. Not the dead orchard husks of the ashlands — living trees, bark slick with moisture, leaves so green they look artificial. But wrong. The branches grow in patterns that are too regular, too geometric. Hexagonal canopies. Roots that surface and dive in perfect arcs. Nature doesn't make right angles. Something is editing the growth.`,
+          ...(function() {
+            if (hasFlag('dustwalker_briefing')) return [
+              `Vance's briefing echoes: <em>Don't eat anything. Don't sleep.</em> The rules feel more urgent here, where the air itself tastes like something you could live on.`,
+            ];
+            return [
+              `You feel watched. Not by eyes — by attention. A diffuse, encompassing awareness that registers your footsteps, your breathing, your body heat, and files each datum away with the patient thoroughness of a system designed to observe.`,
+            ];
+          })(),
         ];
       })(),
     ],
     choices: [
-      { label: 'Follow the path toward the settlement', next: 'arcadia_perimeter' },
-      { label: 'Follow the Dustwalker approach vectors — avoid the main path', next: 'arcadia_perimeter_stealth', req: () => hasFlag('dustwalker_arcadia_map') || hasItem('ARCADIA APPROACH MAP'), reqNote: '[ Requires Arcadia Approach Map ]' },
-      { label: 'Follow the tracker signal from the Dustwalker truck', next: 'arcadia_intake', req: () => hasFlag('arcadia_tracker_planted'), reqNote: '[ Requires planted tracker ]' },
-      { label: 'The spore-lung resonance is overwhelming here — follow it', next: 'arcadia_spore_path', req: () => hasMutation('spore_lung'), reqNote: '[ Requires Spore-Lung mutation ]' },
-      { label: 'Put on the hazmat suit before going deeper', next: 'arcadia_perimeter', req: () => hasItem('HAZMAT SUIT'), reqNote: '[ Use Hazmat Suit ]', effect: () => { setFlag('arcadia_hazmat'); modStat('rad', 2); showNotif('HAZMAT SUIT — sealed environment // RAD +2'); } },
-      { label: 'Turn back — this place is wrong', next: null, effect: () => toggleMap() },
+      // Revisit — skip perimeter, go where you need to
+      { label: 'Lira meets you at the border — head to the commune', next: 'arcadia_commune', hidden: () => !state.visitedLocations.includes('arcadia') },
+      { label: 'Go straight to the heart chamber', next: 'arcadia_heart', hidden: () => !state.visitedLocations.includes('arcadia') },
+      { label: 'Leave', next: null, effect: () => toggleMap(), hidden: () => !state.visitedLocations.includes('arcadia') },
+      // First visit choices
+      { label: 'Follow the path toward the settlement', next: 'arcadia_perimeter', hidden: () => state.visitedLocations.includes('arcadia') },
+      { label: 'Follow the Dustwalker approach vectors — avoid the main path', next: 'arcadia_perimeter_stealth', req: () => hasFlag('dustwalker_arcadia_map') || hasItem('ARCADIA APPROACH MAP'), reqNote: '[ Requires Arcadia Approach Map ]', hidden: () => state.visitedLocations.includes('arcadia') },
+      { label: 'Follow the tracker signal from the Dustwalker truck', next: 'arcadia_intake', req: () => hasFlag('arcadia_tracker_planted'), reqNote: '[ Requires planted tracker ]', hidden: () => state.visitedLocations.includes('arcadia') },
+      { label: 'The spore-lung resonance is overwhelming here — follow it', next: 'arcadia_spore_path', req: () => hasMutation('spore_lung'), reqNote: '[ Requires Spore-Lung mutation ]', hidden: () => state.visitedLocations.includes('arcadia') },
+      { label: 'Put on the hazmat suit before going deeper', next: 'arcadia_perimeter', req: () => hasItem('HAZMAT SUIT'), reqNote: '[ Use Hazmat Suit ]', effect: () => { setFlag('arcadia_hazmat'); modStat('rad', 2); showNotif('HAZMAT SUIT — sealed environment // RAD +2'); }, hidden: () => state.visitedLocations.includes('arcadia') },
+      { label: 'Turn back — this place is wrong', next: null, effect: () => toggleMap(), hidden: () => state.visitedLocations.includes('arcadia') },
     ],
   },
 

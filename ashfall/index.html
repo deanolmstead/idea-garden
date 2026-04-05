@@ -4188,20 +4188,57 @@ const scenes = {
     title: 'Dustwalker Fort',
     chapter: 'Chapter II — Dustwalker Fort',
     text: [
-      `The fort assembles itself from the haze in stages. Guard tower first — a water tower retrofitted with sheet metal and a sniper blind, the Dustwalker boot-print stenciled on every face. Then the walls: highway barriers stacked three deep, topped with razor wire that catches the grey light like a crown of thorns.`,
-      `Two patrols visible. Northern approach, southern approach. Disciplined spacing — twelve meters apart, rifles held at low ready, eyes sweeping in practiced arcs. They move like people who've been drilled until the drill became anatomy.`,
-      `The gate is welded steel, wide enough for a vehicle. A sign above it in military stencil: <em>FORT RESURGENCE — DUSTWALKER TERRITORY — UNAUTHORIZED ENTRY IS A DEATH SENTENCE WE ARE HAPPY TO CARRY OUT.</em>`,
-      `Beyond the walls, the sound of diesel generators and the low clang of metal on metal. They're building something in there. Or loading something.`,
+      ...(function() {
+        // Allied — welcomed back
+        if (hasFlag('dustwalker_alliance')) return [
+          `The fort recognizes you before you're within hailing distance. A mirror-flash from the guard tower — the Dustwalker friend-or-foe signal — and the gate begins grinding open while you're still fifty meters out.`,
+          `The patrol you pass salutes. Not the crisp military kind — the casual kind, one professional acknowledging another. You're Vance's asset now. That buys respect in this place, if not warmth.`,
+          ...(function() {
+            if (hasFlag('bunker_protocols')) return [
+              `The Pyxis data sits heavy in your memory. Pre-war containment protocols, network growth projections, threat assessments. Intel Vance would trade a truck for. The question is whether you want to give it to him.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `You keep your hands steady and your expression neutral as you pass the sentries. If they knew what you'd touched — the network, the core, the thing their commander wants contained or destroyed — the salutes would become rifle barrels. The alliance holds because of what Vance doesn't know about you.`,
+            ];
+            return [];
+          })(),
+        ];
+        // Sabotaged — hostile territory
+        if (hasFlag('dustwalker_sabotaged')) return [
+          `The fort is different now. Patrols doubled — four visible where there used to be two. Spotlights sweep the perimeter even in daylight, and the razor wire has been reinforced with concertina coils. Someone hurt them, and they've responded the way soldiers respond: by hardening everything.`,
+          `A wanted sketch is nailed to a signpost at the two-hundred-meter line. The likeness is rough — charcoal on salvaged paper — but the description beneath it is specific enough. Height, build, last known equipment. The bounty is listed in ammunition. That's how seriously they're taking this.`,
+          `The gate is sealed. The sign above it hasn't changed — <em>UNAUTHORIZED ENTRY IS A DEATH SENTENCE</em> — but now it feels less like bureaucracy and more like a promise written specifically for you.`,
+        ];
+        // Default — first visit or return without alliance/sabotage
+        return [
+          `The fort assembles itself from the haze in stages. Guard tower first — a water tower retrofitted with sheet metal and a sniper blind, the Dustwalker boot-print stenciled on every face. Then the walls: highway barriers stacked three deep, topped with razor wire that catches the grey light like a crown of thorns.`,
+          `Two patrols visible. Northern approach, southern approach. Disciplined spacing — twelve meters apart, rifles held at low ready, eyes sweeping in practiced arcs. They move like people who've been drilled until the drill became anatomy.`,
+          `The gate is welded steel, wide enough for a vehicle. A sign above it in military stencil: <em>FORT RESURGENCE — DUSTWALKER TERRITORY — UNAUTHORIZED ENTRY IS A DEATH SENTENCE WE ARE HAPPY TO CARRY OUT.</em>`,
+          `Beyond the walls, the sound of diesel generators and the low clang of metal on metal. They're building something in there. Or loading something.`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Approach the gate openly — use your leverage', next: 'dustwalker_gate', req: () => hasFlag('dustwalker_leverage') || hasItem('TRADE SCRIP'), reqNote: '[ Requires Dustwalker leverage or Trade Scrip ]' },
-      { label: 'Talk your way in', next: 'dustwalker_gate_cha', req: () => skillCheck('cha', 12), reqNote: '[ Requires CHA 12+ ]' },
-      { label: 'Circle to the northern gap in the patrol rotation', next: 'dustwalker_stealth', req: () => skillCheck('dex', 11), reqNote: '[ Requires DEX 11+ ]' },
-      { label: 'Glass the perimeter with binoculars first', next: 'dustwalker_recon', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]' },
-      { label: 'Your thermal sense maps the heat signatures inside', next: 'dustwalker_thermal_recon', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]' },
-      { label: 'The pheromones do the talking — the gate guard relaxes before you speak', next: 'dustwalker_pheromone_entry', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]' },
-      { label: 'Force your way through', next: 'dustwalker_assault', danger: true },
-      { label: 'Leave — you\'re not ready for this', next: null, effect: () => toggleMap() },
+      // Alliance choices
+      { label: 'Walk through the open gate', next: 'dustwalker_interior', hidden: () => !hasFlag('dustwalker_alliance') },
+      { label: 'Report to Commander Vance', next: 'dustwalker_commander', hidden: () => !hasFlag('dustwalker_alliance') },
+      { label: 'Share the Bunker Pyxis data with Vance', next: 'dustwalker_vance_arcadia', hidden: () => !hasFlag('dustwalker_alliance') || !hasFlag('bunker_protocols'), req: () => hasFlag('bunker_protocols'), reqNote: '[ Share Pyxis intel ]' },
+      { label: 'Open the overworld map', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('dustwalker_alliance') },
+      // Sabotaged choices
+      { label: 'Try to sneak past the reinforced patrols', next: 'dustwalker_stealth', hidden: () => !hasFlag('dustwalker_sabotaged'), req: () => skillCheck('dex', 14), reqNote: '[ Requires DEX 14+ — security doubled ]', danger: true },
+      { label: 'This was a mistake — leave before they spot you', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('dustwalker_sabotaged') },
+      // Default choices (first visit / neutral return)
+      { label: 'Approach the gate openly — use your leverage', next: 'dustwalker_gate', req: () => hasFlag('dustwalker_leverage') || hasItem('TRADE SCRIP'), reqNote: '[ Requires Dustwalker leverage or Trade Scrip ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Talk your way in', next: 'dustwalker_gate_cha', req: () => skillCheck('cha', 12), reqNote: '[ Requires CHA 12+ ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Circle to the northern gap in the patrol rotation', next: 'dustwalker_stealth', req: () => skillCheck('dex', 11), reqNote: '[ Requires DEX 11+ ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Glass the perimeter with binoculars first', next: 'dustwalker_recon', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Your thermal sense maps the heat signatures inside', next: 'dustwalker_thermal_recon', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'The pheromones do the talking — the gate guard relaxes before you speak', next: 'dustwalker_pheromone_entry', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Force your way through', next: 'dustwalker_assault', danger: true, hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Leave — you\'re not ready for this', next: null, effect: () => toggleMap(), hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
     ],
   },
 

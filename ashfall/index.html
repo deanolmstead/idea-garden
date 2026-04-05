@@ -1143,6 +1143,16 @@ const ENEMIES = {
     loot: null,
     xpStat: 'dex',
   },
+  nervebloom_beast: {
+    name: 'Nervebloom Stalker',
+    desc: 'It might have been a coyote once. Now it moves in spore-driven jerks — muscles firing in sequences no nervous system designed, eyes glazed white with mycelial threading. The network is piloting it. Badly. But with enough mass and teeth to make the piloting irrelevant.',
+    threat: 11,
+    hp: 16,
+    tags: ['beast', 'mutant', 'poison'],
+    loot: () => { if (Math.random() < 0.3) addMutation('spore_lung'); },
+    xpStat: 'con',
+    poisonChance: 0.3,
+  },
   dustwalker_patrol: {
     name: 'Dustwalker Patrol',
     desc: 'Three soldiers in formation — point, flank, rear guard. Standard Dustwalker sweep-and-clear, rifles up, spacing textbook. They\'ve been hunting you since the fort.',
@@ -2725,17 +2735,73 @@ const RANDOM_ENCOUNTERS = [
       { label: 'Approach openly — you have leverage', next: null, effect: () => { modRep('dustwalker', 1); modStat('cha', 1); showNotif('Patrol intel traded for goodwill // Dustwalker rep +1, CHA +1'); }, req: () => hasFlag('dustwalker_leverage'), reqNote: '[ Requires Dustwalker leverage ]' },
     ],
   },
+
+  // ── STORY-REACTIVE ENCOUNTERS: ARCADIA NETWORK ──
+  { id: 100,
+    req: () => hasFlag('arcadia_open_contact'),
+    title: 'The Watcher',
+    text: `A crow. Black-feathered, larger than it should be, perched on a guardrail with its head tilted at an angle that looks almost deliberate. It watches you pass with pupils that dilate in sync with your heartbeat — you can feel the rhythm matching, a biological metronome linking your circulatory system to a bird that has no business knowing your pulse. It hops twice. Follows. Lands on your shoulder with a weight that feels like a hand. The talons don't grip — they rest. The crow's eyes go white for two seconds. Then it launches skyward and is gone. The network just took your photograph.`,
+    effect: () => { modStat('ms', 1); },
+    notif: 'MS +1 — the network is watching through nature' },
+  { id: 101,
+    req: () => hasFlag('arcadia_nervebloom_contact'),
+    title: 'Spore Drift',
+    text: [
+      `The air changes. Thicker. Golden. A spore drift — Arcadia's exhaled breath, carried on thermals from the east. The particulate density is ten times what you'd encounter at the perimeter. Your nervebloom mutation recognizes it before your brain does: the filaments along your arms rise like antennae, each one straining toward the cloud as if greeting a relative.`,
+      `The spores carry information. Fragments of the network's awareness — soil moisture data, canopy growth rates, the slow pulse of mycelial communication. Breathing deeply would let more in. Your body is already adapted. The question is whether you want the network to adapt more to you.`,
+    ],
+    choices: [
+      { label: 'Breathe deep — let the network in', next: null, effect: () => { modStat('ms', 1); if (Math.random() < 0.4) addMutation('spore_lung'); showNotif('Nervebloom resonance — MS +1' + (hasMutation('spore_lung') ? '' : ' // possible mutation')); } },
+      { label: 'Cover your face and push through', next: null, effect: () => { showNotif('Spore drift — resisted'); } },
+    ],
+  },
+  { id: 102,
+    req: () => hasFlag('arcadia_nervebloom_contact'),
+    combat: 'nervebloom_beast',
+    text: `It emerges from a drainage culvert trailing spore-fog like a veil. The body plan says coyote — the movement says puppet. Muscles fire in wrong sequences, limbs jerking with the mechanical imprecision of a system learning to drive hardware it wasn't designed for. The eyes are white. Completely white. Mycelial filaments thread through the orbital sockets like wiring through a junction box. It doesn't growl. It doesn't need to. The network has taken this animal apart and rebuilt it for one purpose, and that purpose is currently looking at you with borrowed eyes and borrowed hunger.` },
+  { id: 103,
+    req: () => hasFlag('arcadia_open_contact'),
+    once: 'enc_arcadia_envoy',
+    title: 'The Envoy',
+    text: [
+      `She steps from behind a collapsed billboard with the serene confidence of someone who knew exactly where you'd be. Arcadia commune clothing — woven from fibers that shimmer faintly green. Her pupils are dilated past the iris, the way all deep-contact commune members' are. She speaks slowly, as if translating from a language that doesn't use words.`,
+      `<em>"The network asks a trade. A blood sample — three milliliters, drawn clean, sealed in glass. Your blood carries the nervebloom signature. The network wants to understand how your body adapted without being subsumed."</em>`,
+      `She holds out a sealed glass vial in one hand and a hand-drawn map in the other. The map shows clean-water sources across the eastern valley — springs, aquifers, cisterns that aren't on any trader map. Holloway would kill for this.`,
+    ],
+    choices: [
+      { label: 'Accept — blood for water', next: null, effect: () => { addItem('CLEAN WATER MAP'); setFlag('enc_arcadia_blood_trade'); modRep('arcadia', 1); showNotif('Arcadia trade — CLEAN WATER MAP + Arcadia rep +1'); } },
+      { label: 'Refuse — your blood stays inside you', next: null, effect: () => { showNotif('Arcadia envoy — trade refused'); } },
+    ],
+  },
+  { id: 104,
+    req: () => hasFlag('arcadia_signal') && !hasFlag('arcadia_open_contact') && !hasFlag('arcadia_nervebloom_contact') && !hasFlag('arcadia_guarded_contact'),
+    title: 'The Frequency',
+    text: `It starts in your molars. A low vibration — not sound, not quite. A carrier wave that bypasses your ears and settles directly into the bone conduction pathways of your jaw. The Arcadia frequency. You've heard about it. Now you're hearing it with your skeleton. The signal probes — a gentle, iterative query, like a sonar ping waiting for an echo. It doesn't hurt. It doesn't push. It listens. You can feel it mapping the contours of your consciousness the way a hand maps the surface of a wall in the dark, searching for a door. You don't have to open it. But the signal knows you're there now. And it will remember.`,
+    notif: 'Arcadia frequency — you\'ve been noticed' },
+  { id: 105,
+    req: () => repCheck('arcadia', 2),
+    title: 'Supply Drop',
+    text: [
+      `The bioluminescent marker is impossible to miss — a circle of pale blue-green fungal caps, each one the size of your fist, pulsing in a synchronized rhythm that matches the network's carrier wave. They've grown overnight. They weren't here yesterday. They were grown for you.`,
+      `At the center of the circle: a woven cache-basket, sealed with spore-resin, warm to the touch. Inside: anti-radiation compound in glass ampules, each one hand-labeled in the careful block lettering the commune uses. Six doses. Beside them, a sealed field medkit — pre-Fall military issue, the kind Arcadia shouldn't have access to. The network's supply chains are longer than anyone suspects.`,
+    ],
+    choices: [
+      { label: 'Take the anti-rad compound', next: null, effect: () => { addItem('ANTI-RAD COMPOUND x6'); modStat('hp', 2); showNotif('Arcadia supply drop — ANTI-RAD COMPOUND x6 // HP +2'); } },
+      { label: 'Take the field medkit', next: null, effect: () => { addItem('FIELD MEDKIT'); modStat('hp', 4); showNotif('Arcadia supply drop — FIELD MEDKIT // HP +4'); } },
+    ],
+  },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──
 // Items that grant bonus choices or narrative advantages in specific encounters
 const COMBAT_ITEM_EFFECTS = {
-  'GAS MASK':       { enemies: ['rad_ghoul'], bonus: 2, desc: 'Filters the rad-ghoul\'s toxic proximity' },
+  'GAS MASK':       { enemies: ['rad_ghoul', 'nervebloom_beast'], bonus: 2, desc: 'Filters the toxic proximity' },
   'SOLAR LANTERN':  { enemies: ['tunnel_crawler'], bonus: 2, desc: 'Illuminates the tunnel — no blind spots' },
   'GEIGER COUNTER': { enemies: ['rad_ghoul'], bonus: 1, desc: 'Early warning on the radiation signature' },
   'ROPE':           { enemies: ['ridge_hawk', 'mutant_boar'], bonus: 1, desc: 'Improvised restraint' },
   'BINOCULARS':     { enemies: ['dustwalker_scout', 'bandit_pair', 'dustwalker_patrol'], bonus: 1, desc: 'Spotted them before they set the ambush' },
   'ENCRYPTED RADIO': { enemies: ['dustwalker_patrol'], bonus: 2, desc: 'Dustwalker frequencies — you hear them coming' },
+  'RAD-SHIELDED CONTAINER': { enemies: ['nervebloom_beast'], bonus: 1, desc: 'The spores recoil from the shielding' },
 };
 
 function triggerRandomEncounter() {

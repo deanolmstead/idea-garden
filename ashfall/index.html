@@ -2760,6 +2760,21 @@ const scenes = {
       { label: '"Just passing through."', next: 'ironmarket_kael_pass', effect: () => setFlag('met_kael') },
       { label: '"I heard you lost a scout."', next: 'ironmarket_kael_scout', req: () => hasFlag('heard_eastern_warning'), reqNote: '[ Requires prior intel ]' },
       { label: '"People talk when they trust you. What aren\'t you telling me?"', next: 'ironmarket_kael_cha', req: () => skillCheck('cha', 11), reqNote: '[ Requires CHA 11+ ]' },
+      { label: 'Her grief hits you like a wall — someone she cared about is the missing scout', next: 'ironmarket_kael_empathic', req: () => hasMutation('empathic_bleed'), reqNote: '[ Requires Empathic Bleed mutation ]' },
+    ],
+  },
+
+  ironmarket_kael_empathic: {
+    title: 'The Shape of Loss',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `You don't hear it — you feel it. Grief, thick and heavy, radiating off Kael like heat from a furnace. Not the professional concern of a guard who lost a colleague. Something deeper. Personal. The kind of loss that rearranges the architecture of a person's chest.`,
+      `Your face changes before you can stop it. She sees.`,
+      `Her rifle barrel drops an inch. <em>"You know."</em> Not a question. She reads the empathic bleed in your expression the way a doctor reads symptoms. <em>"The scout — Dara — she was mine."</em> A breath. <em>"She found coordinates. A bunker, northeast ridgeline. Called it Pyxis. Said the signal was still active."</em>`,
+      `<em>"She went alone because I asked her to wait and she never could."</em> Kael's jaw sets. <em>"Find the bunker. Find what happened to her. That's the only trade I need."</em>`,
+    ],
+    choices: [
+      { label: 'Head into the market plaza', next: 'ironmarket_plaza', effect: () => { setFlag('met_kael'); setFlag('heard_eastern_warning'); setFlag('enc_bunkerpyxis_tunnel'); modStat('ms', 1); showNotif('Empathic Bleed — Kael\'s grief reveals Pyxis coordinates + personal stakes // MS +1'); } },
     ],
   },
 
@@ -2832,7 +2847,37 @@ const scenes = {
       { label: 'Horace\'s scrap exchange, northwest corner', next: 'ironmarket_horace' },
       { label: 'Healer\'s Row, along the south wall', next: 'ironmarket_healer', req: () => state.hp < 24, reqNote: '[ Only when hurt ]' },
       { label: 'East stalls, toward the grain silos (find Voss)', next: 'ironmarket_voss_approach' },
+      { label: 'Your compound eyes catch a hand dipping into a trader\'s satchel', next: 'ironmarket_pickpocket', req: () => hasMutation('compound_eyes'), reqNote: '[ Requires Compound Eyes mutation ]' },
+      { label: 'A low rumble beneath the asphalt — your infrasound picks up something under the market', next: 'ironmarket_infrasound', req: () => hasMutation('infrasound_hearing'), reqNote: '[ Requires Infrasound Hearing mutation ]' },
       { label: 'Open the overworld map', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  ironmarket_pickpocket: {
+    title: 'The Hand in the Bag',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Your hexagonal vision catches what no one else can — a child, nine or ten, threading between stalls with a hand that moves like smoke. The 270-degree field doesn't miss the angle of entry: into a trader's satchel, two fingers on a sealed foil packet, out again before the trader finishes his sentence.`,
+      `The child catches your compound gaze and freezes. Those fractured eyes are unmistakable. She knows you saw.`,
+      `She bolts — but drops the packet. You pick it up: military-grade antibiotics, sealed and dry. Worth a week of food in this market.`,
+    ],
+    choices: [
+      { label: 'Keep the antibiotics', next: 'ironmarket_plaza', effect: () => { addItem('ANTIBIOTICS'); showNotif('Compound Eyes — ANTIBIOTICS recovered from pickpocket'); } },
+      { label: 'Return them to the trader', next: 'ironmarket_plaza', effect: () => { modRep('ironmarket', 1); modStat('cha', 1); showNotif('Compound Eyes — returned stolen goods // Ironmarket rep +1, CHA +1'); } },
+    ],
+  },
+
+  ironmarket_infrasound: {
+    title: 'Below the Market',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The sound lives below hearing — a deep, rhythmic pulse that your mutant inner ear catches like a drumbeat felt through the floor. The asphalt vibrates at a frequency nobody else can perceive.`,
+      `You press your palm to the ground between two stalls. The pulse is stronger here. Regular. Biological. Not machinery — something alive, something massive, pulsing beneath the foundations of Ironmarket itself.`,
+      `The market was built on a parking lot. Before that, this was farmland. And before that — before the Fall — something was growing here that never stopped.`,
+      `The network. It runs under Ironmarket. Under everything. The valley isn't dotted with isolated organisms. It's one organism, and you're standing on its skin.`,
+    ],
+    choices: [
+      { label: 'File this away and return to the plaza', next: 'ironmarket_plaza', effect: () => { setFlag('arcadia_signal'); modStat('ms', 1); showNotif('Infrasound — network detected beneath Ironmarket // MS +1 // Arcadia location revealed'); } },
     ],
   },
 
@@ -2964,6 +3009,38 @@ const scenes = {
     choices: [
       { label: 'Approach her', next: 'ironmarket_pip', effect: () => setFlag('pip_found') },
       { label: 'Look for Voss directly', next: 'ironmarket_voss_stall' },
+      { label: 'Your nose finds Voss before your eyes do — chemical solvents, gun oil, and something radioactive', next: 'ironmarket_scenttrack_voss', req: () => hasMutation('scent_tracking'), reqNote: '[ Requires Scent Tracking mutation ]' },
+      { label: 'Your skin shifts to match the stall canvas — you overhear a private conversation', next: 'ironmarket_chromatophore_eavesdrop', req: () => hasMutation('chromatophore_skin'), reqNote: '[ Requires Chromatophore Skin mutation ]' },
+    ],
+  },
+
+  ironmarket_scenttrack_voss: {
+    title: 'The Scent Trail',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The east stalls are a symphony of smell to your mutant olfaction — rendered fat, ozone from jury-rigged batteries, the copper tang of ammunition. But one trail cuts through the noise: chemical solvents, machining oil, and beneath it all, the unmistakable metallic sweetness of refined uranium.`,
+      `You follow the scent past three stalls, through a canvas partition, and into a back room where the trail ends at a man sitting behind a desk made of a car hood laid across cinder blocks.`,
+      `Voss. He looks up — not surprised. The kind of man who expects visitors, even uninvited ones. His eyes go to your nose, then your jawline, cataloging the subtle changes that scent-tracking mutation leaves on facial structure.`,
+      `<em>"Tracker mutation. Bloodhound variant."</em> He's seen mutants before. <em>"You followed the product smell. That means you know what I'm moving."</em> He leans back. <em>"So we skip the small talk. What do you want?"</em>`,
+    ],
+    choices: [
+      { label: '"Information. The eastern routes."', next: 'ironmarket_voss_stall', effect: () => { setFlag('pip_found'); modStat('cha', 1); showNotif('Scent Tracking — skipped the gatekeepers, Voss respects directness // CHA +1'); } },
+    ],
+  },
+
+  ironmarket_chromatophore_eavesdrop: {
+    title: 'Invisible Audience',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Your skin ripples — ochre, slate, the sun-bleached nothing-color of the stall canvas behind you. Not perfect camouflage, but in the dim light of the east stalls, good enough. You flatten against the canvas partition and disappear.`,
+      `Two voices on the other side. One you don't know — male, careful, the clipped cadence of someone used to giving orders. The other is a woman — Pip, you'll learn later.`,
+      `<em>"—Dustwalker shipment moves in nine days. Twelve canisters, hazard-rated. Vance is using the eastern highway."</em>`,
+      `<em>"Route?"</em> Pip's voice is ice.`,
+      `<em>"Same as last quarter. Through the Knot, south fork to Fort Resurgence. But the escort is doubled. Whatever's in those canisters, Vance doesn't want them intercepted."</em>`,
+      `Your chromatophore skin holds its pattern. The conversation shifts to payment, then silence. By the time the partition moves, you're three stalls away, carrying intelligence that most people would trade a weapon for.`,
+    ],
+    choices: [
+      { label: 'Continue to find Voss with this intel', next: 'ironmarket_voss_stall', effect: () => { setFlag('pip_found'); setFlag('dustwalker_leverage'); modStat('ms', 1); showNotif('Chromatophore Skin — overheard Dustwalker shipment route // MS +1 // Dustwalker leverage gained'); } },
     ],
   },
 

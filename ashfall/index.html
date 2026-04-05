@@ -2084,10 +2084,12 @@ function renderScene(id) {
     state._pendingScene = null;
     const nextScene = dest || state.currentScene;
     scenes[id] = {
-      title: 'Encounter',
-      chapter: '— on the road —',
-      text: [enc.text],
-      choices: [{ label: 'Continue', next: nextScene }]
+      title: enc.title || 'Encounter',
+      chapter: enc.chapter || '— on the road —',
+      text: Array.isArray(enc.text) ? enc.text : [enc.text],
+      choices: enc.choices
+        ? enc.choices.map(c => ({ ...c, next: c.next || nextScene }))
+        : [{ label: 'Continue', next: nextScene }]
     };
   }
 
@@ -2669,8 +2671,17 @@ const COMBAT_ITEM_EFFECTS = {
 };
 
 function triggerRandomEncounter() {
-  const enc = RANDOM_ENCOUNTERS[Math.floor(Math.random() * RANDOM_ENCOUNTERS.length)];
-  if (enc.combat) return enc; // combat encounters handled separately
+  // Filter to eligible encounters: no req, or req met; no once, or once-flag not yet set
+  const eligible = RANDOM_ENCOUNTERS.filter(e => (!e.req || e.req()) && (!e.once || !hasFlag(e.once)));
+  // Story-reactive encounters (those with req) get 2x weight when eligible
+  const weighted = [];
+  for (const e of eligible) {
+    weighted.push(e);
+    if (e.req) weighted.push(e);
+  }
+  const enc = weighted[Math.floor(Math.random() * weighted.length)];
+  if (enc.once) setFlag(enc.once);
+  if (enc.combat) return enc;
   if (enc.effect) enc.effect();
   if (enc.loot)   addItem(enc.loot);
   if (enc.flag)   setFlag(enc.flag);

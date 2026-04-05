@@ -4556,6 +4556,8 @@ const scenes = {
       { label: 'Glass the perimeter with binoculars first', next: 'dustwalker_recon', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Your thermal sense maps the heat signatures inside', next: 'dustwalker_thermal_recon', req: () => hasMutation('thermal_sense'), reqNote: '[ Requires Thermal Sense mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'The pheromones do the talking — the gate guard relaxes before you speak', next: 'dustwalker_pheromone_entry', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Wait for nightfall — your nocturnal vision turns darkness into advantage', next: 'dustwalker_nocturnal_infiltrate', req: () => hasMutation('nocturnal_shift'), reqNote: '[ Requires Nocturnal Shift mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'Your compact frame fits through a gap in the barrier wall', next: 'dustwalker_dwarfism_squeeze', req: () => hasMutation('dwarfism'), reqNote: '[ Requires Dwarfism mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Force your way through', next: 'dustwalker_assault', danger: true, hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Leave — you\'re not ready for this', next: null, effect: () => toggleMap(), hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
     ],
@@ -4650,6 +4652,7 @@ const scenes = {
     choices: [
       { label: 'Head for the vehicle bay', next: 'dustwalker_transport', effect: () => { if (!hasItem('GAS MASK')) { modStat('hp', -2); modStat('con', -1); showNotif('HP -2, CON -1 — toxic fumes'); } setFlag('dustwalker_infiltrated'); } },
       { label: 'Move toward the command post', next: 'dustwalker_commander', effect: () => { if (!hasItem('GAS MASK')) { modStat('hp', -2); modStat('con', -1); showNotif('HP -2, CON -1 — toxic fumes'); } setFlag('dustwalker_infiltrated'); } },
+      { label: 'Your dense bones shrug off the culvert debris — push straight through the razor wire exit', next: 'dustwalker_interior', req: () => hasMutation('dense_bone'), reqNote: '[ Requires Dense Bone mutation ]', effect: () => { setFlag('dustwalker_infiltrated'); modStat('str', 1); showNotif('Dense Bone — razor wire can\'t cut calcified tissue // STR +1'); } },
     ],
   },
 
@@ -4719,6 +4722,7 @@ const scenes = {
     ],
     choices: [
       { label: 'Fight the gate guard', next: 'dustwalker_assault_result', effect: () => { renderCombatScene('dustwalker_scout', 'dustwalker_assault_result', 'She moves like training — economical, precise, the kind of violence that comes from drilling the same sequences until they live in the muscle memory. Her rifle is slung. Sidearm drawn. She\'s already inside the range where a rifle is a liability and a handgun is a conversation ender.'); } },
+      { label: 'Your rapid clotting seals the graze wound — you\'re already moving', next: 'dustwalker_assault_result', req: () => hasMutation('rapid_clotting'), reqNote: '[ Requires Rapid Clotting mutation ]', effect: () => { modStat('hp', 3); setFlag('dustwalker_hostile_entry'); showNotif('Rapid Clotting — bullet graze sealed in seconds, no HP loss // HP +3'); } },
     ],
   },
 
@@ -4837,6 +4841,49 @@ const scenes = {
       { label: '"I want safe passage east. What does that cost?"', next: 'dustwalker_vance_deal' },
       { label: 'Your synaptic overclock processes her micro-expressions faster than she can mask them', next: 'dustwalker_vance_overclock', req: () => hasMutation('synaptic_overclock'), reqNote: '[ Requires Synaptic Overclock mutation ]' },
       { label: 'Attack Vance — take the maps by force', next: 'dustwalker_vance_fight', danger: true, hidden: () => !hasFlag('dustwalker_hostile_entry') },
+      { label: 'The battle fugue descends — you read Vance\'s tactical posture without thinking', next: 'dustwalker_battlefugue_read', req: () => hasMutation('battle_fugue'), reqNote: '[ Requires Battle Fugue mutation ]' },
+    ],
+  },
+
+  dustwalker_nocturnal_infiltrate: {
+    title: 'Night Eyes',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `You wait. The sun drops. The spotlights come on — and become irrelevant. Your dilated pupils drink the darkness between the light cones, mapping a route through shadows that don't exist for the sentries' day-adapted eyes.`,
+      `The patrol's night rotation is sloppier than their daytime discipline. They cluster near the lights, moths to their own flames, leaving corridors of perfect darkness that might as well be doors held open for you.`,
+      `You cross the perimeter in ninety seconds. Past the gate, past the motor pool, into the shadow of the command building. Inside the fort, standing in darkness so total that the sentries could look directly at you and see nothing. Your nocturnal pupils are the only eyes that work here.`,
+    ],
+    choices: [
+      { label: 'Head for the command post', next: 'dustwalker_commander', effect: () => { setFlag('dustwalker_infiltrated'); modStat('dex', 2); showNotif('Nocturnal Shift — perfect night infiltration // DEX +2'); } },
+      { label: 'Explore the vehicle bay first', next: 'dustwalker_transport', effect: () => { setFlag('dustwalker_infiltrated'); modStat('dex', 2); showNotif('Nocturnal Shift — perfect night infiltration // DEX +2'); } },
+    ],
+  },
+
+  dustwalker_dwarfism_squeeze: {
+    title: 'The Gap',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `There — where two highway barriers meet at an angle the builders didn't bother welding shut. A gap. Twenty centimeters wide at the narrowest point. A normal-framed person would look at it and keep walking.`,
+      `Your compact frame turns sideways and slides through like a letter through a mail slot. The razor wire overhead catches nothing — you're a full head shorter than the coils are set for. The concrete scrapes your shoulders but can't find purchase on a body that's been rebuilt for exactly this kind of geometry.`,
+      `Inside the compound. No alarm. No shots. You've bypassed every defense they built for someone taller than you.`,
+    ],
+    choices: [
+      { label: 'Move toward the command post', next: 'dustwalker_commander', effect: () => { setFlag('dustwalker_infiltrated'); modStat('dex', 1); showNotif('Dwarfism — bypassed perimeter through barrier gap // DEX +1'); } },
+      { label: 'Head for the vehicle bay', next: 'dustwalker_transport', effect: () => { setFlag('dustwalker_infiltrated'); modStat('dex', 1); showNotif('Dwarfism — bypassed perimeter through barrier gap // DEX +1'); } },
+    ],
+  },
+
+  dustwalker_battlefugue_read: {
+    title: 'The Fugue State',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `The fugue drops like a curtain. The part of you that worries, that second-guesses, that politely waits for people to finish sentences — it steps aside. What's left reads Vance the way a predator reads prey: stance, weight distribution, hand placement, the micro-tensions in her jaw and shoulders that map her tactical options.`,
+      `She's bluffing. The sidearm on the desk is unloaded — the weight is wrong, the balance too light. Her real weapon is the knife strapped to her left thigh, which she'll draw if you move for the desk. The two soldiers behind you are positioning for a crossfire, but they're nervous — their breathing is fast and their fingers aren't on their triggers yet.`,
+      `The fugue gives you all of this in two seconds. The rest of the conversation happens with you knowing every card she holds.`,
+      `<em>"You're more than you look,"</em> Vance says, watching your eyes. She recognizes the mutation — she's seen it in combat veterans. The flat, dissociated gaze of someone whose body has automated the threat assessment. <em>"Battle fugue. The old soldiers got it from trauma. You got it from radiation."</em> She leans forward. <em>"Good. I prefer working with people who can see clearly."</em>`,
+    ],
+    choices: [
+      { label: '"Then let\'s stop posturing and talk."', next: 'dustwalker_vance_map', effect: () => { modStat('ms', 1); modStat('str', 1); showNotif('Battle Fugue — Vance respects the tactical clarity // MS +1, STR +1'); } },
     ],
   },
 

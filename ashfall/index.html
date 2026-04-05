@@ -3771,17 +3771,57 @@ const scenes = {
     chapter: 'Chapter I — Holloway Ranch',
     text: [
       `Green. The color hits like a physical thing after days of grey — almost violent in its aliveness. Rows of low-growing kale, radishes with leaves slick from irrigation, trellised beans climbing salvaged car windshields arranged into greenhouse panels. The water in the channels runs clear and cold. You can hear it.`,
-      `Three figures on the farmhouse porch. Two rifles. Not raised. Not lowered. Held at that precise angle that says the decision hasn't been made yet. The third figure — an older woman, sun-darkened to leather, hands scarred from decades of soil and wire — steps off the porch.`,
-      `<em>"That's far enough."</em> Her voice carries the way a fence carries — marking the line, not crossing it. <em>"Name. Business. Or turn around."</em>`,
+      ...(function() {
+        // Revisit — Marta knows you
+        if (state.visitedLocations.includes('holloway')) return [
+          ...(function() {
+            if (hasFlag('holloway_trusted')) return [
+              `Marta is waiting on the porch. Not guarding — waiting. The rifles are inside today. She raises a hand as you approach, the gesture of someone greeting a neighbor, not evaluating a threat. <em>"Back again. Good. I just pulled bread out of the oven."</em>`,
+            ];
+            return [
+              `The farmhouse porch. Marta again — same weathered face, same calculating eyes. But the rifles sit a fraction lower this time. Memory is its own currency here. <em>"You came back."</em> A statement, not a question. <em>"Most don't."</em>`,
+            ];
+          })(),
+          ...(function() {
+            if (hasFlag('sigma_destroyed')) return [
+              `She studies you over the rim of a water cup. <em>"Whatever happened east — the relay, the signals — something changed. Sky's been quieter. Rad-storms are still coming, but there's no pattern to them anymore. Used to be they followed the broadcast cycle."</em> She sets the cup down. <em>"I'm not asking if that was you. I'm saying thank you, and I don't need details."</em>`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_alliance')) return [
+              `Her jaw tightens when she notices the Dustwalker insignia on your gear. <em>"Vance's people have been pressing the border again. Two patrols last week — close enough to count my rows."</em> She meets your eyes. <em>"I don't judge who you ally with. But if those soldiers set one boot on my soil, alliance or not, I'll water my kale with what's left of them."</em>`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `You notice something you missed before — the irrigation channels have a faint green luminescence at the roots. Not algae. Mycelium. The network reaches here too, threading through Marta's water system in filaments she's probably been cultivating for years without knowing what she was feeding.`,
+            ];
+            return [];
+          })(),
+        ];
+        // First visit
+        return [
+          `Three figures on the farmhouse porch. Two rifles. Not raised. Not lowered. Held at that precise angle that says the decision hasn't been made yet. The third figure — an older woman, sun-darkened to leather, hands scarred from decades of soil and wire — steps off the porch.`,
+          `<em>"That's far enough."</em> Her voice carries the way a fence carries — marking the line, not crossing it. <em>"Name. Business. Or turn around."</em>`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Introduce yourself openly', next: 'holloway_welcome', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]' },
-      { label: 'Offer to trade information', next: 'holloway_trade', req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
-      { label: 'Offer the water purifier — a farmer\'s currency', next: 'holloway_purifier_gift', req: () => hasItem('WATER PURIFIER'), reqNote: '[ Gift Water Purifier ]' },
-      { label: 'Show the technical manual — WARDEN maintenance docs', next: 'holloway_technical_trade', req: () => hasItem('TECHNICAL MANUAL'), reqNote: '[ Trade Technical Manual ]' },
-      { label: 'Circle around the perimeter', next: 'holloway_sneak' },
-      { label: 'Marta notices your skin — the green patches catch her eye immediately', next: 'holloway_photosynthetic_welcome', req: () => hasMutation('photosynthetic'), reqNote: '[ Requires Photosynthetic Dermis mutation ]' },
-      { label: 'Offer Voss\'s trade scrip', next: 'holloway_trade_scrip', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]' },
+      // First visit choices
+      { label: 'Introduce yourself openly', next: 'holloway_welcome', req: () => skillCheck('cha', 10), reqNote: '[ Requires CHA 10+ ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Offer to trade information', next: 'holloway_trade', req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Offer the water purifier — a farmer\'s currency', next: 'holloway_purifier_gift', req: () => hasItem('WATER PURIFIER'), reqNote: '[ Gift Water Purifier ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Show the technical manual — WARDEN maintenance docs', next: 'holloway_technical_trade', req: () => hasItem('TECHNICAL MANUAL'), reqNote: '[ Trade Technical Manual ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Circle around the perimeter', next: 'holloway_sneak', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Marta notices your skin — the green patches catch her eye immediately', next: 'holloway_photosynthetic_welcome', req: () => hasMutation('photosynthetic'), reqNote: '[ Requires Photosynthetic Dermis mutation ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Offer Voss\'s trade scrip', next: 'holloway_trade_scrip', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]', hidden: () => state.visitedLocations.includes('holloway') },
+      // Revisit choices
+      { label: 'Sit down and share what you\'ve learned', next: 'holloway_east_intel', hidden: () => !state.visitedLocations.includes('holloway') },
+      { label: 'Share the Arcadia data package', next: 'holloway_arcadia_data', hidden: () => !state.visitedLocations.includes('holloway') || !hasItem('ARCADIA DATA PACKAGE'), req: () => hasItem('ARCADIA DATA PACKAGE'), reqNote: '[ Share Arcadia Data ]' },
+      { label: 'Trade information for supplies', next: 'holloway_trade', hidden: () => !state.visitedLocations.includes('holloway') || !(hasFlag('voss_deal') || hasFlag('met_warden')), req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
+      { label: 'Rest, eat, and resupply', next: null, effect: () => { modStat('hp', 4); modStat('con', 1); showNotif('HP +4, CON +1 — Marta\'s hospitality'); toggleMap(); }, hidden: () => !state.visitedLocations.includes('holloway') },
       { label: 'Leave respectfully', next: null, effect: () => toggleMap() },
     ],
   },

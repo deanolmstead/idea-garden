@@ -5136,6 +5136,7 @@ const scenes = {
       { label: 'Bypass the keypad electronics', next: 'bunkerpyxis_descent', req: () => skillCheck('ms', 13), reqNote: '[ Requires MS 13+ ]', effect: () => { modStat('ms', 1); showNotif('MS +1 — keypad bypass // blast door cycling'); }, hidden: () => hasFlag('bunker_protocols') },
       { label: 'The tunnel entrance the trader described — around the north face', next: 'bunkerpyxis_tunnel_entry', req: () => hasFlag('enc_bunkerpyxis_tunnel'), reqNote: '[ Requires tunnel coordinates ]', hidden: () => hasFlag('bunker_protocols') },
       { label: 'Your echo-sense maps the structure beyond the door', next: 'bunkerpyxis_echosense', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]', hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Your hollow bones make the ventilation shaft descent trivial — no torch needed', next: 'bunkerpyxis_hollowbones_vent', req: () => hasMutation('hollow_bones'), reqNote: '[ Requires Hollow Bones mutation ]', hidden: () => hasFlag('bunker_protocols') },
       { label: 'Leave — you can\'t get in', next: null, effect: () => toggleMap(), hidden: () => hasFlag('bunker_protocols') },
     ],
   },
@@ -5204,6 +5205,20 @@ const scenes = {
       { label: 'Search the storage level first', next: 'bunkerpyxis_storage' },
       { label: 'You mapped the crawler\'s patrol — wait for the gap', next: 'bunkerpyxis_crawler_bypass', req: () => hasFlag('bunkerpyxis_mapped'), reqNote: '[ Requires echo-sense map ]' },
       { label: 'Use the Geiger counter to check for contamination', next: 'bunkerpyxis_geiger', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
+      { label: 'Your whisker filaments read the air currents — you can navigate blind', next: 'bunkerpyxis_whisker_navigate', req: () => hasMutation('whisker_filaments'), reqNote: '[ Requires Whisker Filaments mutation ]' },
+    ],
+  },
+
+  bunkerpyxis_whisker_navigate: {
+    title: 'Airflow Map',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The filaments along your jawline and forearms fire in concert — reading air currents the way a spider reads its web. Every draft tells a story: the filtration system pulls air from above, cycles it through the residential level, and exhausts it through a vent on the south wall. The flow pattern maps the bunker's architecture in three dimensions without your eyes needing to see a thing.`,
+      `You feel the crawler before you hear it. A disruption in the airflow — something large displacing atmosphere in the corridor below, pushing a bow wave of stale air ahead of it like a submarine. You track its movement through pressure differentials: corridor B, heading south, nine-meter-per-second traversal speed. It will clear the stairwell in approximately forty seconds.`,
+      `You count to forty. The air settles. You descend.`,
+    ],
+    choices: [
+      { label: 'Continue to the archives — the crawler is behind you now', next: 'bunkerpyxis_archives', effect: () => { modStat('dex', 1); modStat('ms', 1); showNotif('Whisker Filaments — crawler bypassed via airflow tracking // DEX +1, MS +1'); } },
     ],
   },
 
@@ -5217,6 +5232,20 @@ const scenes = {
     ],
     choices: [
       { label: 'Take what\'s useful and head down', next: 'bunkerpyxis_crawler', effect: () => { addItem('FIELD MEDKIT'); addItem('TECHNICAL MANUAL'); addItem('FLARE GUN'); modStat('hp', 3); showNotif('Found: FIELD MEDKIT + TECHNICAL MANUAL + FLARE GUN // HP +3'); } },
+      { label: 'A security cage blocks the back row — your gigantism lets you wrench it open', next: 'bunkerpyxis_gigantism_cage', req: () => hasMutation('gigantism'), reqNote: '[ Requires Gigantism mutation ]' },
+    ],
+  },
+
+  bunkerpyxis_gigantism_cage: {
+    title: 'The Restricted Shelf',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The security cage is heavy-gauge steel mesh, padlocked with a mechanism that corroded shut long before you were born. A normal person would need bolt cutters. Your extended frame grips the mesh and pulls — the long bones in your arms leveraging force that the cage's designers never anticipated from human anatomy.`,
+      `The mesh warps. The weld points at the corner give first, then the padlock housing tears free of the frame entirely. Behind it: the restricted shelf. Equipment the bunker commanders deemed too valuable or too dangerous for standard requisition.`,
+      `A hazmat suit, military-grade, still sealed in its compression bag. A mycotoxin formula — labeled <em>CONTINGENCY PROTOCOL OMEGA</em> — in a reinforced glass vial. And a Dustwalker logbook, stashed here by someone who had access to both the bunker and the fort.`,
+    ],
+    choices: [
+      { label: 'Take everything and descend', next: 'bunkerpyxis_crawler', effect: () => { addItem('FIELD MEDKIT'); addItem('TECHNICAL MANUAL'); addItem('FLARE GUN'); addItem('HAZMAT SUIT'); addItem('MYCOTOXIN FORMULA'); addItem('DUSTWALKER LOGBOOK'); modStat('hp', 3); modStat('str', 1); showNotif('Gigantism — restricted shelf breached: HAZMAT SUIT + MYCOTOXIN FORMULA + DUSTWALKER LOGBOOK + standard gear // STR +1'); } },
     ],
   },
 
@@ -5269,6 +5298,7 @@ const scenes = {
       { label: 'Blind it with the lantern and run past', next: 'bunkerpyxis_archives', req: () => hasItem('SOLAR LANTERN'), reqNote: '[ Use Solar Lantern ]', effect: () => { modStat('hp', -3); modStat('dex', 1); showNotif('DEX +1, HP -3 — lantern blind, scrambled past'); } },
       { label: 'Use the flare gun — light and noise in a confined space', next: 'bunkerpyxis_archives', req: () => hasItem('FLARE GUN'), reqNote: '[ Use Flare Gun ]', effect: () => { removeItem('FLARE GUN'); addItem('FLARE GUN (SPENT)'); modStat('hp', -1); showNotif('HP -1 — flare disoriented crawler // clear passage'); } },
       { label: 'Your chitin plates can take the hit — charge through', next: 'bunkerpyxis_archives', req: () => hasMutation('chitin_plates'), reqNote: '[ Requires Chitin Plates mutation ]', effect: () => { modStat('hp', -2); modStat('con', 1); showNotif('CON +1, HP -2 — chitin absorbed the mandible strike'); } },
+      { label: 'The crawler\'s venom sac ruptures on impact — your toxin filter neutralizes it instantly', next: 'bunkerpyxis_archives', req: () => hasMutation('toxin_filter'), reqNote: '[ Requires Toxin Filter mutation ]', effect: () => { modStat('con', 1); showNotif('Toxin Filter — crawler venom neutralized, no damage // CON +1'); } },
     ],
   },
 
@@ -5309,6 +5339,36 @@ const scenes = {
       { label: 'Access the containment protocols', next: 'bunkerpyxis_protocols' },
       { label: 'Search for the armory mentioned in the storage manifest', next: 'bunkerpyxis_armory' },
       { label: 'Your eidetic flash absorbs the entire archive in seconds', next: 'bunkerpyxis_eidetic', req: () => hasMutation('eidetic_flash'), reqNote: '[ Requires Eidetic Flash mutation ]' },
+      { label: 'Your bioluminescent glow illuminates a hidden panel behind the server racks', next: 'bunkerpyxis_biolum_panel', req: () => hasMutation('bioluminescence'), reqNote: '[ Requires Bioluminescence mutation ]' },
+    ],
+  },
+
+  bunkerpyxis_biolum_panel: {
+    title: 'The Hidden Terminal',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `Your skin casts its pale green-blue light across the archive room, and the glow catches something the overhead strips missed — a seam behind the last server rack. Not structural. Deliberate. A panel, painted to match the wall, invisible under artificial light but responsive to the particular wavelength your bioluminescence emits.`,
+      `You push the rack aside and touch the panel. It opens to a secondary terminal — smaller, personal, hand-labeled: <em>DR. ELENA VASQUEZ — PERSONAL LOG — NOT FOR ARCHIVE.</em>`,
+      `The log is dated across fourteen years. The early entries are clinical — growth rates, signal measurements, containment margins. The middle entries grow anxious. The final entries are desperate:`,
+      `<em>"It asked me a question today. Not through the sensors. Through the root system in my office wall. The question was: 'Why do you keep us apart?' I didn't have an answer that satisfied either of us."</em>`,
+      `<em>"I'm leaving. Marta Holloway will take me in — she owes the Cooperative, even if she won't admit it. The others are staying. I can't save people who don't believe they need saving."</em>`,
+      `The final entry: <em>"If you're reading this by bioluminescent light, the network has already changed you. It changed me too. The chlorophyll in your skin and the mycelium in these walls respond to the same frequencies. You are what we were trying to understand. I'm sorry. And I'm not."</em>`,
+    ],
+    choices: [
+      { label: 'Return to the main archive', next: 'bunkerpyxis_archives', effect: () => { setFlag('bunker_vasquez_log'); setFlag('arcadia_founding_intel'); modStat('ms', 2); showNotif('Bioluminescence — Dr. Vasquez personal log found // MS +2 // Arcadia founding intel + Holloway connection'); } },
+    ],
+  },
+
+  bunkerpyxis_hollowbones_vent: {
+    title: 'The Light Descent',
+    chapter: 'Chapter II — Bunker Pyxis',
+    text: [
+      `The ventilation grate is a meter square — and it's not welded, just bolted. Four corroded bolts that your hands can work loose without tools. The advantage of needing to enter tight spaces regularly: you learn how every fastener works.`,
+      `The shaft descends at thirty degrees. Smooth concrete, no handholds — a problem for someone with normal mass. Your hollow bones change the math. You weigh so little that friction alone keeps you braced, your back and boots pressing against opposite walls with a featherweight grip that would fail anyone heavier.`,
+      `You slide down fifty meters in controlled silence. No torch glow to announce your arrival. No sparks, no molten metal, no smell of hot steel. Just the whisper of fabric on concrete and the soft tap of boots hitting the corridor floor.`,
+    ],
+    choices: [
+      { label: 'Explore the sealed corridor', next: 'bunkerpyxis_descent', effect: () => { modStat('dex', 2); showNotif('Hollow Bones — silent ventilation descent, no tools needed // DEX +2'); } },
     ],
   },
 

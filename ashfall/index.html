@@ -3192,6 +3192,8 @@ const scenes = {
       { label: 'Scan for radiation hotspots with the Geiger counter', next: 'sigma_geiger_scan', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Cut through the maintenance hatch with the welding torch', next: 'sigma_torch_breach', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Your static charge arcs toward the relay electronics — the system responds', next: 'sigma_staticcharge_interface', req: () => hasMutation('static_charge'), reqNote: '[ Requires Static Charge mutation ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Below hearing, the relay hums — your infrasound sense reads its health', next: 'sigma_infrasound_diagnostic', req: () => hasMutation('infrasound_hearing'), reqNote: '[ Requires Infrasound Hearing mutation ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Search the wreckage for salvageable data', next: 'sigma_destroyed_salvage', hidden: () => !hasFlag('sigma_destroyed') },
       { label: 'Leave — there\'s nothing here anymore', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('sigma_destroyed') },
     ],
@@ -3320,6 +3322,50 @@ const scenes = {
       { label: '"Tell me about Arcadia."', next: 'warden_arcadia', req: () => hasFlag('arcadia_signal'), reqNote: '[ Requires Arcadia Card ]' },
       { label: 'You feel WARDEN-3\'s processing cycles like a pulse against your skin', next: 'sigma_nervebloom_dialogue', req: () => hasMutation('nerve_bloom'), reqNote: '[ Requires Nerve-Bloom mutation ]' },
       { label: 'Present the Signal Token alongside your badge', next: 'sigma_token_badge_access', req: () => hasItem('SIGNAL TOKEN') && hasItem('SURVEY BADGE'), reqNote: '[ Requires Signal Token + Survey Badge ]' },
+      { label: 'A security door jams — your adrenal surge rips it open bare-handed', next: 'sigma_adrenal_breach', req: () => hasMutation('adrenal_surge'), reqNote: '[ Requires Adrenal Surge mutation ]' },
+    ],
+  },
+
+  sigma_staticcharge_interface: {
+    title: 'Lightning Handshake',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `You reach for the access panel and the static discharges before your fingers make contact — a blue-white arc that jumps the gap and grounds through the relay's housing. The speaker crackles. The entrance light cycles from red to amber.`,
+      `<em class="warden-text">ANOMALOUS ELECTROMAGNETIC INPUT DETECTED ON ACCESS PANEL 7-A. BIOELECTRIC SIGNATURE. HUMAN ORIGIN WITH... MODIFICATIONS.</em>`,
+      `A pause. The kind of pause that, in a human, would be recalculation.`,
+      `<em class="warden-text">BIOELECTRIC INTERFACE COMPATIBLE WITH LEGACY MAINTENANCE PROTOCOLS. THESE PROTOCOLS WERE DESIGNED FOR TECHNICIANS WITH AUGMENTED CONDUCTIVITY. YOU ARE THE FIRST COMPATIBLE INDIVIDUAL IN 140 YEARS. GRANTING MAINTENANCE-TIER ACCESS.</em>`,
+      `The blast door cycles open. Not the standard visitor entrance — the maintenance bay. Deeper access. Better tools. WARDEN-3 just promoted you.`,
+    ],
+    choices: [
+      { label: 'Enter through the maintenance bay', next: 'sigma_interior', effect: () => { modStat('ms', 2); setFlag('sigma_maintenance_access'); showNotif('Static Charge — maintenance-tier access granted // MS +2'); } },
+    ],
+  },
+
+  sigma_infrasound_diagnostic: {
+    title: 'The Relay\'s Heartbeat',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `Below the threshold of human hearing, the relay sings. Your infrasound mutation catches every note: the transformer hum at 12 Hz, the cooling system's rhythmic pulse at 7 Hz, and beneath it all, the deep 3 Hz throb of the main processing core — WARDEN-3's heartbeat.`,
+      `But there's a dissonance. A flutter in the transformer cycle that shouldn't be there — the electrical equivalent of an irregular heartbeat. The relay is running, but it's running sick. Power degradation in the eastern array. Two nodes offline. The system is compensating, rerouting, holding together through software patches and sheer computational stubbornness.`,
+      `You know more about this relay's health than anyone who's visited in a decade. When WARDEN-3 greets you, you can speak its language.`,
+    ],
+    choices: [
+      { label: 'Enter and tell WARDEN-3 what you heard', next: 'sigma_interior', effect: () => { modStat('ms', 1); modRep('ironmarket', 1); showNotif('Infrasound — relay diagnostic complete, WARDEN will trust you // MS +1'); } },
+    ],
+  },
+
+  sigma_adrenal_breach: {
+    title: 'Brute Force Solution',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The secondary server room is behind a security door that hasn't opened in decades — the hydraulics seized, the manual override corroded to a solid block. WARDEN-3 apologizes with genuine embarrassment: <em class="warden-text">I HAVE BEEN MEANING TO REQUEST MAINTENANCE FOR THAT DOOR FOR APPROXIMATELY 11,000 DAYS.</em>`,
+      `Your adrenal glands dump everything. Vision tunnels. Muscles lock. You grip the door frame and pull — not with the measured effort of someone testing resistance, but with the explosive, rebar-bending force that the mutation was designed for.`,
+      `Metal screams. The hydraulic seals crack. The door moves — grudgingly, violently, eight centimeters per second — until it locks open, your fingerprints dented into the steel frame.`,
+      `<em class="warden-text">...THAT WAS UNEXPECTED. AND SOMEWHAT ALARMING. BUT ALSO VERY EFFICIENT. THANK YOU.</em>`,
+      `Behind the door: a secondary archive. Soil surveys, weather models, and — critically — the signal data that maps every relay node in the eastern network. Including one broadcasting from coordinates that match the Arcadia Card.`,
+    ],
+    choices: [
+      { label: 'Download the archive data', next: 'sigma_interior', effect: () => { setFlag('full_sigma_context'); setFlag('arcadia_signal'); modStat('str', 1); showNotif('Adrenal Surge — secondary archive breached // STR +1 // Full Sigma context + Arcadia signal'); } },
     ],
   },
 
@@ -4019,12 +4065,43 @@ const scenes = {
       { label: 'Circle around the perimeter', next: 'holloway_sneak', hidden: () => state.visitedLocations.includes('holloway') },
       { label: 'Marta notices your skin — the green patches catch her eye immediately', next: 'holloway_photosynthetic_welcome', req: () => hasMutation('photosynthetic'), reqNote: '[ Requires Photosynthetic Dermis mutation ]', hidden: () => state.visitedLocations.includes('holloway') },
       { label: 'Offer Voss\'s trade scrip', next: 'holloway_trade_scrip', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'Your iron gut lets you eat anything — offer to test her experimental crops', next: 'holloway_irongut_taste', req: () => hasMutation('iron_gut'), reqNote: '[ Requires Iron Gut mutation ]', hidden: () => state.visitedLocations.includes('holloway') },
+      { label: 'You haven\'t needed water in three days — a farmer notices that', next: 'holloway_waterretention', req: () => hasMutation('water_retention'), reqNote: '[ Requires Water Retention mutation ]', hidden: () => state.visitedLocations.includes('holloway') },
       // Revisit choices
       { label: 'Sit down and share what you\'ve learned', next: 'holloway_east_intel', hidden: () => !state.visitedLocations.includes('holloway') },
       { label: 'Share the Arcadia data package', next: 'holloway_arcadia_data', hidden: () => !state.visitedLocations.includes('holloway') || !hasItem('ARCADIA DATA PACKAGE'), req: () => hasItem('ARCADIA DATA PACKAGE'), reqNote: '[ Share Arcadia Data ]' },
       { label: 'Trade information for supplies', next: 'holloway_trade', hidden: () => !state.visitedLocations.includes('holloway') || !(hasFlag('voss_deal') || hasFlag('met_warden')), req: () => hasFlag('voss_deal') || hasFlag('met_warden'), reqNote: '[ Requires Voss deal or WARDEN intel ]' },
       { label: 'Rest, eat, and resupply', next: null, effect: () => { modStat('hp', 4); modStat('con', 1); showNotif('HP +4, CON +1 — Marta\'s hospitality'); toggleMap(); }, hidden: () => !state.visitedLocations.includes('holloway') },
       { label: 'Leave respectfully', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  holloway_irongut_taste: {
+    title: 'The Test Row',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `Marta's eyes narrow when you offer, but not with suspicion — with interest. The clinical interest of a researcher who just found a volunteer.`,
+      `<em>"Row seven."</em> She leads you past the main crops to a fenced-off section where the plants look wrong — bulbous, discolored, growing at angles that suggest the roots aren't sure which direction is down. <em>"Irradiation-resistant cultivars. Third generation. Problem is, every tester so far gets stomach cramps within the hour."</em>`,
+      `You eat three specimens. A tuber that tastes like battery acid and chalk. A leaf that fights back on the way down. A fruit that might be a tomato's distant, troubled cousin. Your iron gut processes them all without complaint — the acid burns hot enough to neutralize whatever's wrong with the genetics.`,
+      `Marta watches you not die with visible fascination. <em>"You're the first."</em> She pulls out a notebook and starts writing. <em>"I need everything — taste, texture, aftertaste, digestion time. This is six years of work and you're the first person who can actually eat it."</em>`,
+      `By the time you finish the debrief, she's treating you like family.`,
+    ],
+    choices: [
+      { label: 'Continue', next: 'holloway_east_intel', effect: () => { setFlag('holloway_trusted'); modStat('hp', 8); modStat('con', 2); modStat('cha', 1); showNotif('Iron Gut — Marta\'s full trust earned // HP +8, CON +2, CHA +1'); } },
+    ],
+  },
+
+  holloway_waterretention: {
+    title: 'The Dry Walker',
+    chapter: 'Chapter I — Holloway Ranch',
+    text: [
+      `The rifles lower before you say a word. Not because of what you say — because of what you don't do. You don't reach for the water channel. You don't glance at the irrigation lines. You don't lick your cracked lips. Every other traveler who reaches this farm is half-dead with thirst. You're standing in front of a water source and your body language says <em>not interested.</em>`,
+      `Marta catches it immediately. Six generations of farmers develop an eye for water — who needs it, who's hoarding it, who can go without.`,
+      `<em>"Three days on the road and you're not thirsty."</em> She steps closer, studying you. <em>"Camel mutation. Water retention. My grandmother documented one case — a trader who crossed the Mojave on a single canteen."</em>`,
+      `She offers respect instead of water. In a valley where hydration is currency, someone who doesn't need it is either dangerous or invaluable. She decides on the latter.`,
+    ],
+    choices: [
+      { label: 'Accept her hospitality', next: 'holloway_east_intel', effect: () => { modStat('hp', 6); modStat('con', 2); modStat('ms', 1); showNotif('Water Retention — Marta respects the adaptation // HP +6, CON +2, MS +1'); } },
     ],
   },
 

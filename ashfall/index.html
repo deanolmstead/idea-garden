@@ -3681,9 +3681,30 @@ const scenes = {
     title: 'Ashgrove',
     chapter: 'Chapter I — Ashgrove',
     text: [
-      `The suburb died in slow motion and never stopped. Ash drifts swallow some houses to their gutters; others stand gutted and gaping, windows blown out like missing teeth, interiors picked clean to the drywall by decades of scavengers, weather, and time.`,
-      `A swing set turns in a wind that carries plaster dust and the dry chemical smell of old insulation. Deeper in, a gutter bangs against a wall — clang, pause, clang — metronomic, patient, as if the house is counting the years.`,
-      `The Ironmarket noticeboard mentioned a parts cache somewhere in here. If it exists, it's behind walls that are still standing.`,
+      ...(function() {
+        if (state.visitedLocations.includes('ashgrove')) return [
+          `Ashgrove again. The suburb sits exactly as you left it — ash drifts, gutted houses, the same swing set turning in the same wind. Ruins don't change. That's what makes them ruins.`,
+          ...(function() {
+            if (hasFlag('sigma_destroyed')) return [
+              `The relay repeater on the community center roof is dark. It used to blink — a faint amber pulse you probably didn't notice the first time. Now it's dead. Another node in WARDEN's network gone silent.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `Except — you see it now, in the cracks of the asphalt, threading through the collapsed garden beds. Green. Not weeds. Mycelium. The network has been reclaiming Ashgrove in slow inches, converting dead suburb into living substrate. Give it another decade and this place will look like Arcadia's front porch.`,
+            ];
+            return [];
+          })(),
+          `The gutter still bangs. Clang, pause, clang. The suburb is patient. It has nothing but time.`,
+        ];
+        // First visit
+        return [
+          `The suburb died in slow motion and never stopped. Ash drifts swallow some houses to their gutters; others stand gutted and gaping, windows blown out like missing teeth, interiors picked clean to the drywall by decades of scavengers, weather, and time.`,
+          `A swing set turns in a wind that carries plaster dust and the dry chemical smell of old insulation. Deeper in, a gutter bangs against a wall — clang, pause, clang — metronomic, patient, as if the house is counting the years.`,
+          `The Ironmarket noticeboard mentioned a parts cache somewhere in here. If it exists, it's behind walls that are still standing.`,
+        ];
+      })(),
     ],
     choices: [
       { label: 'Search for the parts cache', next: 'ashgrove_cache' },
@@ -4800,19 +4821,46 @@ const scenes = {
     title: 'Bunker Pyxis',
     chapter: 'Chapter II — Bunker Pyxis',
     text: [
-      `The ridgeline trail dies at a concrete face set into the hillside like a fist pushed into clay. The blast door is three meters wide, half a meter thick, and decorated with exactly one piece of art: the Pyxis constellation, etched into the steel in lines that have survived a hundred and forty years of weather without dulling. Pre-Fall craftsmanship. The kind that assumed it was building for eternity and turned out to be right.`,
-      `The beacon antenna on the roof turns with a patience that borders on devotion. Three clicks, pause, three clicks. The signal that brought you here, still broadcasting to a world that forgot how to listen.`,
-      `The blast door is sealed. A keypad beside it — military-grade, alphanumeric, the screen cracked but functional. A steady green cursor blinks on the display: <em>ENTER AUTHORIZATION CODE.</em>`,
-      `The hillside around the entrance is scarred with failed attempts. Drill marks. Torch burns. Someone tried to cut through the door with an acetylene rig and gave up after removing approximately zero percent of it. This bunker was built to keep people out, and it has been performing that function with quiet excellence.`,
+      ...(function() {
+        if (hasFlag('bunker_protocols')) return [
+          `The ridgeline trail. The concrete face. The Pyxis constellation etched in steel. You know this place now — not just its doors and corridors, but its purpose, its history, the researchers who built it and the thing they were trying to contain.`,
+          `The blast door stands open where you left it, cycling light spilling from the corridor beyond. The beacon antenna still turns on the roof — three clicks, pause, three clicks — but you know now that nobody is listening. Nobody except, perhaps, the network.`,
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `You feel it here more strongly than anywhere else. The network's awareness, pressing against the bunker's walls like water against a dam. The Pyxis researchers built this place to study the organism. The organism has been studying it right back.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_alliance')) return [
+              `Vance would pay dearly for unsupervised access to this archive. The containment protocols alone would justify a battalion deployment. You left the door open. That might have been a mistake.`,
+            ];
+            return [];
+          })(),
+        ];
+        // First visit
+        return [
+          `The ridgeline trail dies at a concrete face set into the hillside like a fist pushed into clay. The blast door is three meters wide, half a meter thick, and decorated with exactly one piece of art: the Pyxis constellation, etched into the steel in lines that have survived a hundred and forty years of weather without dulling. Pre-Fall craftsmanship. The kind that assumed it was building for eternity and turned out to be right.`,
+          `The beacon antenna on the roof turns with a patience that borders on devotion. Three clicks, pause, three clicks. The signal that brought you here, still broadcasting to a world that forgot how to listen.`,
+          `The blast door is sealed. A keypad beside it — military-grade, alphanumeric, the screen cracked but functional. A steady green cursor blinks on the display: <em>ENTER AUTHORIZATION CODE.</em>`,
+          `The hillside around the entrance is scarred with failed attempts. Drill marks. Torch burns. Someone tried to cut through the door with an acetylene rig and gave up after removing approximately zero percent of it. This bunker was built to keep people out, and it has been performing that function with quiet excellence.`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Enter the access code from WARDEN-3', next: 'bunkerpyxis_descent', req: () => hasFlag('warden_alliance'), reqNote: '[ Requires WARDEN-3 alliance ]', effect: () => { showNotif('WARDEN access code accepted — blast door cycling'); } },
-      { label: 'Use the Dustwalker logbook codes', next: 'bunkerpyxis_descent', req: () => hasItem('DUSTWALKER LOGBOOK'), reqNote: '[ Use Dustwalker Logbook ]', effect: () => { showNotif('Dustwalker override code accepted — blast door cycling'); } },
-      { label: 'Cut through the ventilation shaft with the welding torch', next: 'bunkerpyxis_ventshaft', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]' },
-      { label: 'Bypass the keypad electronics', next: 'bunkerpyxis_descent', req: () => skillCheck('ms', 13), reqNote: '[ Requires MS 13+ ]', effect: () => { modStat('ms', 1); showNotif('MS +1 — keypad bypass // blast door cycling'); } },
-      { label: 'The tunnel entrance the trader described — around the north face', next: 'bunkerpyxis_tunnel_entry', req: () => hasFlag('enc_bunkerpyxis_tunnel'), reqNote: '[ Requires tunnel coordinates ]' },
-      { label: 'Your echo-sense maps the structure beyond the door', next: 'bunkerpyxis_echosense', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]' },
-      { label: 'Leave — you can\'t get in', next: null, effect: () => toggleMap() },
+      // Revisit — door is open, go straight in
+      { label: 'Walk through the open blast door', next: 'bunkerpyxis_descent', hidden: () => !hasFlag('bunker_protocols') },
+      { label: 'Head straight to the archives', next: 'bunkerpyxis_archives', hidden: () => !hasFlag('bunker_protocols') },
+      { label: 'Check the armory again', next: 'bunkerpyxis_armory', hidden: () => !hasFlag('bunker_protocols') },
+      { label: 'Leave', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('bunker_protocols') },
+      // First visit — sealed door, multiple entry methods
+      { label: 'Enter the access code from WARDEN-3', next: 'bunkerpyxis_descent', req: () => hasFlag('warden_alliance'), reqNote: '[ Requires WARDEN-3 alliance ]', effect: () => { showNotif('WARDEN access code accepted — blast door cycling'); }, hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Use the Dustwalker logbook codes', next: 'bunkerpyxis_descent', req: () => hasItem('DUSTWALKER LOGBOOK'), reqNote: '[ Use Dustwalker Logbook ]', effect: () => { showNotif('Dustwalker override code accepted — blast door cycling'); }, hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Cut through the ventilation shaft with the welding torch', next: 'bunkerpyxis_ventshaft', req: () => hasItem('WELDING TORCH'), reqNote: '[ Use Welding Torch ]', hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Bypass the keypad electronics', next: 'bunkerpyxis_descent', req: () => skillCheck('ms', 13), reqNote: '[ Requires MS 13+ ]', effect: () => { modStat('ms', 1); showNotif('MS +1 — keypad bypass // blast door cycling'); }, hidden: () => hasFlag('bunker_protocols') },
+      { label: 'The tunnel entrance the trader described — around the north face', next: 'bunkerpyxis_tunnel_entry', req: () => hasFlag('enc_bunkerpyxis_tunnel'), reqNote: '[ Requires tunnel coordinates ]', hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Your echo-sense maps the structure beyond the door', next: 'bunkerpyxis_echosense', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]', hidden: () => hasFlag('bunker_protocols') },
+      { label: 'Leave — you can\'t get in', next: null, effect: () => toggleMap(), hidden: () => hasFlag('bunker_protocols') },
     ],
   },
 

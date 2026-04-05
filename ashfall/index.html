@@ -2850,6 +2850,71 @@ const RANDOM_ENCOUNTERS = [
     title: 'Observed',
     text: `A camera. Mounted on a rusted utility pole at a highway junction you've passed twice before — and it wasn't there either time. The housing is new. Pre-Fall manufacture, yes, but recently installed: the mounting bolts are bright against the weathered steel, and the cable running down the pole disappears into a freshly dug trench. The lens tracks you with the smooth, servo-driven precision of equipment maintained by something that doesn't sleep. WARDEN-3 is extending its sensor grid. It knows you visited. It knows you left without committing. And now it's watching to see what you do next. The camera doesn't blink. You do.`,
     notif: 'WARDEN-3 — observation post detected' },
+
+  // ── STORY-REACTIVE ENCOUNTERS: HOLLOWAY / REGIONAL ──
+  { id: 112,
+    req: () => hasFlag('holloway_trusted'),
+    title: 'The Farmhand',
+    text: [
+      `He's sitting against a mile marker, left leg splinted with a tree branch and a belt, face grey with pain and dust. Holloway work clothes — the patched denim and hand-stitched canvas Marta's people wear. He sees you and his eyes widen with recognition.`,
+      `<em>"You're Marta's friend. The one who—"</em> He stops. Grimaces. The leg is bad — compound fracture, the bone visible through the denim below the knee. <em>"Cart lost a wheel on the ridge. I went under it. The others went for help but that was six hours ago."</em>`,
+      `He's losing color. The splint is keeping the bone aligned but the wound needs cleaning and the blood loss is steady. Six hours alone on an ash road with an open fracture. He's tougher than he looks.`,
+    ],
+    choices: [
+      { label: 'Use the field medkit', next: null, req: () => hasItem('FIELD MEDKIT'), reqNote: '[ Use Field Medkit ]', effect: () => { removeItem('FIELD MEDKIT'); modRep('ironmarket', 1); modStat('cha', 1); showNotif('Field medkit used — Holloway farmhand saved // Ironmarket rep +1, CHA +1'); } },
+      { label: 'Carry him — it\'ll cost you', next: null, effect: () => { modStat('hp', -3); modStat('str', 1); modRep('ironmarket', 1); showNotif('Carried the farmhand to safety // HP -3, STR +1, Ironmarket rep +1'); } },
+      { label: 'Leave water and keep moving', next: null, effect: () => { modStat('hp', -1); showNotif('Left water for the farmhand // HP -1'); } },
+    ],
+  },
+  { id: 113,
+    req: () => hasFlag('holloway_trusted'),
+    title: 'Marta\'s Cache',
+    text: `The mark is subtle — three scratches on a guardrail, arranged in the pattern Marta uses to tag her irrigation channels. You'd never have noticed it without spending time at the ranch. Behind the guardrail, buried under six inches of ash and covered with a sheet of corrugated tin: a waxed-canvas bundle. Inside: dried root vegetables, dense enough to last a week. Flatbread wrapped in oiled cloth. A sealed bottle of clean water. And a note in Marta's precise handwriting: <em>"For friends of the ranch. Take what you need. Leave what you can."</em> She's been seeding the roads with these for years. You're just now reading the language.`,
+    effect: () => { modStat('hp', 4); modStat('con', 1); },
+    notif: 'HP +4, CON +1 — Marta\'s roadside cache' },
+  { id: 114,
+    req: () => hasFlag('meridian_quest'),
+    once: 'enc_meridian_seedlings',
+    title: 'Wild Growth',
+    text: `The seedlings are wrong for this soil. That's what stops you — a cluster of green shoots pushing through the ash crust beside a collapsed irrigation channel, in soil that hasn't supported cultivation since the Fall. But you recognize the leaf pattern. Meridian stock. The same cultivars WARDEN described in the seed transmission data. These aren't wild — they're the first generation of a deliberate planting, carried here by wind or water or the slow underground migration of root systems that don't respect property lines. Meridian isn't just a destination on WARDEN's map. It's already spreading.`,
+    flag: 'enc_meridian_seedlings',
+    notif: 'Intel: Meridian seedlings found — the project is working' },
+  { id: 115,
+    req: () => hasFlag('holloway_radio'),
+    title: 'Broadcast',
+    text: `The static parts like a curtain and Marta's voice comes through — thin, compressed by the ancient transmitter, but unmistakable. <em>"...westerly winds through Thursday. Soil moisture holding at twelve percent. Bean harvest on schedule. The north well tested clean again this morning."</em> A pause. The sound of a cup being set down. <em>"If anyone's hearing this: we're still here. The ranch is still producing. Come hungry, leave fed. Holloway out."</em> The frequency goes silent. You stand in the middle of an ash road, holding a canteen to your ear, and for thirty seconds the world is not a wasteland. It's a farm with a weather report and a standing invitation. The feeling fades. The road doesn't change. But something in your chest recalibrates.`,
+    effect: () => { modStat('hp', 2); },
+    notif: 'HP +2 — Holloway broadcast, morale' },
+  { id: 116,
+    req: () => state.visitedLocations.length >= 4,
+    title: 'Reputation',
+    text: [
+      `The trader falls into step beside you without asking — a woman with a mule and a cart of salvage, heading the direction you just came from. She studies your face, your gear, your gait. Then she nods.`,
+      `<em>"I know you. Not your name — your description. You've been to Ironmarket, the fort, that relay station."</em> She lists your stops with the accuracy of someone who trades in information as much as goods. <em>"People talk. The valley isn't big enough for someone to move through it without leaving a wake."</em>`,
+      ...(function() {
+        if (typeof state !== 'undefined' && getRep('dustwalker') >= getRep('ironmarket') && getRep('dustwalker') >= getRep('arcadia')) return [
+          `<em>"The soldiers speak well of you. That's rare — Vance's people don't praise civilians."</em> She adjusts the mule's pack. <em>"Here. A soldier's friend is worth knowing."</em> She offers a bundle of dried rations.`,
+        ];
+        if (typeof state !== 'undefined' && getRep('arcadia') >= getRep('ironmarket') && getRep('arcadia') >= getRep('dustwalker')) return [
+          `<em>"The eastern folk mention you. The quiet ones, with the dilated eyes."</em> She shivers. <em>"I don't go east. But they left something for you at my last stop."</em> She passes a sealed pouch — warm, faintly luminescent.`,
+        ];
+        return [
+          `<em>"The market traders remember you. That's worth something — trust is the only currency that appreciates."</em> She reaches into her cart and produces a small bundle. <em>"For the road. Consider it a professional courtesy."</em>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Accept and share what you know', next: null, effect: () => { modStat('hp', 3); modStat('cha', 1); showNotif('Reputation — trader gift // HP +3, CHA +1'); } },
+      { label: 'Decline — you prefer anonymity', next: null, effect: () => { modStat('ms', 1); showNotif('Reputation — stayed anonymous // MS +1'); } },
+    ],
+  },
+  { id: 117,
+    req: () => state.visitedLocations.length >= 6,
+    once: 'enc_road_mastery',
+    title: 'The Known Road',
+    text: `The road bends and you know what's beyond it before you see it — the collapsed overpass, the dead orchard, the drainage culvert where scorpions nest in wet weather. You know because you've been here. Not this exact stretch. But this exact type of stretch, a hundred times, in a hundred configurations. The ash has a grammar. The road has a syntax. The collapsed infrastructure speaks a language of angles and erosion patterns that your body has learned to read without consulting your brain. You sidestep a crumbled section of guardrail. Duck a low-hanging cable. Avoid a soft spot in the road surface that would have swallowed your boot six months ago. The valley hasn't changed. You have.`,
+    effect: () => { modStat('dex', 1); },
+    notif: 'DEX +1 — road mastery, earned through miles' },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──

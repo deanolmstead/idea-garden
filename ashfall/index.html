@@ -3526,8 +3526,37 @@ const scenes = {
     chapter: 'Chapter I — The Knot',
     text: [
       `Three overpasses, folded into each other like broken fingers reaching for a fist. The interchange is a canyon of rust and crumbled concrete — Highway 99 markers still legible beneath a century of ash, pointing to destinations that no longer answer.`,
-      `The cistern sits where every traveler knows to look: buried beneath a hand-crank pump, no sign, no lock, no owner. An honor system maintained by the collective understanding that poisoning the water supply gets you killed by everyone. Beside it, a signal post bristles with scratched trader marks — directional arrows, faction warnings, supply notes gouged into the metal with nails and desperation.`,
-      `A handful of travelers shelter in the shadow of a toppled semi-trailer. No one speaks. No one makes eye contact. The Knot's only rule, enforced by no one and observed by all.`,
+      ...(function() {
+        if (state.visitedLocations.includes('theknot')) return [
+          `The Knot hasn't changed. It never changes. That's the point — the one fixed waypoint in a valley where everything else shifts. The cistern pump still creaks. The signal post still bristles with marks. But the marks themselves are different.`,
+          ...(function() {
+            if (hasFlag('sigma_destroyed')) return [
+              `Fresh scratches on the signal post, gouged deep and recent: <em>SIGMA DARK — NO RELAY — EASTERN SIGNAL CHAIN DEAD.</em> Beneath it, in a different hand: <em>Reroute south. Avoid ridgeline.</em> The travelers sheltering here are fewer than last time, and the ones who remain keep glancing east.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_alliance')) return [
+              `A Dustwalker patrol moves through the Knot's shadow — two soldiers, rifles slung, moving with the unhurried confidence of people who own the road. They've pinned a notice to the signal post: <em>FORT RESURGENCE TRADE CORRIDOR — SAFE PASSAGE GUARANTEED BY DUSTWALKER COMMAND.</em> The travelers eye it with the wary optimism of people who've been promised things before.`,
+            ];
+            if (hasFlag('dustwalker_sabotaged')) return [
+              `A hand-drawn sketch is nailed to the signal post beside the trader marks. Your likeness — rough, but close enough. Beneath it: <em>WANTED BY DUSTWALKER COMMAND — SABOTAGE — AMMUNITION BOUNTY.</em> A traveler notices you noticing it and looks away fast. The Knot's rules say no one talks. But everyone sees.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `You feel it now — a low hum beneath the concrete, almost subliminal. The network's tendrils run under Highway 99. Even here, even at this crossroads of strangers and silence, the mycelium listens.`,
+            ];
+            return [];
+          })(),
+        ];
+        // First visit
+        return [
+          `The cistern sits where every traveler knows to look: buried beneath a hand-crank pump, no sign, no lock, no owner. An honor system maintained by the collective understanding that poisoning the water supply gets you killed by everyone. Beside it, a signal post bristles with scratched trader marks — directional arrows, faction warnings, supply notes gouged into the metal with nails and desperation.`,
+          `A handful of travelers shelter in the shadow of a toppled semi-trailer. No one speaks. No one makes eye contact. The Knot's only rule, enforced by no one and observed by all.`,
+        ];
+      })(),
     ],
     choices: [
       { label: 'Examine the signal post', next: 'theknot_signals' },

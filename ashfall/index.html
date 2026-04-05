@@ -2691,15 +2691,59 @@ const scenes = {
     title: 'The Gate',
     chapter: 'Chapter I — Ironmarket',
     text: [
-      `Ash sifts down like grey flour, dusting your shoulders, coating your teeth. Ironmarket's wall cuts the horizon ahead — a jagged ridge of corrugated steel, rebar, and highway signs beaten into something a generous person might call a fortification. A less generous person would call it a scar.`,
-      `The guard tower catches your eye first. A woman up top, rifle scope glinting, tracking you with the lazy patience of someone who has already decided you aren't worth the bullet. Below her, a hand-painted sign: <em>IRONMARKET — TRADE FAIR, NOT FREE.</em>`,
-      `Smoke. Rendered fat. Something fermenting in a barrel somewhere. The gate swallows you into noise — hammers on metal, a barking dog, two voices haggling over battery acid with the intensity of theologians.`,
-      `Two traders shoulder past with a handcart, heading out. One leans close to the other: <em>"—still hasn't come back. Kael won't say it, but that's three weeks now. Scout goes east alone, doesn't return. Same story every time—"</em> Their voices dissolve into the crowd before you can catch more.`,
+      ...(function() {
+        if (state.visitedLocations.includes('ironmarket') && hasFlag('heard_eastern_warning')) return [
+          ...(function() {
+            if (state.visitedLocations.length >= 5) return [
+              `Ironmarket's wall rises ahead — familiar now, almost welcoming in its ugliness. The guard tower spots you early. A hand signal passes between sentries: <em>known face</em>. No rifle scope this time. You've earned that much.`,
+            ];
+            return [
+              `The wall again. Ironmarket's jagged silhouette against the ash-white sky. The gate guard clocks you on approach — a nod, nothing more. You're not new anymore.`,
+            ];
+          })(),
+          `The market noise swallows you. Hammers, haggling, the smell of rendered fat and fermenting grain. Same as before. But the conversations have shifted.`,
+          ...(function() {
+            if (hasFlag('sigma_destroyed')) return [
+              `You catch fragments as you pass: <em>"—relay's dead, whole eastern signal chain went dark—"</em> and <em>"—nobody knows who did it, but the WARDEN broadcasts stopped overnight—"</em> The traders' voices carry a new edge. The east just became unpredictable.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('dustwalker_alliance')) return [
+              `Something new: Dustwalker scouts in the market. Two of them, desert-wrapped and armed, browsing Horace's scrap bins with the careful attention of people pricing inventory for a war. Vance's people, trading openly for the first time. The other merchants give them space.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('voss_deal')) return [
+              `One of Voss's runners spots you and tips a nod. Word travels fast in a market this small — you have standing here now. Doors that were closed last time might open.`,
+            ];
+            return [];
+          })(),
+          ...(function() {
+            if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) return [
+              `Something is different. You notice it in the walls — hairline threads of green tracing the mortar between cinder blocks, thin as capillaries. Mycelium. The network reaches even here, threading through Ironmarket's foundations in filaments too fine for anyone to see. Anyone who hasn't touched it.`,
+            ];
+            return [];
+          })(),
+        ];
+        // First visit — original text
+        return [
+          `Ash sifts down like grey flour, dusting your shoulders, coating your teeth. Ironmarket's wall cuts the horizon ahead — a jagged ridge of corrugated steel, rebar, and highway signs beaten into something a generous person might call a fortification. A less generous person would call it a scar.`,
+          `The guard tower catches your eye first. A woman up top, rifle scope glinting, tracking you with the lazy patience of someone who has already decided you aren't worth the bullet. Below her, a hand-painted sign: <em>IRONMARKET — TRADE FAIR, NOT FREE.</em>`,
+          `Smoke. Rendered fat. Something fermenting in a barrel somewhere. The gate swallows you into noise — hammers on metal, a barking dog, two voices haggling over battery acid with the intensity of theologians.`,
+          `Two traders shoulder past with a handcart, heading out. One leans close to the other: <em>"—still hasn't come back. Kael won't say it, but that's three weeks now. Scout goes east alone, doesn't return. Same story every time—"</em> Their voices dissolve into the crowd before you can catch more.`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Approach the gate guard', next: 'ironmarket_kael', effect: () => setFlag('heard_eastern_warning') },
-      { label: 'Slip past without engaging', next: 'ironmarket_plaza', effect: () => { modStat('con', -1); setFlag('heard_eastern_warning'); } },
-      { label: 'The guards eye your bark-grey skin but step aside without asking questions', next: 'ironmarket_gate_ashskin', req: () => hasMutation('ash_skin'), reqNote: '[ Requires Ash-Skin mutation ]' },
+      { label: 'Approach the gate guard', next: 'ironmarket_kael', effect: () => setFlag('heard_eastern_warning'), hidden: () => hasFlag('heard_eastern_warning') },
+      { label: 'Slip past without engaging', next: 'ironmarket_plaza', effect: () => { modStat('con', -1); setFlag('heard_eastern_warning'); }, hidden: () => hasFlag('heard_eastern_warning') },
+      { label: 'The guards eye your bark-grey skin but step aside without asking questions', next: 'ironmarket_gate_ashskin', req: () => hasMutation('ash_skin'), reqNote: '[ Requires Ash-Skin mutation ]', hidden: () => hasFlag('heard_eastern_warning') },
+      { label: 'Head into the plaza', next: 'ironmarket_plaza', hidden: () => !hasFlag('heard_eastern_warning') },
+      { label: 'Find Voss at the grain silos', next: 'ironmarket_voss_approach', hidden: () => !hasFlag('voss_deal') },
+      { label: 'Check in with Kael at the gate', next: 'ironmarket_kael', hidden: () => !hasFlag('met_kael') || !hasFlag('heard_eastern_warning') },
+      { label: 'Open the overworld map', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('heard_eastern_warning') },
     ],
   },
 

@@ -3643,7 +3643,35 @@ const scenes = {
       { label: 'Offer battery cells to the traveler with the dead radio', next: 'theknot_trade_batteries', req: () => hasItem('BATTERY CELLS'), reqNote: '[ Trade Battery Cells ]' },
       { label: 'Scan the overpass structure with binoculars', next: 'theknot_binocular_scan', req: () => hasItem('BINOCULARS'), reqNote: '[ Use Binoculars ]' },
       { label: 'Consult the pre-Fall map', next: 'theknot_premap', req: () => hasItem('PRE-FALL MAP'), reqNote: '[ Requires Pre-Fall Map ]' },
+      { label: 'Your feet feel it first — vibrations in the concrete, approaching from the south', next: 'theknot_tremorfeel', req: () => hasMutation('tremor_feel'), reqNote: '[ Requires Tremor-Feel mutation ]' },
+      { label: 'Your hollow bones make the climb easy — scale the overpass for a vantage point', next: 'theknot_hollowbones_climb', req: () => hasMutation('hollow_bones'), reqNote: '[ Requires Hollow Bones mutation ]' },
       { label: 'Move on', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  theknot_tremorfeel: {
+    title: 'The Ground Speaks',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The vibration arrives through the balls of your feet — rhythmic, heavy, disciplined. Multiple sets of boots, spaced twelve meters apart. Military cadence. Coming from the south-southeast, two kilometers out and closing.`,
+      `Dustwalker patrol. You feel their weight, their pace, the slight hitch where one favors a left knee. Two soldiers, standard rotation, nine-minute loop around the interchange perimeter. They'll pass through the Knot in approximately four minutes.`,
+      `None of the other travelers have noticed yet. They will when the patrol rounds the overpass. But you have four minutes of foreknowledge — enough to observe their exact route, map their blind spots, and identify the forty-second gap in their coverage.`,
+    ],
+    choices: [
+      { label: 'Map the patrol gap and file it away', next: 'theknot_arrive', effect: () => { setFlag('dustwalker_leverage'); modStat('ms', 1); showNotif('Tremor-Feel — Dustwalker patrol pattern mapped through vibration // MS +1'); } },
+    ],
+  },
+
+  theknot_hollowbones_climb: {
+    title: 'The Overpass',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `Twelve kilos lighter than you should be, the climb is effortless. Your hollow bones carry you up the crumbled concrete like a bird finding thermals — fingers catching edges that would buckle under normal weight, feet finding purchase on ledges too narrow for heavier frames.`,
+      `From the top of the overpass, the valley unfolds. South: Ironmarket's smoke. East: the grey haze where the rad-zones start, and beyond that, the dark green smear that must be Arcadia's canopy. North: the ridgeline where Sigma Relay's antenna catches the light.`,
+      `And directly below — a canvas-covered cache tucked into the overpass joint, invisible from ground level. Someone stashed supplies here, counting on nobody being light enough or reckless enough to climb. They didn't account for avian bone structure.`,
+    ],
+    choices: [
+      { label: 'Raid the cache and climb down', next: 'theknot_arrive', effect: () => { addItem('ROPE'); modStat('hp', 3); modStat('dex', 1); showNotif('Hollow Bones — overpass cache found: ROPE + HP +3, DEX +1'); } },
     ],
   },
 
@@ -3722,6 +3750,7 @@ const scenes = {
       { label: 'Return to The Knot', next: 'theknot_arrive', effect: () => { if (skillCheck('ms', 10)) { setFlag('dustwalker_leverage'); showNotif('MS CHECK PASSED — Dustwalker patrol routes decoded'); } } },
       { label: 'Light the marks with the solar lantern — UV residue becomes visible', next: 'theknot_lantern_decode', req: () => hasItem('SOLAR LANTERN'), reqNote: '[ Use Solar Lantern ]' },
       { label: 'Your mutant vision picks up UV-reactive ink beneath the scratched codes', next: 'theknot_splitpupil_decode', req: () => hasMutation('split_pupil'), reqNote: '[ Requires Split-Pupil Vision mutation ]' },
+      { label: 'The UV spectrum blazes — hidden marks burn bright as signal fires', next: 'theknot_splitpupil_decode', req: () => hasMutation('uv_vision'), reqNote: '[ Requires UV Vision mutation ]', effect: () => { modStat('ms', 1); showNotif('UV Vision — hidden signal layer decoded // MS +1'); } },
     ],
   },
 
@@ -3789,7 +3818,53 @@ const scenes = {
       { label: 'Grapple up to the second-story window — skip the death-trap stairs', next: 'ashgrove_upper_floors', req: () => hasItem('GRAPPLING HOOK'), reqNote: '[ Use Grappling Hook ]' },
       { label: 'Sweep for radiation pockets with the Geiger counter', next: 'ashgrove_geiger_sweep', req: () => hasItem('GEIGER COUNTER'), reqNote: '[ Use Geiger Counter ]' },
       { label: 'Check for relay signal repeaters', next: 'ashgrove_repeater', req: () => hasFlag('full_sigma_context'), reqNote: '[ Requires Sigma context ]' },
+      { label: 'Press your bare hand to the earth — your root-nerve reads the soil', next: 'ashgrove_rootnerve', req: () => hasMutation('root_nerve'), reqNote: '[ Requires Root Nerve mutation ]' },
+      { label: 'Your bioluminescent glow draws someone out of a collapsed house', next: 'ashgrove_biolum_survivor', req: () => hasMutation('bioluminescence'), reqNote: '[ Requires Bioluminescence mutation ]' },
+      { label: 'Your nose catches a living scent trail — someone was here recently', next: 'ashgrove_scenttrack', req: () => hasMutation('scent_tracking'), reqNote: '[ Requires Scent Tracking mutation ]' },
       { label: 'Leave', next: null, effect: () => toggleMap() },
+    ],
+  },
+
+  ashgrove_rootnerve: {
+    title: 'The Soil Remembers',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `You kneel and press both palms flat against the cracked asphalt. The root-nerve fires immediately — a rush of information traveling up through your wrists, your arms, settling into the base of your skull like a second set of memories.`,
+      `The soil beneath Ashgrove is alive. Not the dormant half-life of abandoned ground — genuinely, actively alive. Root networks thread through the substrate in patterns too organized for wild growth. Moisture channels, nutrient highways, signal pathways carrying electrical pulses too faint for any instrument but faster than anything biological should be.`,
+      `The network is here. It's been here for decades, maybe longer — growing beneath the suburb while the houses above it crumbled. The asphalt and concrete slowed it, but it found the cracks, the pipe trenches, the foundation gaps. Patient. Persistent. Inevitable.`,
+      `And at the edges of your root-sense, a direction: east-southeast. The main body. The source. Whatever is generating this network lives there, and it is vast.`,
+    ],
+    choices: [
+      { label: 'Stand up — you know where Arcadia is now', next: 'ashgrove_arrive', effect: () => { setFlag('arcadia_signal'); modStat('ms', 2); showNotif('Root Nerve — network mapped through soil contact // MS +2 // Arcadia location revealed'); } },
+    ],
+  },
+
+  ashgrove_biolum_survivor: {
+    title: 'The Light-Keeper',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `You don't try to hide it — in a suburb this dark, your bioluminescent skin is a beacon. The pale green-blue pulses at your wrists and throat cast moving shadows across the gutted houses.`,
+      `A figure emerges from a collapsed doorway — slow, cautious, drawn by the light the way moths are drawn by instinct rather than choice. A woman, gaunt, wrapped in salvaged insulation, carrying a solar lantern with a dead cell.`,
+      `<em>"Light."</em> She says it like a prayer. <em>"Haven't seen real light in six days. The lantern died. Been navigating by sound."</em>`,
+      `She stares at your glowing skin without fear. In the wasteland, mutation isn't a stigma — it's a weather report. Her own hands show the early signs of ash-skin calcification. She understands what the glow costs.`,
+      `<em>"There's a supply cache two streets over. I've been guarding it, but I can't find my way back in the dark. Guide me there. We split what's inside."</em>`,
+    ],
+    choices: [
+      { label: 'Light the way', next: 'ashgrove_arrive', effect: () => { addItem('BATTERY CELLS'); modStat('hp', 4); modStat('cha', 1); showNotif('Bioluminescence — guided survivor to cache: BATTERY CELLS + HP +4, CHA +1'); } },
+    ],
+  },
+
+  ashgrove_scenttrack: {
+    title: 'The Fresh Trail',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `There — cutting through the background noise of plaster dust and old insulation — a living scent. Human. Female. Recent: the trail is less than six hours old, the biochemical signature still sharp enough to read. Elevated cortisol, low blood sugar, the copper tang of a healing wound. Someone moving fast, afraid, and bleeding.`,
+      `You follow the trail through three houses, into a storm drain, and up through a collapsed garden wall. It ends at a stash site — a waterproof duffel wedged into the cavity between a chimney and a support beam. The person who hid it is gone, but the duffel isn't.`,
+      `Inside: a pre-Fall whiskey bottle (sealed, intact, worth a fortune in trade), a hand-drawn map with water sources marked in blue ink, and a note: <em>"If I don't come back, whoever finds this — trade the whiskey for medicine. Give the medicine to the Knot cistern camp. — D."</em>`,
+    ],
+    choices: [
+      { label: 'Take the whiskey — D isn\'t coming back', next: 'ashgrove_arrive', effect: () => { addItem('PRE-FALL WHISKEY'); showNotif('Scent Tracking — found hidden stash: PRE-FALL WHISKEY'); } },
+      { label: 'Honor the note — trade it for medicine later', next: 'ashgrove_arrive', effect: () => { addItem('PRE-FALL WHISKEY'); setFlag('ashgrove_d_promise'); modStat('cha', 1); showNotif('Scent Tracking — PRE-FALL WHISKEY found // CHA +1 — you\'ll honor the request'); } },
     ],
   },
 

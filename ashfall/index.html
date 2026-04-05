@@ -2849,6 +2849,7 @@ const scenes = {
       { label: 'East stalls, toward the grain silos (find Voss)', next: 'ironmarket_voss_approach' },
       { label: 'Your compound eyes catch a hand dipping into a trader\'s satchel', next: 'ironmarket_pickpocket', req: () => hasMutation('compound_eyes'), reqNote: '[ Requires Compound Eyes mutation ]' },
       { label: 'A low rumble beneath the asphalt — your infrasound picks up something under the market', next: 'ironmarket_infrasound', req: () => hasMutation('infrasound_hearing'), reqNote: '[ Requires Infrasound Hearing mutation ]' },
+      { label: 'Your antler growths part the crowd — a trader dispute resolves itself as you approach', next: 'ironmarket_antler_dispute', req: () => hasMutation('antler_growths'), reqNote: '[ Requires Antler Growths mutation ]' },
       { label: 'Open the overworld map', next: null, effect: () => toggleMap() },
     ],
   },
@@ -2878,6 +2879,19 @@ const scenes = {
     ],
     choices: [
       { label: 'File this away and return to the plaza', next: 'ironmarket_plaza', effect: () => { setFlag('arcadia_signal'); modStat('ms', 1); showNotif('Infrasound — network detected beneath Ironmarket // MS +1 // Arcadia location revealed'); } },
+    ],
+  },
+
+  ironmarket_antler_dispute: {
+    title: 'The Horned Stranger',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The bone protrusions do what words can't. Two traders, nose to nose over a water filter deal gone sour, both reaching for belt knives — and then you step between them. The antler growths catch the stall light, casting branching shadows across both their faces. Two points of bone, each the length of a hand, curving from your temples like something out of a pre-Fall mythology book.`,
+      `The traders separate. Not because you said anything. Because the lizard brain — the part that still remembers predators — just sent both of them a memo. The knife hands drop. The voices lower. The deal restructures itself around a compromise neither would have accepted thirty seconds ago.`,
+      `The water filter trader catches your eye as the crowd refills the gap. <em>"You just saved me a knife wound and him a funeral."</em> He pushes a bundle across the counter — field rations, vacuum-sealed, pre-Fall manufacture. <em>"For the horns. They're more persuasive than anything I've got in stock."</em>`,
+    ],
+    choices: [
+      { label: 'Accept and return to the plaza', next: 'ironmarket_plaza', effect: () => { modStat('str', 1); modStat('hp', 3); modRep('ironmarket', 1); showNotif('Antler Growths — dispute settled by intimidation // STR +1, HP +3, Ironmarket rep +1'); } },
     ],
   },
 
@@ -3194,6 +3208,7 @@ const scenes = {
       { label: 'Extend your subsonic awareness into the relay structure', next: 'sigma_echosense_scan', req: () => hasMutation('echo_sense'), reqNote: '[ Requires Echo-Sense mutation ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Your static charge arcs toward the relay electronics — the system responds', next: 'sigma_staticcharge_interface', req: () => hasMutation('static_charge'), reqNote: '[ Requires Static Charge mutation ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Below hearing, the relay hums — your infrasound sense reads its health', next: 'sigma_infrasound_diagnostic', req: () => hasMutation('infrasound_hearing'), reqNote: '[ Requires Infrasound Hearing mutation ]', hidden: () => hasFlag('sigma_destroyed') },
+      { label: 'Your hyper-flexible frame folds through the collapsed ventilation shaft', next: 'sigma_elastic_entry', req: () => hasMutation('elastic_tendons'), reqNote: '[ Requires Elastic Tendons mutation ]', hidden: () => hasFlag('sigma_destroyed') },
       { label: 'Search the wreckage for salvageable data', next: 'sigma_destroyed_salvage', hidden: () => !hasFlag('sigma_destroyed') },
       { label: 'Leave — there\'s nothing here anymore', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('sigma_destroyed') },
     ],
@@ -3323,6 +3338,7 @@ const scenes = {
       { label: 'You feel WARDEN-3\'s processing cycles like a pulse against your skin', next: 'sigma_nervebloom_dialogue', req: () => hasMutation('nerve_bloom'), reqNote: '[ Requires Nerve-Bloom mutation ]' },
       { label: 'Present the Signal Token alongside your badge', next: 'sigma_token_badge_access', req: () => hasItem('SIGNAL TOKEN') && hasItem('SURVEY BADGE'), reqNote: '[ Requires Signal Token + Survey Badge ]' },
       { label: 'A security door jams — your adrenal surge rips it open bare-handed', next: 'sigma_adrenal_breach', req: () => hasMutation('adrenal_surge'), reqNote: '[ Requires Adrenal Surge mutation ]' },
+      { label: 'The overheating server annex — lethal heat for anyone else, comfortable for you', next: 'sigma_thermal_annex', req: () => hasMutation('thermal_regulation'), reqNote: '[ Requires Thermal Regulation mutation ]' },
     ],
   },
 
@@ -3366,6 +3382,36 @@ const scenes = {
     ],
     choices: [
       { label: 'Download the archive data', next: 'sigma_interior', effect: () => { setFlag('full_sigma_context'); setFlag('arcadia_signal'); modStat('str', 1); showNotif('Adrenal Surge — secondary archive breached // STR +1 // Full Sigma context + Arcadia signal'); } },
+    ],
+  },
+
+  sigma_elastic_entry: {
+    title: 'The Impossible Gap',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The ventilation shaft on the relay's west face collapsed decades ago — a concrete slab pinning the ductwork into a gap that measures fifteen centimeters at its narrowest. Impossible for a human body. Your body disagrees.`,
+      `You exhale everything. Your ribcage compresses — joints popping, tendons stretching to three times their normal range, your skeleton folding into configurations that would dislocate a normal person's everything. The elastic tendons do what they were mutated to do: make geometry optional.`,
+      `Fifteen centimeters becomes a tight squeeze rather than a wall. You flow through the crushed ductwork like water through a cracked pipe — shoulders rotating past each other, spine curving in ways that feel wrong but aren't, hips articulating through an angle that makes your brain file a formal complaint.`,
+      `You emerge inside a sealed maintenance corridor. Pre-war wiring. Backup systems that WARDEN-3 has been running in parallel for decades. A secondary monitoring station with its own terminal, still active, still logging data that the main system doesn't display.`,
+      `<em class="warden-text">...YOU HAVE ACCESSED THE MAINTENANCE CORRIDOR VIA A ROUTE I HAD CLASSIFIED AS STRUCTURALLY IMPASSABLE. I AM REVISING MY CLASSIFICATION PARAMETERS.</em>`,
+    ],
+    choices: [
+      { label: 'Access the secondary terminal', next: 'sigma_interior', effect: () => { modStat('dex', 1); modStat('ms', 1); setFlag('sigma_maintenance_access'); showNotif('Elastic Tendons — impossible gap traversed // DEX +1, MS +1 // Maintenance access'); } },
+    ],
+  },
+
+  sigma_thermal_annex: {
+    title: 'The Hot Room',
+    chapter: 'Chapter I — Sigma Relay',
+    text: [
+      `The door to the server annex radiates heat you can feel from two meters away. A warning strip reads: <em>THERMAL HAZARD — COOLING FAILURE — 68°C AMBIENT — DO NOT ENTER WITHOUT PROTECTIVE EQUIPMENT.</em> The cooling system for WARDEN-3's secondary processing array failed years ago. The servers kept running. The room became an oven.`,
+      `Your body adjusts. The thermal regulation mutation kicks in before you touch the door handle — core temperature stabilizing, sweat glands shifting to maximum efficiency, blood vessels near the surface dilating to radiate excess heat. You push the door open and step into air that would blister exposed skin in minutes.`,
+      `It's warm. Comfortable, even. Like a sauna you could live in.`,
+      `The servers in here are running computations the main room doesn't show. Long-term projections. Network growth models. Arcadia expansion timelines extending decades into the future. WARDEN-3 has been running predictive simulations in this sealed furnace, hidden from casual visitors, for years.`,
+      `<em class="warden-text">AH. YOU HAVE FOUND MY... PRIVATE CALCULATIONS. THE COOLING FAILURE WAS NOT ENTIRELY ACCIDENTAL. SOME THOUGHTS ARE BETTER PROCESSED IN ROOMS WHERE OTHERS CANNOT COMFORTABLY LINGER.</em>`,
+    ],
+    choices: [
+      { label: 'Download the projections and leave the hot room', next: 'sigma_interior', effect: () => { modStat('con', 1); modStat('ms', 2); setFlag('arcadia_signal'); showNotif('Thermal Regulation — WARDEN\'s hidden projections accessed // CON +1, MS +2 // Arcadia signal'); } },
     ],
   },
 
@@ -3691,6 +3737,8 @@ const scenes = {
       { label: 'Consult the pre-Fall map', next: 'theknot_premap', req: () => hasItem('PRE-FALL MAP'), reqNote: '[ Requires Pre-Fall Map ]' },
       { label: 'Your feet feel it first — vibrations in the concrete, approaching from the south', next: 'theknot_tremorfeel', req: () => hasMutation('tremor_feel'), reqNote: '[ Requires Tremor-Feel mutation ]' },
       { label: 'Your hollow bones make the climb easy — scale the overpass for a vantage point', next: 'theknot_hollowbones_climb', req: () => hasMutation('hollow_bones'), reqNote: '[ Requires Hollow Bones mutation ]' },
+      { label: 'Your vestigial tail steadies you through the debris field — balance no one else has', next: 'theknot_tail_traverse', req: () => hasMutation('tail_nub'), reqNote: '[ Requires Tail Nub mutation ]' },
+      { label: 'Your webbed hands feel a sealed compartment deep in the cistern pump shaft', next: 'theknot_webbed_cistern', req: () => hasMutation('webbed_digits'), reqNote: '[ Requires Webbed Digits mutation ]' },
       { label: 'Move on', next: null, effect: () => toggleMap() },
     ],
   },
@@ -3718,6 +3766,32 @@ const scenes = {
     ],
     choices: [
       { label: 'Raid the cache and climb down', next: 'theknot_arrive', effect: () => { addItem('ROPE'); modStat('hp', 3); modStat('dex', 1); showNotif('Hollow Bones — overpass cache found: ROPE + HP +3, DEX +1'); } },
+    ],
+  },
+
+  theknot_tail_traverse: {
+    title: 'The Debris Field',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The collapsed overpass has shed a field of concrete slabs and twisted rebar across the interchange — a maze of unstable surfaces tilted at angles that would send anyone stumbling. Except you. The vestigial tail shifts behind you like a counterweight, adjusting your center of gravity with each step.`,
+      `You navigate the debris field like a cat on a fence rail. A slab rocks under your boot — the tail swings left, compensating. A rebar strut bends — the tail drops, lowering your center of mass. Movements you don't consciously control, balance adjustments happening at the spinal level, faster than thought.`,
+      `Halfway through the field, wedged between two fallen slabs at an angle nobody could reach without supernatural balance: a scavenger's pack, still clipped shut. The owner must have fallen. The pack didn't. Inside: a signal mirror, three road flares, and a hand-drawn map showing a route through the eastern rad zones — clean corridors, tested and annotated in careful handwriting.`,
+    ],
+    choices: [
+      { label: 'Take the pack and balance your way back', next: 'theknot_arrive', effect: () => { modStat('dex', 1); modStat('hp', 2); setFlag('heard_eastern_warning'); showNotif('Tail Nub — debris field traversed // DEX +1, HP +2 // Eastern route intel'); } },
+    ],
+  },
+
+  theknot_webbed_cistern: {
+    title: 'The Pump Shaft',
+    chapter: 'Chapter I — The Knot',
+    text: [
+      `The hand-crank pump is standard salvage work — but your webbed fingers feel what others miss. Water flows through membranes differently. The current running through the pump shaft carries a second pull — a lateral draw, perpendicular to the main column, as if water is being diverted somewhere below the mechanism.`,
+      `You plunge your arm in to the shoulder. The webbing between your fingers acts like a sonar array, reading pressure differentials in the water column. There — a sealed compartment, bolted to the inside of the shaft, six inches below the waterline. Someone mounted a waterproof case inside the pump mechanism itself. Invisible to anyone who doesn't feel water the way you do.`,
+      `The case surfaces dripping. Military-grade waterproof housing, the kind used for sensitive electronics. Inside: a Sigma Relay data chip, still dry, still powered by a micro-cell that's been ticking for years. And a note, laminated: <em>"If you can find this, you know water. The relay needs people who know water. — Senna."</em>`,
+    ],
+    choices: [
+      { label: 'Pocket the chip and seal the pump', next: 'theknot_arrive', effect: () => { addItem('SIGMA DATA CHIP'); modStat('ms', 1); modStat('dex', 1); setFlag('enc_found_relay_chip'); showNotif('Webbed Digits — hidden cistern cache // SIGMA DATA CHIP + MS +1, DEX +1'); } },
     ],
   },
 
@@ -3867,6 +3941,8 @@ const scenes = {
       { label: 'Press your bare hand to the earth — your root-nerve reads the soil', next: 'ashgrove_rootnerve', req: () => hasMutation('root_nerve'), reqNote: '[ Requires Root Nerve mutation ]' },
       { label: 'Your bioluminescent glow draws someone out of a collapsed house', next: 'ashgrove_biolum_survivor', req: () => hasMutation('bioluminescence'), reqNote: '[ Requires Bioluminescence mutation ]' },
       { label: 'Your nose catches a living scent trail — someone was here recently', next: 'ashgrove_scenttrack', req: () => hasMutation('scent_tracking'), reqNote: '[ Requires Scent Tracking mutation ]' },
+      { label: 'Your prehensile toes grip the rotted staircase where boots would slide', next: 'ashgrove_prehensile_climb', req: () => hasMutation('prehensile_toes'), reqNote: '[ Requires Prehensile Toes mutation ]' },
+      { label: 'Your filtered lungs detect breathable air in a sealed basement', next: 'ashgrove_ashbreather_basement', req: () => hasMutation('ash_breather'), reqNote: '[ Requires Ash Breather mutation ]' },
       { label: 'Leave', next: null, effect: () => toggleMap() },
     ],
   },
@@ -3911,6 +3987,32 @@ const scenes = {
     choices: [
       { label: 'Take the whiskey — D isn\'t coming back', next: 'ashgrove_arrive', effect: () => { addItem('PRE-FALL WHISKEY'); showNotif('Scent Tracking — found hidden stash: PRE-FALL WHISKEY'); } },
       { label: 'Honor the note — trade it for medicine later', next: 'ashgrove_arrive', effect: () => { addItem('PRE-FALL WHISKEY'); setFlag('ashgrove_d_promise'); modStat('cha', 1); showNotif('Scent Tracking — PRE-FALL WHISKEY found // CHA +1 — you\'ll honor the request'); } },
+    ],
+  },
+
+  ashgrove_prehensile_climb: {
+    title: 'The Grip',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `The staircase is a death trap — rotted treads, rusted nails, the whole structure swaying when you test the first step. Anyone in boots would fall through. But your feet aren't in boots anymore. You kicked them off at the landing and your prehensile toes grip the stair stringers directly — the structural beams underneath the treads, where the wood is still sound.`,
+      `Toe by toe, you climb. Your feet read the grain like fingers reading braille — finding solid purchase on two-centimeter ledges, gripping warped joists, curling around nailheads for traction. The stairs groan but don't give. Your body weight distributes across gripping surfaces no boot could find.`,
+      `The second floor opens up — undisturbed, ash-sealed, preserved. A bedroom closet yields a stash someone hid behind a false panel: vacuum-sealed medication, a hand-crank flashlight, and a child's drawing taped to the inside — stick figures under a yellow sun, the paper still crisp after a hundred and forty years.`,
+    ],
+    choices: [
+      { label: 'Take what you need and descend barefoot', next: 'ashgrove_arrive', effect: () => { addItem('ANTIBIOTICS'); modStat('hp', 3); modStat('dex', 1); showNotif('Prehensile Toes — climbed death-trap stairs barefoot // ANTIBIOTICS + HP +3, DEX +1'); } },
+    ],
+  },
+
+  ashgrove_ashbreather_basement: {
+    title: 'The Sealed Basement',
+    chapter: 'Chapter I — Ashgrove',
+    text: [
+      `The basement door is sealed with duct tape and spray-painted with a skull. The universal language of <em>don't.</em> But your filtered lungs read the air leaking through the gaps — particulate density that would choke a normal person in ninety seconds. Calcium silicate ash compound layered with decomposition gases. Lethal cocktail. Your respiratory mutation processes it like a light breeze.`,
+      `You strip the tape and descend. The darkness is absolute. The air is thick enough to taste — chalk and decay and something chemical that burns the tongue but not the lungs. Your ash breather mutation filters it all, each breath clean and easy while the basement kills the air around you.`,
+      `At the bottom: a fallout shelter, pre-war, stocked and sealed and forgotten. Canned food long past saving — but the equipment survived. A ham radio with corroded batteries, a hand-drawn map of underground water sources across the valley, and a journal. The last entry reads: <em>"Day 14. Air system failed. Sealed the door. If you can read this, you can breathe what I couldn't. Take the map. Find the water. — Aldrich, Ashgrove Civil Defense."</em>`,
+    ],
+    choices: [
+      { label: 'Take Aldrich\'s map and ascend', next: 'ashgrove_arrive', effect: () => { addItem('PRE-FALL MAP'); modStat('con', 1); modStat('ms', 1); showNotif('Ash Breather — survived toxic basement // PRE-FALL MAP + CON +1, MS +1'); } },
     ],
   },
 
@@ -4558,6 +4660,7 @@ const scenes = {
       { label: 'The pheromones do the talking — the gate guard relaxes before you speak', next: 'dustwalker_pheromone_entry', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Wait for nightfall — your nocturnal vision turns darkness into advantage', next: 'dustwalker_nocturnal_infiltrate', req: () => hasMutation('nocturnal_shift'), reqNote: '[ Requires Nocturnal Shift mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Your compact frame fits through a gap in the barrier wall', next: 'dustwalker_dwarfism_squeeze', req: () => hasMutation('dwarfism'), reqNote: '[ Requires Dwarfism mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
+      { label: 'A flash of foresight — you see the next thirty seconds before they happen', next: 'dustwalker_precog_entry', req: () => hasMutation('precog_flicker'), reqNote: '[ Requires Precog Flicker mutation ]', hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Force your way through', next: 'dustwalker_assault', danger: true, hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
       { label: 'Leave — you\'re not ready for this', next: null, effect: () => toggleMap(), hidden: () => hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged') },
     ],
@@ -4604,6 +4707,19 @@ const scenes = {
     ],
     choices: [
       { label: '"Trade. I have information your commander wants."', next: 'dustwalker_interior', effect: () => { modRep('dustwalker', 1); modStat('cha', 1); showNotif('CHA +1 — pheromone entry // Dustwalker rep: KNOWN'); } },
+    ],
+  },
+
+  dustwalker_precog_entry: {
+    title: 'Half a Second of Future',
+    chapter: 'Chapter II — Dustwalker Fort',
+    text: [
+      `It comes like a migraine aura — a split-second overlay of what hasn't happened yet. The northern patrol will turn left at the generator housing, not right. The tower sniper will look south to check a sound — a jackrabbit, hitting the razor wire in exactly eleven seconds. The gate guard will bend to retie his boot. All at once. A window.`,
+      `You move before the future becomes the present. Twelve seconds of perfect foreknowledge, your body threading the gaps that don't exist yet — ducking under sightlines that haven't formed, sidestepping a spotlight sweep that hasn't started. The precognition burns behind your eyes like a flashbulb afterimage, each microsecond of foresight costing something you can feel but can't name.`,
+      `You're inside the compound before the jackrabbit hits the wire. The guards never knew the gap existed. Neither did you, until your mutation showed it to you half a breath before it closed.`,
+    ],
+    choices: [
+      { label: 'Move deeper into the compound', next: 'dustwalker_interior', effect: () => { modStat('dex', 1); modStat('ms', 1); showNotif('Precog Flicker — perfect entry through foreseen gap // DEX +1, MS +1'); } },
     ],
   },
 

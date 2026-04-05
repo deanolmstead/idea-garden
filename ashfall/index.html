@@ -5612,6 +5612,8 @@ const scenes = {
     choices: [
       { label: 'Enter the commune', next: 'arcadia_commune' },
       { label: 'Circle the perimeter — look for another way in', next: 'arcadia_heart', req: () => skillCheck('dex', 12), reqNote: '[ Requires DEX 12+ ]', effect: () => { modStat('hp', -2); showNotif('HP -2 — roots and thorns // bypassed commune'); } },
+      { label: 'Your scale patches resist the defensive thorns — push through the undergrowth directly', next: 'arcadia_heart', req: () => hasMutation('scale_patches'), reqNote: '[ Requires Scale Patches mutation ]', effect: () => { modStat('con', 1); showNotif('Scale Patches — thorns can\'t penetrate reptilian scales // CON +1'); } },
+      { label: 'Your rubber flesh absorbs the spore bombardment — the defense system can\'t slow you', next: 'arcadia_commune', req: () => hasMutation('rubber_flesh'), reqNote: '[ Requires Rubber Flesh mutation ]', effect: () => { modStat('hp', 3); modRep('arcadia', 1); showNotif('Rubber Flesh — spore defenses bounced off, the network is impressed // HP +3, Arcadia rep +1'); } },
     ],
   },
 
@@ -5632,6 +5634,52 @@ const scenes = {
       { label: '"Commander Vance sent me. I\'m here to determine if you can be reasoned with."', next: 'arcadia_commune_lira_vance', req: () => hasFlag('dustwalker_alliance'), reqNote: '[ Requires Dustwalker alliance ]' },
       { label: 'Skip the conversation — head for the core', next: 'arcadia_heart', effect: () => { modRep('arcadia', -1); showNotif('Arcadia rep decreased — commune bypassed'); } },
       { label: 'Your pheromones read her biochemistry — she\'s not lying', next: 'arcadia_commune_pheromone_read', req: () => hasMutation('pheromone_broadcast'), reqNote: '[ Requires Pheromone Broadcast mutation ]' },
+      { label: 'Their emotions flood into you — thirty-seven minds, content, connected, and not entirely their own', next: 'arcadia_commune_empathic', req: () => hasMutation('empathic_bleed'), reqNote: '[ Requires Empathic Bleed mutation ]' },
+      { label: 'Your spore exhalations resonate with the commune\'s atmosphere — the network greets you as kin', next: 'arcadia_commune_sporecloud', req: () => hasMutation('spore_cloud'), reqNote: '[ Requires Spore Cloud mutation ]' },
+      { label: 'The trees react to your depigmented skin — they\'ve mistaken you for something fungal', next: 'arcadia_commune_albino', req: () => hasMutation('albino_adaptation'), reqNote: '[ Requires Albino Adaptation mutation ]' },
+    ],
+  },
+
+  arcadia_commune_empathic: {
+    title: 'Thirty-Seven Heartbeats',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `It hits you the moment you enter the commune. Not one emotional signature — thirty-seven. Every person in this settlement radiates into your empathic receptors simultaneously, and the aggregate is overwhelming: contentment, deep and structural, layered with purpose and belonging and an undercurrent of something you've never felt from a human mind before. Connection. Not metaphorical connection — literal, neurochemical, the emotional residue of minds linked through a shared substrate.`,
+      `They're happy. Genuinely happy. But the happiness has a uniformity that raises the hair on your arms. Not identical — each person's contentment has its own flavor. But the rhythms are synchronized. They feel things together, the way an orchestra plays together. Someone is conducting.`,
+      `Lira watches you process this with an expression that says she's seen empaths before. <em>"You feel what they feel."</em> A statement. <em>"Then you know we're not prisoners. You can feel the difference between captivity and choice. Can't you?"</em>`,
+      `She's right. You can. The emotions are real. Uncoerced. Whatever the network is doing, it isn't forcing happiness. It's providing the conditions for it. Whether that distinction matters is the question you'll carry to the core.`,
+    ],
+    choices: [
+      { label: '"Take me to the source."', next: 'arcadia_heart', effect: () => { modRep('arcadia', 1); modStat('cha', 1); setFlag('arcadia_empathic_read'); showNotif('Empathic Bleed — commune emotions verified as genuine // CHA +1, Arcadia rep +1'); } },
+    ],
+  },
+
+  arcadia_commune_sporecloud: {
+    title: 'Kin Recognition',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `You exhale. The golden spores drift from your lips into Arcadia's air — and the commune's atmosphere answers. Your fungal particles meet the network's spore field, and the chemical handshake is immediate: recognition, classification, acceptance. Your mutation speaks the network's language at a molecular level.`,
+      `The effect is visible. The trees straighten. The root paths widen. Bioluminescent nodes pulse brighter as you pass, tracking your movement with the enthusiasm of a system greeting a long-lost component. Lira's expression shifts from diplomatic smile to genuine surprise.`,
+      `<em>"You carry spores."</em> She steps closer, inhaling. <em>"Fungal exhalation. The network hasn't encountered this variant before — it's cataloging your biology in real time."</em> Her eyes refocus — a moment where Lira-the-person steps aside and Lira-the-interface takes over. <em>"It says you're... familiar. Like a word it knows in a dialect it hasn't heard."</em>`,
+      `The commune parts around you. Not fear — reverence. To these people, you're not an outsider. You're proof that the network's reach extends further than anyone knew.`,
+    ],
+    choices: [
+      { label: 'Follow Lira to the core', next: 'arcadia_heart', effect: () => { modRep('arcadia', 2); modStat('cha', 1); showNotif('Spore Cloud — recognized as kin by the network // CHA +1, Arcadia rep +2'); } },
+    ],
+  },
+
+  arcadia_commune_albino: {
+    title: 'The White Visitor',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `The trees lean in as you enter the commune clearing. Not the cautious attention they give other visitors — something more urgent. Your paper-white skin, your frost-pale hair, the pink-grey eyes — in the valley's ash-colored world, you look human. In Arcadia's bioluminescent green, you look like something else entirely.`,
+      `Fungal. You look fungal. The depigmentation mimics the coloring of the network's fruiting bodies — the pale, translucent structures that emerge from the root system when the organism is communicating with the surface. The trees think you're one of those structures. Their bioluminescent nodes pulse in greeting patterns usually reserved for the network's own growths.`,
+      `Lira arrives at a run. <em>"Don't move."</em> Not fear — fascination. <em>"The network is trying to interface with your skin. It thinks — it's confused. You're registering as part of itself."</em>`,
+      `The confusion passes. The network recategorizes you: not-self, but not-foreign. A third category. The trees settle into a watchful calm that feels almost affectionate.`,
+      `<em>"In thirteen years,"</em> Lira says, slightly breathless, <em>"I have never seen the network mistake a human for part of itself. Whatever your mutation did to you, it brought you closer to what we're building here than anyone who's walked in without an invitation."</em>`,
+    ],
+    choices: [
+      { label: 'Follow Lira to the core', next: 'arcadia_heart', effect: () => { modRep('arcadia', 2); modStat('ms', 1); showNotif('Albino Adaptation — mistaken for network growth, unique relationship established // MS +1, Arcadia rep +2'); } },
     ],
   },
 
@@ -5744,6 +5792,7 @@ const scenes = {
       { label: 'Open yourself to contact', next: 'arcadia_contact' },
       { label: 'Resist the pressure — keep your mind closed', next: 'arcadia_contact_guarded', effect: () => { modStat('ms', 1); showNotif('MS +1 — mental resistance'); } },
       { label: 'Your nerve-bloom interfaces directly with the biological structure', next: 'arcadia_contact_nervebloom', req: () => hasMutation('nerve_bloom'), reqNote: '[ Requires Nerve-Bloom mutation ]' },
+      { label: 'Your redundant organs absorb the psychic pressure — you can touch the core bare-handed', next: 'arcadia_redundant_touch', req: () => hasMutation('redundant_organs'), reqNote: '[ Requires Redundant Organs mutation ]' },
       { label: 'Deploy the mycotoxin', next: 'arcadia_ending_destroy_toxin', req: () => hasItem('MYCOTOXIN FORMULA'), reqNote: '[ Use Mycotoxin Formula ]', danger: true },
       { label: 'You\'ve seen enough. This thing dies now.', next: 'arcadia_ending_destroy_force', danger: true, req: () => state.weapon !== null, reqNote: '[ Requires equipped weapon ]' },
     ],
@@ -5797,6 +5846,21 @@ const scenes = {
     ],
     choices: [
       { label: 'Withdraw from the interface — you have what you need', next: 'arcadia_choice', effect: () => { modRep('arcadia', 2); modStat('ms', 2); setFlag('arcadia_nervebloom_contact'); showNotif('MS +2 — full neural interface // network fear revealed'); } },
+    ],
+  },
+
+  arcadia_redundant_touch: {
+    title: 'Direct Contact',
+    chapter: 'Chapter III — Arcadia',
+    text: [
+      `You walk to the core and put your hands on it. No preparation. No mental barrier. No interface mutation. Just skin on bioluminescent membrane, and the full force of the network's consciousness hitting your nervous system like a dam breaking.`,
+      `A normal human would seize. The neural overload — a hundred and forty years of accumulated consciousness pouring through a single point of contact — would blow every circuit in a standard nervous system. Your backup heart kicks in at the same moment your primary heart stutters. Your redundant kidneys filter the cascade of stress hormones that would shut down a single set. Your body was built with spares, and every spare fires simultaneously.`,
+      `The network registers your survival with something that feels like astonishment. It has made contact with visitors before — through intermediaries, through mutations, through careful graduated exposure. Nobody has ever just grabbed it and held on.`,
+      `The connection is raw. Unfiltered. You feel the entire valley in brutal resolution — every root, every spore, every mind connected to the web, and the vast dreaming intelligence at the center of it all, suddenly confronted with a human who can take everything it has to give.`,
+      `<em>You are... durable,</em> the network says. Not in words. In the structural language of pressure and warmth and light. <em>We were not prepared for this approach.</em>`,
+    ],
+    choices: [
+      { label: 'Release the core — you have what you need', next: 'arcadia_choice', effect: () => { modRep('arcadia', 2); modStat('con', 2); modStat('ms', 1); setFlag('arcadia_open_contact'); showNotif('Redundant Organs — survived direct contact with the core // CON +2, MS +1, Arcadia rep +2'); } },
     ],
   },
 

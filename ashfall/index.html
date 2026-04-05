@@ -1143,6 +1143,15 @@ const ENEMIES = {
     loot: null,
     xpStat: 'dex',
   },
+  dustwalker_patrol: {
+    name: 'Dustwalker Patrol',
+    desc: 'Three soldiers in formation — point, flank, rear guard. Standard Dustwalker sweep-and-clear, rifles up, spacing textbook. They\'ve been hunting you since the fort.',
+    threat: 13,
+    hp: 18,
+    tags: ['human', 'ranged', 'trained', 'pack'],
+    loot: () => { if (Math.random() < 0.4) addItem('AMMUNITION BOX'); },
+    xpStat: 'dex',
+  },
 };
 
 // Combat approach definitions
@@ -2658,6 +2667,64 @@ const RANDOM_ENCOUNTERS = [
     text: `"Don't." The voice comes from above — a rock outcropping you walked past without checking. Rookie mistake. She's prone, rifle steady, one eye on the scope. Dustwalker patches on her sleeve. "Wrong road, stranger. This one's toll-operated." She shifts her weight. The barrel doesn't move. "Pay or pray. Your call."` },
   { id: 93, combat: 'tunnel_crawler',
     text: `The tunnel seemed like a shortcut. It is not a shortcut. The clicking starts deep in the dark — rhythmic, chitinous, growing louder with a speed that suggests something large moving fast. Your lantern catches it: segmented, pale, eyeless, filling the passage wall to wall. Mandibles the size of your forearms open and close with the mechanical patience of a machine designed to process organic matter. You are organic matter.` },
+
+  // ── STORY-REACTIVE ENCOUNTERS: DUSTWALKER FACTION ──
+  { id: 94,
+    req: () => hasFlag('dustwalker_alliance'),
+    title: 'Allied Patrol',
+    text: [
+      `Three Dustwalker soldiers round a bend in the road — rifles up, spacing tight, the formation dissolving the instant the point man recognizes you. He raises a fist. The patrol halts.`,
+      `<em>"Vance's asset."</em> Not your name. Your function. He says it without malice — in the Dustwalker lexicon, being useful is the highest compliment. <em>"We're running supplies to the eastern checkpoint. Rations to spare if you need them. Or we can walk your flank for the next two klicks — road's been active."</em>`,
+    ],
+    choices: [
+      { label: 'Accept the rations', next: null, effect: () => { modStat('hp', 4); showNotif('Dustwalker patrol — rations shared // HP +4'); } },
+      { label: 'Request the escort', next: null, effect: () => { modStat('con', 1); setFlag('enc_dustwalker_escort'); showNotif('Dustwalker escort — safer travel // CON +1'); } },
+      { label: 'Decline — you travel faster alone', next: null },
+    ],
+  },
+  { id: 95,
+    req: () => hasFlag('dustwalker_alliance'),
+    once: 'enc_dustwalker_courier',
+    title: 'The Courier',
+    text: `A Dustwalker courier, running alone, pack bouncing, catches sight of you and adjusts course. She's breathing hard — six kilometers at speed, by the look of her. <em>"For Commander Vance. From the eastern listening post."</em> She presses a sealed pouch into your hands. <em>"You'll see her before I will. The road back is compromised."</em> She doesn't explain. She doesn't wait. She turns north and runs. The pouch is heavy. The seal is Commander-grade encryption — wax and wire. Whatever's inside, Vance trusts you to carry it.`,
+    effect: () => { addItem('SEALED DISPATCH'); },
+    notif: 'Found: SEALED DISPATCH — for Commander Vance' },
+  { id: 96,
+    req: () => hasFlag('dustwalker_sabotaged'),
+    combat: 'dustwalker_patrol',
+    text: `They come from the treeline in formation — three soldiers, rifles up, moving with the grim efficiency of people who've been briefed on exactly who they're looking for. The point man has a sketch pinned to his vest. Your sketch. The charcoal likeness is rough but the description beneath it is surgical: height, build, gear, last known heading. The bounty is listed in ammunition — two hundred rounds of .308. That's how much your head is worth to Commander Vance. The lead soldier's finger moves from the trigger guard to the trigger. The negotiation phase of this encounter lasted approximately zero seconds.` },
+  { id: 97,
+    req: () => hasFlag('dustwalker_sabotaged'),
+    title: 'Checkpoint',
+    text: [
+      `A makeshift checkpoint spans the road — two burned-out cars pushed together, gap in the middle, Dustwalker boot-print stenciled on a sheet-metal sign. Two soldiers, both armed, both watching the road with the focused attention of people who've been given a description and told to wait.`,
+      `Your description. You can see the sketch from here — pinned to the car hood, fluttering in the ash-wind. They haven't spotted you yet. The road curves. There's brush to the south. The checkpoint covers the direct route, but not the drainage ditch thirty meters east.`,
+    ],
+    choices: [
+      { label: 'Bluff your way through — different clothes, different walk', next: null, effect: () => { if (skillCheck('cha', 13)) { showNotif('CHA CHECK PASSED — bluffed past the checkpoint'); } else { modStat('hp', -4); modRep('dustwalker', -1); showNotif('CHA CHECK FAILED — recognized, took a hit escaping // HP -4'); } } },
+      { label: 'Slip through the drainage ditch', next: null, effect: () => { if (skillCheck('dex', 12)) { modStat('dex', 1); showNotif('DEX CHECK PASSED — ghosted the checkpoint // DEX +1'); } else { modStat('hp', -3); showNotif('DEX CHECK FAILED — spotted, grazed escaping // HP -3'); } } },
+      { label: 'There\'s no getting past quietly — fight', next: null, effect: () => { modStat('hp', -5); modStat('str', 1); showNotif('Forced through the checkpoint // HP -5, STR +1'); } },
+    ],
+  },
+  { id: 98,
+    req: () => getRep('dustwalker') <= -2,
+    title: 'Warning Shot',
+    text: `The crack reaches you a full second after the round kicks up gravel two meters to your left. Sniper. High ground. The ridge to the northwest, if you had to guess — the angle is consistent with the Dustwalker observation posts you've seen on approach maps. A warning shot. They could have aimed center mass. They didn't. This time. The message is clear: you are known, you are tracked, and the next round will not miss on purpose. You pick up the pace and stay off the ridgelines for the next three hours.`,
+    effect: () => { modStat('hp', -3); },
+    notif: 'HP -3 — Dustwalker sniper, warning shot' },
+  { id: 99,
+    req: () => hasFlag('enc_dustwalker_patrol_intel'),
+    title: 'Pattern Recognition',
+    text: [
+      `The boot-prints in the ash are fresh — twelve-meter spacing, standard Dustwalker two-man sweep. You've seen this pattern before. The scout's sketch on the torn paper bag, the timing data from the signal post cipher — it layers over what you're seeing now like a transparency. They'll be back in seven minutes. The gap is to the southeast, behind the collapsed grain elevator.`,
+      `But the patrol is heading toward something. The tracks converge on a structure two hundred meters east — a culvert with a fresh padlock. Supply cache. Dustwalker logistics, restocked on the rotation you just decoded.`,
+    ],
+    choices: [
+      { label: 'Avoid them entirely — use the gap', next: null, effect: () => { showNotif('Patrol intel — gap exploited, safe passage'); } },
+      { label: 'Shadow them to the cache', next: null, effect: () => { if (skillCheck('dex', 12)) { addItem('AMMUNITION BOX'); addItem('FIELD MEDKIT'); modStat('dex', 1); showNotif('DEX CHECK PASSED — cache raided: AMMUNITION BOX + FIELD MEDKIT // DEX +1'); } else { modStat('hp', -4); showNotif('DEX CHECK FAILED — spotted near the cache // HP -4'); } } },
+      { label: 'Approach openly — you have leverage', next: null, effect: () => { modRep('dustwalker', 1); modStat('cha', 1); showNotif('Patrol intel traded for goodwill // Dustwalker rep +1, CHA +1'); }, req: () => hasFlag('dustwalker_leverage'), reqNote: '[ Requires Dustwalker leverage ]' },
+    ],
+  },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──
@@ -2667,7 +2734,8 @@ const COMBAT_ITEM_EFFECTS = {
   'SOLAR LANTERN':  { enemies: ['tunnel_crawler'], bonus: 2, desc: 'Illuminates the tunnel — no blind spots' },
   'GEIGER COUNTER': { enemies: ['rad_ghoul'], bonus: 1, desc: 'Early warning on the radiation signature' },
   'ROPE':           { enemies: ['ridge_hawk', 'mutant_boar'], bonus: 1, desc: 'Improvised restraint' },
-  'BINOCULARS':     { enemies: ['dustwalker_scout', 'bandit_pair'], bonus: 1, desc: 'Spotted them before they set the ambush' },
+  'BINOCULARS':     { enemies: ['dustwalker_scout', 'bandit_pair', 'dustwalker_patrol'], bonus: 1, desc: 'Spotted them before they set the ambush' },
+  'ENCRYPTED RADIO': { enemies: ['dustwalker_patrol'], bonus: 2, desc: 'Dustwalker frequencies — you hear them coming' },
 };
 
 function triggerRandomEncounter() {

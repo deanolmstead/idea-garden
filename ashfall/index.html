@@ -2915,6 +2915,72 @@ const RANDOM_ENCOUNTERS = [
     text: `The road bends and you know what's beyond it before you see it — the collapsed overpass, the dead orchard, the drainage culvert where scorpions nest in wet weather. You know because you've been here. Not this exact stretch. But this exact type of stretch, a hundred times, in a hundred configurations. The ash has a grammar. The road has a syntax. The collapsed infrastructure speaks a language of angles and erosion patterns that your body has learned to read without consulting your brain. You sidestep a crumbled section of guardrail. Duck a low-hanging cable. Avoid a soft spot in the road surface that would have swallowed your boot six months ago. The valley hasn't changed. You have.`,
     effect: () => { modStat('dex', 1); },
     notif: 'DEX +1 — road mastery, earned through miles' },
+
+  // ── STORY-REACTIVE ENCOUNTERS: MUTATION-REACTIVE ──
+  { id: 118,
+    req: () => hasMutation('ash_breather'),
+    title: 'The Storm',
+    text: [
+      `The ash storm hits like a wall. Visibility drops to arm's length. The particulate density is lethal — calcium silicate and powdered concrete, the kind that turns lungs into concrete if you breathe it unfiltered for more than three minutes.`,
+      `You breathe it like air. Your filtered respiratory system processes the worst the valley can throw without complaint — each inhalation smooth, each exhalation carrying a faint grey plume of neutralized particulate. You're walking through a death cloud and your body has filed it under "mild weather."`,
+      `A trader, twenty meters off the road, is not so lucky. She's wrapped her face in cloth but the coughing is deep and wet — the sound of someone losing the argument with their own lungs. Her mule has stopped, eyes wide, refusing to move. She can't see you. She can barely see her own hands.`,
+    ],
+    choices: [
+      { label: 'Guide her through — your lungs can handle it', next: null, effect: () => { modStat('cha', 1); modRep('ironmarket', 1); showNotif('Ash Breather — guided trader through the storm // CHA +1, Ironmarket rep +1'); } },
+      { label: 'Keep moving — the storm is your advantage', next: null, effect: () => { modStat('dex', 1); showNotif('Ash Breather — moved freely through the storm // DEX +1'); } },
+    ],
+  },
+  { id: 119,
+    req: () => hasMutation('static_charge'),
+    title: 'The Locked Door',
+    text: [
+      `A pre-Fall security door, recessed into a highway embankment — the kind that protected utility infrastructure back when utility infrastructure mattered. The lock is electronic, dead for a century. No battery. No power grid. No way in.`,
+      `Except your fingers are arcing. The static charge builds as you approach — drawn by the conductive frame, the copper wiring behind the panel, the ghost of a circuit that needs exactly the kind of current your mutation produces. The access pad's LED flickers. Once. Twice. A third time, brighter, as your bioelectric field floods the dormant system with enough voltage to wake the dead.`,
+    ],
+    choices: [
+      { label: 'Channel the charge — force the system online', next: null, effect: () => { if (skillCheck('ms', 11)) { addItem('BATTERY CELLS'); addItem('TECHNICAL MANUAL'); modStat('ms', 1); showNotif('MS CHECK PASSED — Static Charge opened the vault: BATTERY CELLS + TECHNICAL MANUAL + MS +1'); } else { modStat('hp', -3); showNotif('MS CHECK FAILED — discharge feedback // HP -3'); } } },
+      { label: 'Discharge safely and move on', next: null, effect: () => { showNotif('Static charge — discharged safely'); } },
+    ],
+  },
+  { id: 120,
+    req: () => hasMutation('hivemind_echo'),
+    once: 'enc_hivemind_contact',
+    title: 'The Other',
+    text: `It comes without warning — a pressure behind your eyes, a frequency that isn't sound, a presence that overlaps yours like a second shadow. Someone on this road is carrying the hivemind echo. Not Arcadia. Not the network. Another mutant, another mind touched by the same radiation that rewired your synaptic pathways. The contact lasts three seconds. You see fragments: a bunker entrance, half-buried, east-northeast. A woman's face — scarred, determined, afraid. A phrase that doesn't translate into words but means something close to <em>not alone anymore.</em> Then it's gone. The road is empty. The sky is grey. But the coordinates burn in your memory like a brand, and you know — the way you know your own heartbeat — that someone else out there is listening on the same frequency.`,
+    effect: () => { setFlag('enc_hivemind_contact'); modStat('ms', 1); },
+    notif: 'MS +1 — hivemind contact, you\'re not alone' },
+  { id: 121,
+    req: () => hasMutation('thermal_sense'),
+    title: 'Heat Signatures',
+    text: [
+      `Your thermal sense fires before your eyes register the threat. Two heat signatures behind a collapsed wall — body temperature, human, holding position. Not moving. Not traveling. Waiting. The asymmetry of an ambush: one high, one low, covering a kill zone that extends across the road for about fifteen meters. You're eight meters from the edge.`,
+      `They haven't seen you yet. Your thermal map gives you the advantage — you know their positions, their spacing, the gap between them where neither has line of sight. The question is what you do with the next four seconds of ignorance.`,
+    ],
+    choices: [
+      { label: 'Circle through the gap in their coverage', next: null, effect: () => { modStat('dex', 1); showNotif('Thermal Sense — ambush avoided through the blind spot // DEX +1'); } },
+      { label: 'Confront them — you have the element of surprise', next: null, effect: () => { modStat('str', 1); modStat('hp', -2); showNotif('Thermal Sense — ambushers scattered // STR +1, HP -2'); } },
+      { label: 'Set your own trap — reverse the geometry', next: null, effect: () => { if (skillCheck('dex', 12)) { addItem('TRADE SCRIP'); modStat('dex', 1); showNotif('DEX CHECK PASSED — reversed the ambush, took their scrip // TRADE SCRIP + DEX +1'); } else { modStat('hp', -4); showNotif('DEX CHECK FAILED — trap sprung badly // HP -4'); } } },
+    ],
+  },
+  { id: 122,
+    req: () => hasMutation('bioluminescence'),
+    title: 'The Moth Spiral',
+    text: `They come at dusk. Hundreds of them — pale-winged, ash-dusted, drawn from hollows and crevices by the blue-green light pulsing at your wrists and throat. The moths spiral around you in a tightening helix, wings brushing your skin with the dry whisper of paper on paper. From a distance, you must look like a pillar of light walking through the grey — a bioluminescent beacon wrapped in a living shawl of wings. A traveler on a parallel road stops dead. Stares. Crosses herself with a gesture that belongs to a religion older than the ash. She doesn't approach. She doesn't run. She stands perfectly still until you pass, and then she walks on, faster, head down, clutching the strap of her pack with both hands. You are becoming something the valley tells stories about. You're not sure the stories will be kind.`,
+    notif: 'Bioluminescence — the valley is starting to notice you' },
+  { id: 123,
+    req: () => state.mutations.length >= 3,
+    title: 'The Recoil',
+    text: [
+      `The wastelander sees you before you see him — and what he sees makes him step backward. Not a stumble. A deliberate retreat, the kind animals make when they encounter something that doesn't fit their threat model. Your mutations are visible: the skin changes, the structural modifications, the ways your body has been rewritten by a valley that treats human DNA as a rough draft.`,
+      `He's armed. Machete, homemade, well-maintained. His grip tightens. His eyes do the math — threat assessment, combat calculus, the rapid arithmetic of someone deciding whether to fight, flee, or negotiate with something that used to be fully human.`,
+      `<em>"You're..."</em> He doesn't finish. The sentence has too many possible endings and none of them are polite.`,
+    ],
+    choices: [
+      { label: '"I\'m just a traveler. Same as you."', next: null, effect: () => { if (skillCheck('cha', 11)) { modStat('cha', 1); modStat('hp', 2); showNotif('CHA CHECK PASSED — reassured, he shares food // CHA +1, HP +2'); } else { showNotif('CHA CHECK FAILED — he backs away, unconvinced'); } } },
+      { label: 'Say nothing — let him decide', next: null, effect: () => { showNotif('The wastelander leaves. Quickly.'); } },
+      { label: 'Lean into it — let the mutations speak', next: null, effect: () => { modStat('str', 1); addItem('TRADE SCRIP'); showNotif('Intimidation — he dropped his scrip and ran // STR +1, TRADE SCRIP'); } },
+    ],
+  },
 ];
 
 // ── COMBAT ENCOUNTER ITEMS ──

@@ -3508,12 +3508,39 @@ const scenes = {
     title: 'Horace',
     chapter: 'Chapter I — Ironmarket',
     text: [
-      `Three car hoods welded into a countertop. Behind it, a heavyset man with grease-blackened fingernails sorts capacitors into jars with the tender precision of a jeweler. Wire hangs from the ceiling, organized by gauge. Circuitry fills labeled bins. Everything in its place — the workshop of someone who believes order is what keeps entropy at bay.`,
-      `<em>"Compass."</em> He hasn't looked up. His fingers keep sorting. <em>"Seeing a lot of those lately. Pre-war Suunto, by the weight of it?"</em>`,
+      ...(function() {
+        if (hasFlag('horace_favour')) {
+          const lines = [
+            `The workshop hasn't changed — same wire ceiling, same capacitor jars, same grease-blackened order. But Horace looks up when you approach. That's new. He nods once, the way he nods at equipment that's proven reliable.`,
+            `<em>"Back again."</em> Not a question. His hands keep working — a disassembled voltage regulator, components laid out in diagnostic order — but his attention is on you now. <em>"Heard you've been busy."</em>`,
+          ];
+          if (hasFlag('sigma_destroyed')) lines.push(
+            `<em>"Sigma's down."</em> He sets the regulator aside. Both hands flat on the counter — the same gesture he used when he told you about WARDEN-3. <em>"Relay parts are worth triple what they were last month. Buyers coming in from the coast. Everyone wants a piece of the tower that died."</em> His eyes find yours. <em>"You wouldn't happen to have any data from the site, would you?"</em>`
+          );
+          if (hasFlag('warden_alliance')) lines.push(
+            `<em>"Word is WARDEN-3 is cooperating with someone. Actually cooperating — not the synchronization thing, something voluntary."</em> He taps a screwdriver against the counter. <em>"If you've got access to maintenance specs, I could fabricate replacement sensor arrays. The kind WARDEN used to requisition from supply chains that don't exist anymore."</em>`
+          );
+          if (hasFlag('dustwalker_alliance')) lines.push(
+            `<em>"Dustwalker surplus is flowing in — military-grade equipment at salvage prices. Ammunition, hazmat gear, field rations. Vance's people are selling off excess stock to fund the expansion."</em> He gestures toward a new bin behind the counter, olive drab, stenciled with Dustwalker markings. <em>"I set some aside. Figured you'd be through eventually."</em>`
+          );
+          if (hasFlag('bunker_protocols')) lines.push(
+            `His voice drops. <em>"Pyxis schematics."</em> He doesn't explain how he knows you've been in the bunker. <em>"If you've got the protocols, and I've got the fabrication bench — there's a few things those bunker designs can produce that nobody in this valley has seen since before the Fall. Bring me battery cells and I'll show you what I mean."</em>`
+          );
+          lines.push(`The workshop hums with its quiet order. Horace waits, patient as his sorted components.`);
+          return lines;
+        }
+        return [
+          `Three car hoods welded into a countertop. Behind it, a heavyset man with grease-blackened fingernails sorts capacitors into jars with the tender precision of a jeweler. Wire hangs from the ceiling, organized by gauge. Circuitry fills labeled bins. Everything in its place — the workshop of someone who believes order is what keeps entropy at bay.`,
+          `<em>"Compass."</em> He hasn't looked up. His fingers keep sorting. <em>"Seeing a lot of those lately. Pre-war Suunto, by the weight of it?"</em>`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Trade the compass for information on Sigma Relay', next: 'ironmarket_horace_trade', req: () => hasItem('CRACKED COMPASS'), reqNote: '[ Requires cracked compass ]', effect: () => { removeItem('CRACKED COMPASS'); addItem('SIGNAL TOKEN'); setFlag('horace_favour'); showNotif('TRADED: COMPASS → SIGNAL TOKEN'); } },
-      { label: 'Ask about Sigma Relay without trading', next: 'ironmarket_horace_info' },
+      { label: 'Trade the compass for information on Sigma Relay', next: 'ironmarket_horace_trade', req: () => hasItem('CRACKED COMPASS'), reqNote: '[ Requires cracked compass ]', effect: () => { removeItem('CRACKED COMPASS'); addItem('SIGNAL TOKEN'); setFlag('horace_favour'); showNotif('TRADED: COMPASS → SIGNAL TOKEN'); }, hidden: () => hasFlag('horace_favour') },
+      { label: 'Ask about Sigma Relay without trading', next: 'ironmarket_horace_info', hidden: () => hasFlag('horace_favour') },
+      { label: 'Sell Sigma data to Horace', next: 'ironmarket_horace_data_sale', hidden: () => !hasFlag('sigma_destroyed') || !hasFlag('horace_favour') || !hasItem('CORRUPTED DATA CHIP') },
+      { label: 'Ask about Pyxis fabrication', next: 'ironmarket_horace_pyxis', hidden: () => !hasFlag('bunker_protocols') || !hasFlag('horace_favour') },
+      { label: 'Browse the Dustwalker surplus', next: 'ironmarket_horace_surplus', hidden: () => !hasFlag('dustwalker_alliance') || !hasFlag('horace_favour') },
       { label: 'Trade salvage parts for equipment', next: 'ironmarket_horace_salvage', req: () => hasItem('SALVAGE PARTS'), reqNote: '[ Requires Salvage Parts ]' },
       { label: 'Return to the plaza', next: 'ironmarket_plaza' },
     ],
@@ -4999,6 +5026,74 @@ const scenes = {
     ],
     choices: [
       { label: 'Head into the market plaza', next: 'ironmarket_plaza', effect: () => { setFlag('heard_eastern_warning'); modStat('con', 1); showNotif('Ash-Skin — guards let you pass // CON +1'); } },
+    ],
+  },
+
+  ironmarket_horace_data_sale: {
+    title: 'The Data Sale',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Horace takes the data chip between thumb and forefinger, holding it up to the stall light. The casing is cracked, the contacts oxidized, but his eyes read the part number like a diagnostic.`,
+      `<em>"Sigma survey logs. Corrupted, but the metadata alone—"</em> He sets it down, reaches under the counter, and produces two bundles of trade scrip, each one thick enough to buy a week of water. <em>"Soil composition data, water table readings, crop yield projections for the whole valley. Every farmer within fifty miles would kill for this."</em>`,
+      `<em>"The corruption is surface-level. I can clean the read heads, reconstruct the file tables. Give me a week and this chip is worth more than everything else on my counter combined."</em>`,
+      `He slides the scrip across the welded hoods. <em>"Fair price. You brought it to me first — I respect that."</em>`,
+    ],
+    choices: [
+      { label: 'Take the deal', next: 'ironmarket_horace', effect: () => { removeItem('CORRUPTED DATA CHIP'); addItem('TRADE SCRIP'); addItem('TRADE SCRIP'); modStat('cha', 1); showNotif('Data chip sold to Horace // 2x TRADE SCRIP, CHA +1'); } },
+      { label: 'Hold onto it — the chip might be worth more elsewhere', next: 'ironmarket_horace' },
+    ],
+  },
+
+  ironmarket_horace_pyxis: {
+    title: 'Pyxis Fabrication',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Horace pulls a folded schematic from beneath the counter — hand-drawn, meticulous, annotated in his cramped engineer's shorthand. He unfolds it across the welded hoods, weighting the corners with capacitor jars.`,
+      `<em>"Pyxis-class radiation scrubber. Pre-Fall military design — the bunkers had them built into the ventilation. Portable version was never manufactured because the war ended before production started."</em> He taps a component diagram. <em>"But the design is elegant. Simple, even. If I have the protocols for the filtration matrix and enough battery cells to power the fabrication bench—"</em>`,
+      `He looks up. <em>"I can build you one. First one in a hundred and forty years. Scrubs ambient radiation from your immediate area — won't make you immune, but it'll slow the accumulation. The kind of thing that matters when you're spending time in hot zones."</em>`,
+      ...(function() {
+        if (hasItem('BATTERY CELLS')) return [
+          `He glances at your pack. <em>"You've got the cells. I've got the bench. Say the word and I'll start."</em>`,
+        ];
+        return [
+          `<em>"Bring me battery cells. Good ones — pre-Fall manufacture or WARDEN-3 output. The fabrication bench drinks power."</em>`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Hand over the battery cells', next: 'ironmarket_horace_pyxis_built', hidden: () => !hasItem('BATTERY CELLS') },
+      { label: 'Not yet — need to find battery cells first', next: 'ironmarket_horace', hidden: () => hasItem('BATTERY CELLS') },
+      { label: 'Back to Horace', next: 'ironmarket_horace' },
+    ],
+  },
+
+  ironmarket_horace_pyxis_built: {
+    title: 'The Rad Scrubber',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Horace takes the battery cells with both hands — careful, respectful, the way he handles everything that works. He disappears behind the counter for what feels like an hour but is probably ten minutes. You hear the fabrication bench whine, the smell of hot solder, the precise tap-tap-tap of components being seated.`,
+      `What he sets on the counter is smaller than you expected. A cylinder the size of a water bottle, matte black, with a single green indicator light that pulses like a slow heartbeat. The design is clean — military clean, pre-Fall clean, the kind of engineering that prioritizes function over everything else.`,
+      `<em>"Rad scrubber. Pyxis-class. Works passively — clips to your pack, scrubs particulate radiation from a two-meter radius. Won't save you from a direct dose, but it'll buy you time in contaminated areas."</em>`,
+      `He slides it across the counter. <em>"First one since before the Fall. You earned it."</em>`,
+    ],
+    choices: [
+      { label: 'Take the rad scrubber', next: 'ironmarket_horace', effect: () => { removeItem('BATTERY CELLS'); addItem('RAD SCRUBBER'); modStat('con', 1); showNotif('Pyxis fabrication complete // RAD SCRUBBER acquired, CON +1'); } },
+    ],
+  },
+
+  ironmarket_horace_surplus: {
+    title: 'Dustwalker Surplus',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The olive drab bin is military through and through — stenciled unit numbers, inventory tags still attached, the organized efficiency of people who label everything. Horace lifts the lid and steps back, letting you look.`,
+      `Ammunition — sealed boxes, proper manufacture, not the hand-loaded rounds that pass for currency in the outer settlements. A hazmat suit, folded with parade-ground precision, the filters still sealed in factory packaging. Field rations stacked in the corner, each one stamped with a Dustwalker requisition number.`,
+      `<em>"Vance's people are serious about the alliance. This isn't barter — it's logistics. They're investing in the routes, and you're one of the routes."</em> He rests a hand on the bin's edge. <em>"Ammunition is yours, no charge. The hazmat suit costs scrip — Vance's generosity has limits."</em>`,
+    ],
+    choices: [
+      { label: 'Take the ammunition', next: 'ironmarket_horace', effect: () => { addItem('AMMUNITION BOX'); showNotif('Dustwalker surplus — AMMUNITION BOX acquired'); } },
+      { label: 'Buy the hazmat suit (costs TRADE SCRIP)', next: 'ironmarket_horace', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]', effect: () => { removeItem('TRADE SCRIP'); addItem('HAZMAT SUIT'); showNotif('Dustwalker surplus — HAZMAT SUIT purchased'); } },
+      { label: 'Take both', next: 'ironmarket_horace', req: () => hasItem('TRADE SCRIP'), reqNote: '[ Requires Trade Scrip ]', effect: () => { removeItem('TRADE SCRIP'); addItem('AMMUNITION BOX'); addItem('HAZMAT SUIT'); showNotif('Dustwalker surplus — AMMUNITION BOX + HAZMAT SUIT acquired'); } },
+      { label: 'Just browsing', next: 'ironmarket_horace' },
     ],
   },
 

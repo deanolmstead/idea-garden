@@ -6796,6 +6796,42 @@ const scenes = {
           if (visited.includes('bunkerpyxis')) lines.push(
             `<span class="whisper">Bunker Pyxis. The sealed door, the Pyxis constellation etched above the frame, the beacon still transmitting to nobody. Inside: the protocols, the research, the pre-Fall truth preserved in sterile air for a hundred and forty years. The people who built this place knew what was coming. They left instructions for a world that might be ready to read them. Whether that world is this one — that's the question the bunker can't answer.</span>`
           );
+          // faction layer
+          if (hasFlag('dustwalker_alliance')) lines.push(
+            `Vance's voice cuts through the memory: <em>"Hold the line."</em> You chose a side. The Dustwalkers march because you stand with them — their discipline, their certainty, their willingness to impose order on a valley that resists it. That alliance sits in you now, a weight on the scale.`
+          );
+          if (hasFlag('dustwalker_sabotaged')) lines.push(
+            `The supply cache burns in your memory. You chose sabotage — broke the Dustwalker supply line, scattered their certainty. Vance's patrols search for a ghost that wears your face. That choice sits in you now, a weight on the scale.`
+          );
+          if (hasFlag('warden_alliance')) lines.push(
+            `WARDEN-3's green cursor blinks in your mind's eye. The machine chose you — or you chose it. Either way, a century of solitude ended because you walked through that door and didn't leave. The alliance is fragile, built on trust between a mind of flesh and a mind of circuitry, but it holds. It holds.`
+          );
+          if (hasFlag('sigma_destroyed')) lines.push(
+            `The tower falls again in your memory. Sigma's last signal, cutting off mid-transmission. WARDEN-3's data — a hundred and forty years of patient observation — silenced in the time it takes a structure to collapse. You broke the oldest mind in the valley. Whether that was mercy or murder depends on what you do next.`
+          );
+          if (hasFlag('holloway_trusted')) lines.push(
+            `Marta's green rows. The smell of soil. Holloway trusted you — opened their gates, shared their harvest, believed you when you said the valley could be better. That trust is a debt. Not one they'd collect, but one you feel.`
+          );
+          if (hasFlag('voss_deal_fulfilled')) lines.push(
+            `Voss's ledger is clean. The deal fulfilled, the sensor logs delivered, the handshake that closes like a lock. He respects clean ledgers. So do you. Whatever you decide here, Voss will adapt — he always does — but the transaction between you is settled. No debts. No leverage. Just two people who understand each other's weight.`
+          );
+          if (hasFlag('voss_deal') && !hasFlag('voss_deal_fulfilled')) lines.push(
+            `Voss's deal hangs unfinished. The sensor logs he wanted, the survey badge he gave you — an open ledger, a transaction incomplete. He's waiting. Voss is always waiting. And whatever you decide here will close that ledger one way or another.`
+          );
+          // mutation layer
+          const mc = state.mutations ? state.mutations.length : 0;
+          if (mc === 0) lines.push(
+            `And through all of it — every road, every ruin, every faction and every fight — you remained human. Entirely, stubbornly, impossibly human. No mutations. No adaptations. No compromise with the ash that tried to rewrite you. The valley changed around you, but you walked through it unchanged. That's its own kind of strength.`
+          );
+          else if (mc <= 2) lines.push(
+            `The valley marked you. ${mc === 1 ? 'One mutation' : 'Two mutations'} — the ash's signature on your body, small changes that blur the line between what you were and what the valley is making you. Not enough to lose yourself. Enough to remember that adaptation is not surrender.`
+          );
+          else if (mc <= 5) lines.push(
+            `You're becoming something new. ${mc} mutations — the ash rewriting you chapter by chapter, each one a concession to a world that demands you change or die. Your body is a negotiation between what you were born as and what the valley needs you to be. The person who entered Ironmarket is not the person standing in this chamber.`
+          );
+          else lines.push(
+            `More mutation than baseline now. ${mc} adaptations — the ash has rewritten you so thoroughly that the word "human" is more habit than description. Your body is the valley's autobiography, each mutation a chapter in the story of what happens when flesh meets a world that won't stop changing. Whatever you decide here, you decide it as something the pre-Fall world never imagined.`
+          );
           lines.push(`You've walked the whole valley. Every settlement, every ruin, every faction and forgotten bunker. The ash knows your footprints. The roads know your weight. Whatever you decide next, you decide it with the full picture — not a guess, not a gamble, but a choice made by someone who has seen everything this broken world has to offer.`);
           lines.push(`The core pulses once. Patient. It has waited a hundred and forty years. It can wait for you to be ready.`);
           return lines;
@@ -6815,6 +6851,14 @@ const scenes = {
           if (unvisited.length > 0) {
             lines.push(`Somewhere beyond this chamber, beyond the network's reach: ` + unvisited.join('. ') + `. Places that might change what you're about to decide.`);
           }
+          // mutation layer (partial)
+          const mc = state.mutations ? state.mutations.length : 0;
+          if (mc === 0) lines.push(
+            `You're still human — no mutations, no compromises with the ash. That clarity might be enough. Or it might be naivety. Hard to tell from here.`
+          );
+          else if (mc >= 3) lines.push(
+            `${mc} mutations mark your body — the valley has changed you, even if you haven't seen all of it. You carry the ash's signature whether you asked for it or not.`
+          );
           lines.push(`The core pulses. It doesn't rush you. But the gap in your knowledge pulses too — a quiet reminder that you're about to make a permanent choice with an incomplete map.`);
           return lines;
         }

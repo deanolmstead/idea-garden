@@ -3338,13 +3338,47 @@ const scenes = {
     title: 'The Noticeboard',
     chapter: 'Chapter I — Ironmarket',
     text: [
-      `Salvaged plywood, three layers deep in paper. Parts requests. Route warnings. Photographs of the missing — smiling faces from some other life, pinned up with nails and hope. A water-stained plea for news of a daughter last seen heading south. The ordinary desperation of people still trying.`,
-      `Near the bottom, pinned with a sharpened bone: a small card. The paper is wrong — too white, too smooth, the kind nobody has manufactured since before the Fall. Clean sans-serif type: <em>ARCADIA — THOSE WHO REMEMBER ARE WELCOME.</em> No location. No contact. No fingerprints.`,
-      `Scratched beneath it in ballpoint, pressed hard enough to score the wood: <em>don't</em>.`,
+      ...(function() {
+        if (hasFlag('arcadia_signal') || hasItem('ARCADIA CARD')) {
+          const lines = [
+            `The board has turned over since you were last here. Fresh paper covers old — new desperation layered on the ordinary kind. The Arcadia card is gone, replaced by a scorch mark where someone held a lighter to the wood. The warning scratched beneath it remains, the word <em>don't</em> carved deep enough that no amount of new paper will cover it.`,
+          ];
+          if (hasFlag('sigma_destroyed')) lines.push(
+            `A hand-printed notice near the top, ink still sharp: <em>SIGMA RELAY — CONFIRMED DOWN. All relay-dependent trade contracts void. Signal-path salvage rights unclaimed. Cartographic Guild offering premium rates for tower-site survey data.</em> Someone has drawn an arrow to the bottom margin and added: <em>good riddance.</em>`
+          );
+          if (hasFlag('dustwalker_alliance')) lines.push(
+            `A recruitment broadsheet, military-clean typography on recycled cardstock: <em>DUSTWALKER EXPEDITIONARY CORPS — SEEKING EXPERIENCED SCOUTS. Ration guarantee. Medical access. Hazard compensation. Report to Northern Checkpoint, ask for Vance.</em> The corners are crisp, unweathered. Fresh.`
+          );
+          if (hasFlag('dustwalker_sabotaged')) lines.push(
+            `A wanted poster, edges curling in the ash-wind: <em>SABOTEUR — WANTED FOR DESTRUCTION OF DUSTWALKER SUPPLY CACHE. Armed. Possibly mutant. Approach with caution. Reward: 50 rounds + water ration.</em> The sketch is generic — could be anyone. Could be you.`
+          );
+          if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) lines.push(
+            `Pinned with a thorn — actual plant thorn, still green — a new card. Same impossible paper, same clean type: <em>THE NETWORK REMEMBERS WHAT THE ASH FORGETS. ROOTS BELOW. ROOTS ABOVE. ARCADIA GROWS.</em> Below it, in a different hand, cramped and urgent: <em>the mushrooms aren't mushrooms. the roots aren't roots. don't eat anything they give you.</em>`
+          );
+          if (state.visitedLocations && state.visitedLocations.length >= 4) lines.push(
+            `A bounty notice, handwritten on expensive paper — the kind that comes from Voss's stalls: <em>INFORMATION WANTED — regarding movement patterns of [REDACTED] through the eastern valley. Payment in trade scrip. Discretion guaranteed. Leave word with the grain silo clerk.</em> The handwriting is precise, controlled. Familiar.`
+          );
+          if (hasFlag('holloway_trusted')) lines.push(
+            `A crop report from Holloway, pinned neatly at eye level: <em>HARVEST UPDATE — Greenhouse yields up 30%. Water purification capacity still limiting. Donations of WATER PURIFIERS or FIELD REPAIR KITS to Holloway's agricultural program earn community credit. — Marta</em>`
+          );
+          lines.push(`The board tells you more about the state of the valley than any single conversation could.`);
+          return lines;
+        }
+        return [
+          `Salvaged plywood, three layers deep in paper. Parts requests. Route warnings. Photographs of the missing — smiling faces from some other life, pinned up with nails and hope. A water-stained plea for news of a daughter last seen heading south. The ordinary desperation of people still trying.`,
+          `Near the bottom, pinned with a sharpened bone: a small card. The paper is wrong — too white, too smooth, the kind nobody has manufactured since before the Fall. Clean sans-serif type: <em>ARCADIA — THOSE WHO REMEMBER ARE WELCOME.</em> No location. No contact. No fingerprints.`,
+          `Scratched beneath it in ballpoint, pressed hard enough to score the wood: <em>don't</em>.`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'Take the card', next: 'ironmarket_noticeboard_take', effect: () => { addItem('ARCADIA CARD'); setFlag('arcadia_signal'); showNotif('ITEM: ARCADIA CARD'); } },
-      { label: 'Leave it and return to the plaza', next: 'ironmarket_plaza' },
+      { label: 'Take the card', next: 'ironmarket_noticeboard_take', effect: () => { addItem('ARCADIA CARD'); setFlag('arcadia_signal'); showNotif('ITEM: ARCADIA CARD'); }, hidden: () => hasFlag('arcadia_signal') || hasItem('ARCADIA CARD') },
+      { label: 'Read the Sigma salvage notice', next: 'ironmarket_noticeboard_sigma', hidden: () => !hasFlag('sigma_destroyed') || !(hasFlag('arcadia_signal') || hasItem('ARCADIA CARD')) },
+      { label: 'Read the Dustwalker posting', next: 'ironmarket_noticeboard_dustwalker', hidden: () => !(hasFlag('dustwalker_alliance') || hasFlag('dustwalker_sabotaged')) || !(hasFlag('arcadia_signal') || hasItem('ARCADIA CARD')) },
+      { label: 'Examine the new Arcadia card', next: 'ironmarket_noticeboard_arcadia', hidden: () => !(hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) },
+      { label: 'Study the bounty notice', next: 'ironmarket_noticeboard_bounty', hidden: () => !(state.visitedLocations && state.visitedLocations.length >= 4) || !(hasFlag('arcadia_signal') || hasItem('ARCADIA CARD')) },
+      { label: 'Read Marta\'s crop report', next: 'ironmarket_noticeboard_holloway', hidden: () => !hasFlag('holloway_trusted') || !(hasFlag('arcadia_signal') || hasItem('ARCADIA CARD')) },
+      { label: 'Return to the plaza', next: 'ironmarket_plaza' },
     ],
   },
 
@@ -3357,6 +3391,116 @@ const scenes = {
     ],
     choices: [
       { label: 'Return to the plaza', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_noticeboard_sigma: {
+    title: 'Sigma Salvage Notice',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `You lean closer. The notice is detailed — coordinates for the tower site, a breakdown of salvageable relay components, estimated values in trade scrip. The Cartographic Guild seal is stamped at the bottom, authorizing survey expeditions. Someone is already profiting from what you destroyed.`,
+      `The arrow at the bottom and its annotation — <em>good riddance</em> — tell the other half of the story. The relay's death freed as many people as it stranded. Signal-dependent traders lost everything. Everyone else gained a sky that doesn't hum.`,
+      ...(function() {
+        if (hasItem('CORRUPTED DATA CHIP')) return [
+          `Your hand moves to the data chip in your pack. The Cartographic Guild is paying premium rates for tower-site data. This chip — corrupted or not — contains Sigma's last survey records. It would be worth something here.`,
+        ];
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Trade the data chip for TRADE SCRIP', next: 'ironmarket_noticeboard', effect: () => { removeItem('CORRUPTED DATA CHIP'); addItem('TRADE SCRIP'); addItem('TRADE SCRIP'); modStat('ms', 1); showNotif('Sigma salvage data sold // 2x TRADE SCRIP, MS +1'); }, hidden: () => !hasItem('CORRUPTED DATA CHIP') },
+      { label: 'Memorize the coordinates for later', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 1); showNotif('Sigma tower coordinates noted // MS +1'); } },
+      { label: 'Back to the board', next: 'ironmarket_noticeboard' },
+    ],
+  },
+
+  ironmarket_noticeboard_dustwalker: {
+    title: 'Dustwalker Posting',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      ...(function() {
+        if (hasFlag('dustwalker_alliance')) return [
+          `The recruitment broadsheet is professional — proper typeset, clean margins, military formatting. Vance's operation has moved past guerrilla logistics into something that looks almost like governance. Scout positions, medical corps, supply chain coordination. They're building infrastructure.`,
+          `You recognize three of the names listed as references. People you met on the road. People who know what you did for the Dustwalkers. Your name isn't on the sheet, but your work is — in every supply line that runs uninterrupted, every patrol route that holds.`,
+          `<em>"Ration guarantee,"</em> reads the bottom line. <em>"The Dustwalkers don't forget who stood with them."</em>`,
+        ];
+        return [
+          `The wanted poster is vague enough to be dangerous. No name, no real description — just <em>"mutant"</em> and <em>"armed"</em> and <em>"saboteur."</em> The sketch could be anyone who's spent enough time in the ash. Could be you. Could be the person standing next to you.`,
+          `The reward is serious — fifty rounds and a water ration. That's enough to make people look twice at strangers. Enough to make the market less friendly.`,
+          `You notice a trader glancing between you and the poster. His eyes narrow, then he looks away. Not sure enough to act. Not yet.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'Note the patrol routes mentioned', next: 'ironmarket_noticeboard', effect: () => { modStat('con', 1); showNotif('Dustwalker logistics studied // CON +1'); }, hidden: () => !hasFlag('dustwalker_alliance') },
+      { label: 'Tear the poster down quietly', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 1); showNotif('Wanted poster removed — one less problem // MS +1'); }, hidden: () => !hasFlag('dustwalker_sabotaged') },
+      { label: 'Leave it — drawing attention would be worse', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 1); showNotif('Threat noted — adjust your routes // MS +1'); }, hidden: () => !hasFlag('dustwalker_sabotaged') },
+      { label: 'Back to the board', next: 'ironmarket_noticeboard' },
+    ],
+  },
+
+  ironmarket_noticeboard_arcadia: {
+    title: 'The New Card',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The thorn holding the card is still alive — green, with a bead of sap at the tip that catches the stall-light like amber. No one pins notices with living thorns. No one has living thorns. The plant matter should have desiccated in hours in this air, but it's been here long enough for the paper beneath it to yellow at the edges.`,
+      `The text is different from the first card. Less invitation, more doctrine. <em>THE NETWORK REMEMBERS WHAT THE ASH FORGETS.</em> The tone has shifted from recruitment to declaration. Arcadia isn't asking anymore.`,
+      `The warning beneath it — <em>the mushrooms aren't mushrooms</em> — was written in ballpoint, pressed hard, by someone whose hand was shaking. Not anger. Fear. The kind of fear that comes from knowing something specific.`,
+      ...(function() {
+        if (hasFlag('bunker_protocols')) return [
+          `Your knowledge of pre-Fall bioweapons protocols connects dots that the warning's author couldn't. The network isn't a natural organism. It's engineered — and the "wellness mushrooms" in the south stalls are its interface layer. Fruiting bodies designed for human consumption. Designed to connect.`,
+        ];
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Pull the thorn free and study it', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 1); setFlag('arcadia_thorn_studied'); showNotif('Living thorn studied — Arcadia\'s reach extends further than expected // MS +1'); } },
+      { label: 'Cross-reference with bunker protocols', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 2); showNotif('Bioweapons cross-reference confirmed — the network is engineered // MS +2'); }, hidden: () => !hasFlag('bunker_protocols') },
+      { label: 'Back to the board', next: 'ironmarket_noticeboard' },
+    ],
+  },
+
+  ironmarket_noticeboard_bounty: {
+    title: 'The Bounty Notice',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `The paper is too good for a bounty notice. Cream-colored, smooth — the kind Voss's operation uses for contracts. The handwriting is controlled, each letter formed with mechanical precision. No wasted motion. You've seen this handwriting before.`,
+      ...(function() {
+        if (getStat('cha') >= 13) return [
+          `Yes. You've seen exactly this handwriting — on the trade agreements in Voss's office. The controlled verticals, the way the T's cross exactly at the midpoint. Voss wrote this himself. He's looking for someone specific, and the <em>[REDACTED]</em> tells you he doesn't want the market to know who.`,
+          `<em>"Movement patterns through the eastern valley."</em> He's tracking someone — or something — that moves through the territory you've been crossing. Could be you. Could be whoever's been leaving Arcadia cards. Could be both.`,
+        ];
+        return [
+          `The handwriting nags at you — familiar, but you can't place it. The <em>[REDACTED]</em> target, the careful phrasing, the promise of <em>discretion</em> — this isn't a regular bounty. Someone with resources is looking for someone specific, and they don't want the search to be public.`,
+          `You file the details away. The eastern valley. Movement patterns. Discretion guaranteed. Whatever this is, it's worth watching.`,
+        ];
+      })(),
+    ],
+    choices: [
+      { label: 'You recognize Voss\'s handwriting — note this', next: 'ironmarket_noticeboard', effect: () => { modStat('cha', 1); setFlag('voss_bounty_aware'); showNotif('CHA check passed — Voss\'s handwriting recognized // CHA +1, bounty intel gained'); }, hidden: () => getStat('cha') < 13 },
+      { label: 'File the details away', next: 'ironmarket_noticeboard', effect: () => { modStat('con', -1); showNotif('The bounty notice unsettles you — someone is watching // CON -1'); }, hidden: () => getStat('cha') >= 13 },
+      { label: 'Back to the board', next: 'ironmarket_noticeboard' },
+    ],
+  },
+
+  ironmarket_noticeboard_holloway: {
+    title: 'Marta\'s Crop Report',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `Marta's handwriting is the opposite of Voss's — sprawling, organic, letters that lean into each other like they're holding each other up. The report reads like someone who still believes in the future. Greenhouse yields up thirty percent. New irrigation channels. A seed bank expanding beyond survival crops into what she calls <em>"quality of life varieties"</em> — herbs, peppers, something she's trying to call coffee but isn't.`,
+      `The request is humble, practical. Water purifiers and repair kits — the tools that keep a community from sliding backward. <em>"Community credit"</em> means Holloway will remember your name. In the valley, that's worth more than scrip.`,
+      ...(function() {
+        if (hasItem('WATER PURIFIER') || hasItem('FIELD REPAIR KIT')) return [
+          `You have something Marta needs. The farmhand at the south stall would take the donation directly — no middleman, no cut. Holloway's people are straightforward that way.`,
+        ];
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Donate a WATER PURIFIER to Holloway', next: 'ironmarket_noticeboard', effect: () => { removeItem('WATER PURIFIER'); modStat('cha', 1); setFlag('holloway_donation'); showNotif('Water purifier donated to Holloway agricultural program // CHA +1'); }, hidden: () => !hasItem('WATER PURIFIER') },
+      { label: 'Donate a FIELD REPAIR KIT to Holloway', next: 'ironmarket_noticeboard', effect: () => { removeItem('FIELD REPAIR KIT'); modStat('cha', 1); setFlag('holloway_donation'); showNotif('Field repair kit donated to Holloway agricultural program // CHA +1'); }, hidden: () => !hasItem('FIELD REPAIR KIT') },
+      { label: 'Note the intel about seed bank expansion', next: 'ironmarket_noticeboard', effect: () => { modStat('ms', 1); showNotif('Holloway agricultural intel noted // MS +1'); } },
+      { label: 'Back to the board', next: 'ironmarket_noticeboard' },
     ],
   },
 

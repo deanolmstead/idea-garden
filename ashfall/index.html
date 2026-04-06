@@ -3784,6 +3784,109 @@ const scenes = {
     ],
   },
 
+  ironmarket_voss_return: {
+    title: 'Voss',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      ...(function() {
+        const lines = [
+          `The back room has reorganized itself. More maps — the table's geometry is denser now, layers of annotation in Voss's precise cipher, river stones replaced with shell casings as paperweights. He's moved beyond the eastern quadrant. He's mapping the whole valley.`,
+          `He looks up when you enter. No measuring this time. He already knows your weight.`,
+          `<em>"Back."</em> One syllable, no inflection. But his hand moves a stack of papers to one side — clearing space. An invitation, in Voss's language.`,
+        ];
+        if (hasFlag('sigma_destroyed')) lines.push(
+          `<em>"You broke my data source."</em> No anger — just recalculation. His fingers tap the table once, twice. <em>"Sigma's logs were worth more than the tower that held them. Now I have buyers with no product and a valley-wide sensor grid that's gone dark."</em> He looks at you the way a chess player looks at a board after an unexpected move. <em>"So. Let's talk about what replaces it."</em>`
+        );
+        if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) lines.push(
+          `His eyes sharpen. <em>"You've been in contact with them. Arcadia."</em> Not a question — Voss doesn't ask when he already knows. <em>"The network, the cards, the mushrooms — I've been tracking their expansion for six months. What I don't have is the topology."</em> He leans forward a fraction. <em>"You've walked their ground. That's worth something to me."</em>`
+        );
+        if (hasFlag('dustwalker_alliance')) lines.push(
+          `<em>"You chose a side."</em> His tone is clinical. <em>"Vance's people are competent. Rigid, but competent. The alliance changes the route economics — every patrol they run is a supply line I don't have to secure."</em> A pause, measured. <em>"Useful. For now."</em>`
+        );
+        if (hasFlag('met_warden') && !hasFlag('sigma_destroyed')) lines.push(
+          `<em>"WARDEN-3 is talking to you."</em> Something shifts in his expression — not respect exactly, but acknowledgment. <em>"Most valuable courier in this valley. A machine that's been running for a hundred and forty years, and it chose you as its point of contact."</em> He steeples his fingers. <em>"I'd very much like those sensor logs we discussed."</em>`
+        );
+        lines.push(`The room waits. Voss waits. Everything in this room waits on purpose.`);
+        return lines;
+      })(),
+    ],
+    choices: [
+      { label: 'Trade Arcadia intel', next: 'ironmarket_voss_arcadia_trade', hidden: () => !(hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) },
+      { label: 'Renegotiate after Sigma', next: 'ironmarket_voss_renegotiate', hidden: () => !hasFlag('sigma_destroyed') },
+      { label: 'Deliver WARDEN sensor logs', next: 'ironmarket_voss_deliver_logs', hidden: () => !hasFlag('warden_alliance') },
+      { label: 'Ask about the bounty notice', next: 'ironmarket_voss_bounty', hidden: () => !hasFlag('voss_bounty_aware') },
+      { label: 'Just passing through', next: 'ironmarket_plaza' },
+    ],
+  },
+
+  ironmarket_voss_arcadia_trade: {
+    title: 'Arcadia Intel',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `You tell him what you know. Not everything — you learned that from him — but enough. The network's root structure. The fruiting bodies. The way it threads through the valley's foundations like a second nervous system. Where you walked. What you felt. The cards, the thorns, the living green pushing through ash.`,
+      `Voss listens the way he does everything — completely, without moving, cataloging each word the way Horace catalogs capacitors. When you finish, silence fills the space between you.`,
+      `Then he pulls a fresh map from the stack. Pre-Fall topographic, but annotated — his annotations, dense as circuitry. He uncaps a pen and begins marking your observations directly onto the terrain. Node points. Connection lines. Growth vectors.`,
+      `<em>"The topology."</em> He's not talking to you anymore — he's talking to the map. <em>"It's not random. It's following the old irrigation grid. Pre-collapse infrastructure, repurposed."</em> He looks up. <em>"This is worth what I asked for and more."</em>`,
+      `He slides two items across the table: trade scrip, and a folded paper — route annotations, the kind he kept to himself last time.`,
+    ],
+    choices: [
+      { label: 'Take the payment', next: 'ironmarket_voss_return', effect: () => { addItem('TRADE SCRIP'); modStat('cha', 1); modRep('ironmarket', 1); setFlag('voss_arcadia_traded'); showNotif('Arcadia intel traded to Voss // TRADE SCRIP, CHA +1, Ironmarket rep +1'); } },
+      { label: 'Refuse payment — you want a favour instead', next: 'ironmarket_voss_return', effect: () => { setFlag('voss_owes_favour'); modStat('cha', 1); modRep('ironmarket', 1); setFlag('voss_arcadia_traded'); showNotif('Voss owes you a favour // CHA +1, Ironmarket rep +1'); } },
+    ],
+  },
+
+  ironmarket_voss_renegotiate: {
+    title: 'New Terms',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `<em>"The original deal is void."</em> He says it without ceremony — a ledger entry, not a grievance. <em>"Sigma's logs were the product. The product no longer exists. So we renegotiate."</em>`,
+      `He unfolds a new map — not the valley this time, but the routes. Trade paths, patrol schedules, supply lines. Red ink marks the corridors that went dark when Sigma fell. Blue ink marks the ones that still function.`,
+      `<em>"I need eyes on the ground. Dustwalker patrol data — schedules, routes, shift changes. The kind of granularity that sensor logs used to give me."</em> He taps the map. <em>"You've been walking these routes. You know the patterns. Write me a week's worth of observations and I'll make it worth your time."</em>`,
+      ...(function() {
+        if (hasFlag('dustwalker_alliance')) return [
+          `He watches your expression. <em>"Yes. I'm asking you to report on your allies. The question is whether information shared is betrayal or transparency."</em> A beat. <em>"I'll leave that to you."</em>`,
+        ];
+        return [];
+      })(),
+    ],
+    choices: [
+      { label: 'Share patrol observations', next: 'ironmarket_voss_return', effect: () => { addItem('TRADE SCRIP'); modStat('ms', 1); setFlag('voss_renegotiated'); showNotif('Patrol data traded — new deal with Voss // TRADE SCRIP, MS +1'); } },
+      { label: 'Offer supply route data instead', next: 'ironmarket_voss_return', effect: () => { addItem('TRADE SCRIP'); modStat('con', 1); setFlag('voss_renegotiated'); showNotif('Supply route data traded — neutral terms // TRADE SCRIP, CON +1'); } },
+      { label: 'Decline — you\'re done being his courier', next: 'ironmarket_voss_return', effect: () => { modRep('ironmarket', -1); showNotif('Deal declined — Voss recalculates // Ironmarket rep -1'); } },
+    ],
+  },
+
+  ironmarket_voss_deliver_logs: {
+    title: 'The Delivery',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `You set the sensor data on the table between you. Six months of WARDEN-3's eastern quadrant monitoring — movement patterns, radiation readings, soil analysis, the tireless observations of a machine that never stopped watching.`,
+      `Voss doesn't reach for it immediately. He studies it the way he studies everything — assessing weight, provenance, value. Then his hand moves, and the data disappears into the organized stacks like a card into a deck.`,
+      `<em>"Complete."</em> The word carries more satisfaction than his face shows. <em>"WARDEN-3 runs a tight archive. Every data point timestamped, cross-referenced, verified. The buyers will be pleased."</em>`,
+      `He opens a drawer — the only drawer — and produces trade scrip. More than the original deal specified. <em>"Bonus. For delivering with the seal intact."</em> His eyes hold yours. <em>"The original deal is fulfilled. Any future business between us starts from zero. Clean ledger."</em>`,
+      `<em>"I respect clean ledgers."</em>`,
+    ],
+    choices: [
+      { label: 'Accept and close the deal', next: 'ironmarket_voss_return', effect: () => { addItem('TRADE SCRIP'); addItem('TRADE SCRIP'); modStat('cha', 1); modRep('ironmarket', 1); setFlag('voss_deal_fulfilled'); showNotif('WARDEN sensor logs delivered — deal fulfilled // 2x TRADE SCRIP, CHA +1, Ironmarket rep +1'); } },
+    ],
+  },
+
+  ironmarket_voss_bounty: {
+    title: 'The Bounty',
+    chapter: 'Chapter I — Ironmarket',
+    text: [
+      `<em>"You saw the notice."</em> Not a question. His jaw tightens — the first uncontrolled movement you've seen from him. <em>"And you recognized the handwriting."</em>`,
+      `He leans back. The chair doesn't creak. <em>"Operational security failure. I should have had Pip write it."</em> A pause. <em>"The target is real. Someone — or something — has been moving through the eastern valley on a pattern I can't predict. Not Dustwalker. Not Arcadia. Not WARDEN. Something else."</em>`,
+      `His fingers arrange shell casings on the table — three in a line, then a fourth offset. A pattern. <em>"Four sightings. Each one near a pre-Fall infrastructure node. Water treatment, power substation, communications hub, seed vault. Someone is surveying the old network — the physical one, not the biological one."</em>`,
+      `<em>"I don't know who. I don't know why. But whoever is mapping those nodes has access to pre-collapse site plans that shouldn't exist anymore."</em> He sweeps the casings aside. <em>"That's what the bounty is for. Not a person. Information. Who has those plans, and what they intend to do with them."</em>`,
+    ],
+    choices: [
+      { label: 'Share what you know about the bunker protocols', next: 'ironmarket_voss_return', effect: () => { modStat('ms', 1); setFlag('voss_informant_intel'); showNotif('Bounty intel shared — Voss connects the dots // MS +1'); }, hidden: () => !hasFlag('bunker_protocols') },
+      { label: 'File this away — you\'ll investigate on your own', next: 'ironmarket_voss_return', effect: () => { modStat('ms', 1); setFlag('voss_informant_intel'); showNotif('Voss\'s mystery surveyor — noted for later // MS +1'); } },
+      { label: 'This isn\'t your problem', next: 'ironmarket_voss_return' },
+    ],
+  },
+
   // ──────────────────────────────────────────────────
   //  SIGMA RELAY
   // ──────────────────────────────────────────────────

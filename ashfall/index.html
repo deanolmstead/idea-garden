@@ -6775,6 +6775,27 @@ const scenes = {
             `Something shifts. Not in the chamber — in you. The network's presence recedes to a patient hum, and in the space it leaves, your own mind opens. Not Arcadia's doing. Yours. The valley you've walked pours through you like water finding its level, and for the first time you see the whole shape of it.`,
             `Every road. Every ruin. Every face. The journey replays itself — not as memory, but as understanding. Each place you visited was a piece of something larger, and only now, standing at the center of the network that connects them all, do you see how they fit together.`,
           ];
+          if (visited.includes('ironmarket')) lines.push(
+            `<span class="whisper">Ironmarket. The buckled asphalt, the bleached awnings, the solar lamps throwing weak pools across faces that don't look up. Horace's grease-blackened fingers sorting capacitors. Voss behind his desk of maps and ciphers, measuring everything, always measuring. The ordinary machinery of survival — people trading, arguing, healing, choosing to continue. The plaza where commerce is prayer and every transaction says: we are still here.</span>`
+          );
+          if (visited.includes('theknot')) lines.push(
+            `<span class="whisper">The Knot. Three collapsed overpasses and the smell of century-old rubber. The water cache, hand-pump and iron-tasting relief. A crossroads where every faction passes through and no one stays — neutral ground maintained by nothing but habit and the shared understanding that some places must remain open. The place where roads meet and choices branch.</span>`
+          );
+          if (visited.includes('sigma')) lines.push(
+            `<span class="whisper">Sigma Relay. The tower breaking the flat horizon, the cleared approach road, the hum of a machine that never stopped watching. WARDEN-3 — a hundred and forty years of loneliness compressed into green text on a black screen. The agricultural data, the seed vault, the patient accumulation of knowledge for a world that forgot it was being studied. A mind running without purpose, waiting for someone to give it one.</span>`
+          );
+          if (visited.includes('ashgrove')) lines.push(
+            `<span class="whisper">Ashgrove. The dead suburb, ash piled to the gutters, the creak of a swing set in a wind that carries nothing living. Houses buried slowly — front doors, then windows, then rooflines. The salvage beneath the silence. The quiet emptiness of a place that wasn't destroyed but simply... left. Abandoned by everyone except the ash, which stayed, and covered everything with the patience of snow.</span>`
+          );
+          if (visited.includes('holloway')) lines.push(
+            `<span class="whisper">Holloway Ranch. The green. You'd forgotten that color existed until you saw it growing in rows, stubborn and vivid, in soil that someone had fought the ash for six generations to maintain. Marta's irrigation channels, perfectly kept. The smell of actual earth. The radical act of farming in a world that has given up on harvests — the insistence that things can grow, that the future is worth planting for.</span>`
+          );
+          if (visited.includes('dustwalker')) lines.push(
+            `<span class="whisper">Dustwalker Fort. Razor wire and discipline, the overpass reinforced with sandbags and painted with the boot-print emblem. Vance's clipped sentences and the soldiers who move like parts of a single machine. The eastern routes they guard, the radioactive cargo they move, the military certainty that order is what stands between survival and collapse. The conviction that someone must hold the line, even when no one agrees where the line is.</span>`
+          );
+          if (visited.includes('bunkerpyxis')) lines.push(
+            `<span class="whisper">Bunker Pyxis. The sealed door, the Pyxis constellation etched above the frame, the beacon still transmitting to nobody. Inside: the protocols, the research, the pre-Fall truth preserved in sterile air for a hundred and forty years. The people who built this place knew what was coming. They left instructions for a world that might be ready to read them. Whether that world is this one — that's the question the bunker can't answer.</span>`
+          );
           lines.push(`You've walked the whole valley. Every settlement, every ruin, every faction and forgotten bunker. The ash knows your footprints. The roads know your weight. Whatever you decide next, you decide it with the full picture — not a guess, not a gamble, but a choice made by someone who has seen everything this broken world has to offer.`);
           lines.push(`The core pulses once. Patient. It has waited a hundred and forty years. It can wait for you to be ready.`);
           return lines;

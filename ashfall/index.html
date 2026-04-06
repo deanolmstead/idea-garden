@@ -3151,7 +3151,7 @@ const scenes = {
       { label: 'Slip past without engaging', next: 'ironmarket_plaza', effect: () => { modStat('con', -1); setFlag('heard_eastern_warning'); }, hidden: () => hasFlag('heard_eastern_warning') },
       { label: 'The guards eye your bark-grey skin but step aside without asking questions', next: 'ironmarket_gate_ashskin', req: () => hasMutation('ash_skin'), reqNote: '[ Requires Ash-Skin mutation ]', hidden: () => hasFlag('heard_eastern_warning') },
       { label: 'Head into the plaza', next: 'ironmarket_plaza', hidden: () => !hasFlag('heard_eastern_warning') },
-      { label: 'Find Voss at the grain silos', next: 'ironmarket_voss_approach', hidden: () => !hasFlag('voss_deal') },
+      { label: 'Find Voss at the grain silos', next: 'ironmarket_voss_return', hidden: () => !hasFlag('voss_deal') },
       { label: 'Check in with Kael at the gate', next: 'ironmarket_kael', hidden: () => !hasFlag('met_kael') || !hasFlag('heard_eastern_warning') },
       { label: 'Open the overworld map', next: null, effect: () => toggleMap(), hidden: () => !hasFlag('heard_eastern_warning') },
     ],
@@ -3249,14 +3249,43 @@ const scenes = {
     title: 'The Plaza',
     chapter: 'Chapter I — Ironmarket',
     text: [
-      `The plaza sprawls across a dead parking lot, asphalt buckled and split under generations of boots and iron-rimmed cart wheels. Stalls press shoulder to shoulder — canvas awnings bleached to nothing-colors, hand-lettered signs advertising water filters and wire by the meter, solar lamps throwing weak yellow pools across faces that don't look up.`,
-      `From the center, the market radiates outward in all directions.`,
+      ...(function() {
+        if (hasFlag('heard_eastern_warning') && state.visitedLocations && state.visitedLocations.includes('ironmarket')) {
+          const lines = [
+            `The plaza hasn't changed, but you have. The same dead parking lot, the same buckled asphalt, the same bleached awnings — but now you read it differently. You know which stalls water their stock and which ones don't. You know where the sightlines are. The market recognizes you too: fewer stares, a nod from a water-filter vendor, a cart driver who steers around you instead of through you.`,
+          ];
+          if (hasFlag('sigma_destroyed')) lines.push(
+            `The east-facing stalls are quieter than you remember. The signal traders who used to hawk relay components and frequency maps have packed up or pivoted — one sells salvaged wire now, another has a tray of Sigma relay debris laid out as curiosities. <em>"Genuine pre-collapse tech,"</em> he calls to passersby. <em>"From the tower itself."</em> The tower you brought down.`
+          );
+          if (hasFlag('dustwalker_alliance')) lines.push(
+            `Dustwalker uniforms dot the crowd — not patrolling, but shopping. A military surplus stall has appeared near the north entrance, staffed by a woman with Dustwalker insignia who haggles in clipped, efficient sentences. The alliance has opened trade routes that didn't exist a week ago.`
+          );
+          if (hasFlag('arcadia_open_contact') || hasFlag('arcadia_nervebloom_contact')) lines.push(
+            `Green threads have thickened in the mortar between the plaza's foundation stones. A new stall near the south wall sells what it calls <em>"wellness mushrooms"</em> — bioluminescent caps arranged on a cloth like jewelry. The vendor won't meet your eyes. The network is here, in its own way, threading through the cracks.`
+          );
+          if (hasFlag('holloway_trusted')) lines.push(
+            `A Holloway farmhand stands behind a makeshift counter near the water station, selling fresh produce — actual green vegetables, dirt still clinging to the roots. A small crowd gathers. Fresh food is currency and miracle both.`
+          );
+          if (hasFlag('voss_deal')) lines.push(
+            `Voss's people move more openly now. You recognize the body language — the unhurried confidence of people who know the territory is theirs. The east stalls feel less like a market and more like a district, with Voss's invisible hand on every transaction.`
+          );
+          lines.push(`From the center, the market radiates outward — familiar now, but not static. Things have shifted since you were last here.`);
+          return lines;
+        }
+        return [
+          `The plaza sprawls across a dead parking lot, asphalt buckled and split under generations of boots and iron-rimmed cart wheels. Stalls press shoulder to shoulder — canvas awnings bleached to nothing-colors, hand-lettered signs advertising water filters and wire by the meter, solar lamps throwing weak yellow pools across faces that don't look up.`,
+          `From the center, the market radiates outward in all directions.`,
+        ];
+      })(),
     ],
     choices: [
-      { label: 'The noticeboard near the center', next: 'ironmarket_noticeboard' },
-      { label: 'Horace\'s scrap exchange, northwest corner', next: 'ironmarket_horace' },
+      { label: 'The noticeboard near the center', next: 'ironmarket_noticeboard', hidden: () => hasFlag('heard_eastern_warning') && state.visitedLocations && state.visitedLocations.includes('ironmarket') },
+      { label: 'Check the noticeboard for new postings', next: 'ironmarket_noticeboard', hidden: () => !(hasFlag('heard_eastern_warning') && state.visitedLocations && state.visitedLocations.includes('ironmarket')) },
+      { label: 'Horace\'s scrap exchange, northwest corner', next: 'ironmarket_horace', hidden: () => hasFlag('horace_favour') },
+      { label: 'Visit Horace — he mentioned new stock', next: 'ironmarket_horace', hidden: () => !hasFlag('horace_favour') },
       { label: 'Healer\'s Row, along the south wall', next: 'ironmarket_healer', req: () => state.hp < 24, reqNote: '[ Only when hurt ]' },
-      { label: 'East stalls, toward the grain silos (find Voss)', next: 'ironmarket_voss_approach' },
+      { label: 'East stalls, toward the grain silos (find Voss)', next: 'ironmarket_voss_approach', hidden: () => hasFlag('voss_deal') },
+      { label: 'Find Voss at the grain silos', next: 'ironmarket_voss_return', hidden: () => !hasFlag('voss_deal') },
       { label: 'Your compound eyes catch a hand dipping into a trader\'s satchel', next: 'ironmarket_pickpocket', req: () => hasMutation('compound_eyes'), reqNote: '[ Requires Compound Eyes mutation ]' },
       { label: 'A low rumble beneath the asphalt — your infrasound picks up something under the market', next: 'ironmarket_infrasound', req: () => hasMutation('infrasound_hearing'), reqNote: '[ Requires Infrasound Hearing mutation ]' },
       { label: 'Your antler growths part the crowd — a trader dispute resolves itself as you approach', next: 'ironmarket_antler_dispute', req: () => hasMutation('antler_growths'), reqNote: '[ Requires Antler Growths mutation ]' },

@@ -43,15 +43,16 @@ pip install -r requirements.txt
 uvicorn app:app --reload
 ```
 
-Open <http://127.0.0.1:8000>, paste a link, pick a quality. Deep links work too:
-`http://127.0.0.1:8000/?url=<video-url>` (or `#url=`).
+Open <http://127.0.0.1:8000>, paste a link, pick a quality. If port 8000 is
+busy, run uvicorn with `--port 8010` and open <http://127.0.0.1:8010>. Deep
+links work too: `http://127.0.0.1:8010/?url=<video-url>` (or `#url=`).
 
 
 ## GitHub Pages mode
 
 GitHub Pages can host the UI, but it cannot run Python, yt-dlp, or ffmpeg. The
-`magpie/index.html` page is therefore a static front end that talks to the local
-helper at `http://127.0.0.1:8000` when opened from
+`magpie/index.html` page is therefore a static front end that tries to talk to
+the local helper at `http://127.0.0.1:8000` or `http://127.0.0.1:8010` when opened from
 `https://deanolmstead.github.io/idea-garden/magpie/`.
 
 Start the helper on the Mac first:
@@ -61,10 +62,13 @@ cd ~/idea-garden/magpie
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 -m uvicorn app:app --reload
+python3 -m uvicorn app:app --host 127.0.0.1 --port 8010 --reload
 ```
 
-Then open the GitHub Pages URL.
+Then open the GitHub Pages URL. If your browser blocks a public HTTPS page from
+calling a local helper, use the page's **Open local helper** link instead. That
+opens the same UI from FastAPI itself and avoids cross-origin/private-network
+browser policy entirely.
 
 ## Notes & limits
 

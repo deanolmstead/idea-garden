@@ -76,6 +76,8 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 .banner{width:100%;max-width:680px;margin:0 0 16px;background:rgba(127,209,185,.08);border:1px solid rgba(127,209,185,.28);border-radius:14px;padding:14px 16px;color:var(--ink-dim);font-size:13px;line-height:1.5}
 .banner strong{color:var(--ink)}
 .banner code{background:var(--panel-2);padding:1px 6px;border-radius:5px;color:var(--accent-2)}
+.helper-link{display:inline-block;margin-left:6px;color:var(--accent);font-weight:600;text-decoration:none}
+.helper-link:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -83,7 +85,7 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
   <p class="tag">Paste a video link. magpie fetches it through your local yt-dlp helper.</p>
 
   <div id="pagesBanner" class="banner" hidden>
-    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload</code>. If port 8000 is busy, use <code>--port 8010</code>; this page will try both. Current helper: <code id="helperBase">detecting</code>.
+    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload</code>. If port 8000 is busy, use <code>--port 8010</code>; this page will try both. Current helper: <code id="helperBase">detecting</code>. <a id="helperLink" class="helper-link" href="http://127.0.0.1:8010/" target="_blank" rel="noopener">Open local helper</a>
   </div>
 
   <div class="card">
@@ -123,12 +125,13 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 <script>
 const $ = s => document.querySelector(s);
 const IS_PAGES_MODE = location.hostname.endsWith('github.io') || location.hostname === '127.0.0.1' && location.port === '8081';
+const DEFAULT_HELPER_PAGE = 'http://127.0.0.1:8010';
 const HELPER_BASES = ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:8010', 'http://127.0.0.1:8010'];
 let apiBase = '';
 let apiBasePromise = null;
 if (IS_PAGES_MODE) $('#pagesBanner').hidden = false;
 const urlEl = $('#url'), goEl = $('#go'), statusEl = $('#status'),
-      resultEl = $('#result'), optsEl = $('#opts');
+      resultEl = $('#result'), optsEl = $('#opts'), helperLinkEl = $('#helperLink');
 let current = null;
 
 function escapeHtml(value){
@@ -168,9 +171,18 @@ function helperOverride(){
     return '';
   }
 }
+function helperPageUrl(base){
+  const helper = base && base.startsWith('http') ? base : DEFAULT_HELPER_PAGE;
+  const url = urlEl.value.trim();
+  return helper + '/' + (url ? `?url=${encodeURIComponent(url)}` : '');
+}
+function updateHelperLink(base){
+  if(helperLinkEl) helperLinkEl.href = helperPageUrl(base || apiBase);
+}
 function showHelperBase(base){
   const el = $('#helperBase');
   if(el) el.textContent = base || 'same origin';
+  updateHelperLink(base);
 }
 function setHelperBase(base){
   apiBase = base;
@@ -209,7 +221,7 @@ async function getApiBase(){
       }
     }
     showHelperBase('not found');
-    throw new Error('Could not reach the Magpie helper. Start it on port 8000 or 8010, then try again.');
+    throw new Error('Could not reach the Magpie helper from this page. Start it on port 8000 or 8010, or use Open local helper.');
   })();
 
   try{
@@ -319,7 +331,9 @@ async function download(kind, height){
 }
 
 goEl.addEventListener('click', fetchInfo);
+urlEl.addEventListener('input', () => updateHelperLink(apiBase));
 urlEl.addEventListener('keydown', e=>{ if(e.key==='Enter') fetchInfo(); });
+updateHelperLink(DEFAULT_HELPER_PAGE);
 // Support ?url= and #url= deep links like the page you analyzed.
 (function(){
   const h = location.hash, q = new URLSearchParams(location.search);

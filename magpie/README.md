@@ -55,20 +55,32 @@ GitHub Pages can host the UI, but it cannot run Python, yt-dlp, or ffmpeg. The
 the local helper at `http://127.0.0.1:8000` or `http://127.0.0.1:8010` when opened from
 `https://deanolmstead.github.io/idea-garden/magpie/`.
 
-Start the helper on the Mac first:
+Start the helper on the **same machine as the browser** first — its `127.0.0.1`
+is that computer's localhost, so the helper has to run there.
+
+On Windows (PowerShell, from the `magpie` folder — see the full
+[Windows 11 setup](#windows-11-setup) below for the first-time steps):
+
+```powershell
+.venv\Scripts\activate
+python app.py
+```
+
+On macOS/Linux:
 
 ```bash
 cd ~/idea-garden/magpie
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 -m uvicorn app:app --host 127.0.0.1 --port 8010 --reload
+python3 app.py
 ```
 
-Then open the GitHub Pages URL. If your browser blocks a public HTTPS page from
-calling a local helper, use the page's **Open local helper** link instead. That
-opens the same UI from FastAPI itself and avoids cross-origin/private-network
-browser policy entirely.
+Either way the helper listens on `http://127.0.0.1:8010`. Then open the GitHub
+Pages URL. If your browser blocks a public HTTPS page from calling a local
+helper, use the page's **Open local helper** link instead. That opens the same
+UI from FastAPI itself and avoids cross-origin/private-network browser policy
+entirely.
 
 ## Notes & limits
 

@@ -85,7 +85,7 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
   <p class="tag">Paste a video link. magpie fetches it through your local yt-dlp helper.</p>
 
   <div id="pagesBanner" class="banner" hidden>
-    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload</code>. If port 8000 is busy, use <code>--port 8010</code>; this page will try both. Current helper: <code id="helperBase">detecting</code>. <a id="helperLink" class="helper-link" href="http://127.0.0.1:8010/" target="_blank" rel="noopener">Open local helper</a>
+    <strong>GitHub Pages mode:</strong> start the helper on this PC first. In PowerShell, from the <code>magpie</code> folder: <code>.venv\Scripts\activate</code> then <code>python app.py</code> (serves on port 8010). First time only: <code>python -m venv .venv</code>, <code>.venv\Scripts\activate</code>, <code>pip install -r requirements.txt</code>. This page tries ports 8000 and 8010. Current helper: <code id="helperBase">detecting</code>. <a id="helperLink" class="helper-link" href="http://127.0.0.1:8010/" target="_blank" rel="noopener">Open local helper</a>
   </div>
 
   <div class="card">

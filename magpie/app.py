@@ -9,8 +9,9 @@ work happens here.
 Run:
     pip install -r requirements.txt
     # ffmpeg must be on PATH for format merging / mp3 extraction
-    uvicorn app:app --reload
-Then open http://127.0.0.1:8000
+    python app.py            # serves on http://127.0.0.1:8010
+    # or, for auto-reload during development:
+    uvicorn app:app --reload # serves on http://127.0.0.1:8000
 """
 from __future__ import annotations
 
@@ -255,3 +256,12 @@ async def index() -> HTMLResponse:
 
 # Anything else under /static (favicon etc.)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+if __name__ == "__main__":
+    # Convenience entry point so `python app.py` "just works" (e.g. the
+    # Windows run.bat one-click launcher). For development with auto-reload,
+    # prefer `uvicorn app:app --reload`.
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8010)

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>magpie — video downloader</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel-2:#1c232d; --line:#2a323d;
+  --ink:#e8edf2; --ink-dim:#9aa7b4; --accent:#4ea8de; --accent-2:#7fd1b9;
+  --bad:#e0666b; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:48px 20px 80px;
+  background-image:radial-gradient(900px 500px at 50% -10%, rgba(78,168,222,.12), transparent 70%);
+}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.brand h1{font-family:'Fraunces',serif;font-size:34px;font-weight:700;letter-spacing:.5px}
+.brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 16px var(--accent)}
+.tag{color:var(--ink-dim);font-size:14px;margin-bottom:30px;text-align:center}
+.card{
+  width:100%;max-width:680px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius);padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+.row{display:flex;gap:10px}
+input[type=url]{
+  flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--ink);
+  padding:14px 16px;border-radius:10px;font-size:15px;outline:none;transition:border .15s;
+}
+input[type=url]:focus{border-color:var(--accent)}
+button{
+  font-family:inherit;font-weight:600;font-size:15px;border:none;cursor:pointer;
+  border-radius:10px;padding:14px 22px;color:#06131c;background:var(--accent);
+  transition:transform .08s ease, filter .15s;
+}
+button:hover{filter:brightness(1.08)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.5;cursor:not-allowed;filter:none}
+.hint{color:var(--ink-dim);font-size:12.5px;margin-top:10px;line-height:1.5}
+.hint code{background:var(--panel-2);padding:1px 6px;border-radius:5px;color:var(--accent-2)}
+
+.status{margin-top:18px;display:none}
+.status.show{display:block}
+.spinner{
+  width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:-3px;margin-right:8px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{color:var(--bad);font-size:14px;line-height:1.5;word-break:break-word}
+
+.result{
+  margin-top:20px;display:none;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:12px;overflow:hidden;
+}
+.result.show{display:block}
+.meta{display:flex;gap:16px;padding:16px}
+.thumb{width:160px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#000;flex:none}
+.meta .info{min-width:0}
+.meta h3{font-size:16px;line-height:1.35;margin-bottom:6px;word-break:break-word}
+.meta .sub{color:var(--ink-dim);font-size:13px;display:flex;gap:10px;flex-wrap:wrap}
+.badge{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-size:12px}
+.choices{padding:0 16px 18px}
+.choices .lbl{font-size:12.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.6px;margin:6px 0 10px}
+.opts{display:flex;flex-wrap:wrap;gap:9px}
+.opt{
+  background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  padding:9px 16px;border-radius:9px;font-size:14px;font-weight:500;
+}
+.opt.audio{color:var(--accent-2)}
+.foot{color:var(--ink-dim);font-size:12px;margin-top:34px;text-align:center;max-width:560px;line-height:1.6}
+.foot a{color:var(--accent)}
+.banner{width:100%;max-width:680px;margin:0 0 16px;background:rgba(127,209,185,.08);border:1px solid rgba(127,209,185,.28);border-radius:14px;padding:14px 16px;color:var(--ink-dim);font-size:13px;line-height:1.5}
+.banner strong{color:var(--ink)}
+.banner code{background:var(--panel-2);padding:1px 6px;border-radius:5px;color:var(--accent-2)}
+</style>
+</head>
+<body>
+  <div class="brand"><span class="dot"></span><h1>magpie</h1></div>
+  <p class="tag">Paste a video link. magpie fetches it through your local yt-dlp helper.</p>
+
+  <div id="pagesBanner" class="banner" hidden>
+    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --reload</code>. This page will call <code>http://127.0.0.1:8000</code> for yt-dlp downloads.
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="url" type="url" placeholder="https://… any of ~1800 supported sites" autocomplete="off" spellcheck="false">
+      <button id="go">Fetch</button>
+    </div>
+    <p class="hint">Tip: works with most video pages. The server probes the link, then you pick a quality. Needs <code>ffmpeg</code> installed for merged HD &amp; mp3.</p>
+
+    <div id="status" class="status"></div>
+
+    <div id="result" class="result">
+      <div class="meta">
+        <img id="thumb" class="thumb" alt="">
+        <div class="info">
+          <h3 id="title"></h3>
+          <div class="sub">
+            <span id="uploader"></span>
+            <span id="duration" class="badge"></span>
+            <span id="site" class="badge"></span>
+          </div>
+        </div>
+      </div>
+      <div class="choices">
+        <div class="lbl">Download</div>
+        <div id="opts" class="opts"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    Only download content you have the right to (your own uploads, public-domain,
+    or where the platform's terms and your local laws allow). This is a personal
+    tool, not a license to ignore copyright.
+  </p>
+
+<script>
+const $ = s => document.querySelector(s);
+const API_BASE = location.hostname.endsWith('github.io') || location.hostname === '127.0.0.1' && location.port === '8081' ? 'http://127.0.0.1:8000' : '';
+if (API_BASE) $('#pagesBanner').hidden = false;
+const urlEl = $('#url'), goEl = $('#go'), statusEl = $('#status'),
+      resultEl = $('#result'), optsEl = $('#opts');
+let current = null;
+
+function escapeHtml(value){
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+function showStatus(html, isErr=false){
+  statusEl.className = 'status show';
+  statusEl.innerHTML = isErr ? `<span class="err">${escapeHtml(html)}</span>` : html;
+}
+function errorMessage(detail, fallback='Something went wrong.'){
+  if(typeof detail === 'string') return detail;
+  if(Array.isArray(detail)) return detail.map(item => item.msg || JSON.stringify(item)).join(' ');
+  if(detail && typeof detail === 'object') return detail.msg || JSON.stringify(detail);
+  return fallback;
+}
+function clearStatus(){ statusEl.className = 'status'; statusEl.innerHTML=''; }
+function fmtDur(s){
+  if(!s) return '';
+  const h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60;
+  const p=n=>String(n).padStart(2,'0');
+  return h ? `${h}:${p(m)}:${p(sec)}` : `${m}:${p(sec)}`;
+}
+
+async function fetchInfo(){
+  const url = urlEl.value.trim();
+  if(!url){ urlEl.focus(); return; }
+  resultEl.className='result'; optsEl.innerHTML='';
+  goEl.disabled = true;
+  showStatus('<span class="spinner"></span>Probing link…');
+  try{
+    const r = await fetch(API_BASE + '/api/info', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url})
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(errorMessage(data.detail, 'Could not read that link.'));
+    current = {url, ...data};
+    renderResult(data);
+    clearStatus();
+  }catch(e){
+    showStatus(e.message, true);
+  }finally{
+    goEl.disabled = false;
+  }
+}
+
+function renderResult(d){
+  $('#title').textContent = d.title;
+  $('#uploader').textContent = d.uploader || '';
+  $('#duration').textContent = fmtDur(d.duration);
+  $('#duration').style.display = d.duration ? '' : 'none';
+  $('#site').textContent = d.extractor || '';
+  $('#site').style.display = d.extractor ? '' : 'none';
+  const t = $('#thumb');
+  if(d.thumbnail){ t.src = d.thumbnail; t.style.display=''; }
+  else t.style.display='none';
+
+  optsEl.innerHTML='';
+  const heights = (d.heights || []).slice(0, 6);
+  if(heights.length){
+    for(const h of heights){
+      addOpt(`${h}p`, () => download('video', h), 'opt');
+    }
+  } else {
+    addOpt('Best video', () => download('video', null), 'opt');
+  }
+  if(d.has_audio){
+    addOpt('♪ Audio (mp3)', () => download('audio', null), 'opt audio');
+  }
+  resultEl.className='result show';
+}
+
+function addOpt(label, fn, cls){
+  const b = document.createElement('button');
+  b.className = cls; b.textContent = label;
+  b.onclick = fn;
+  optsEl.appendChild(b);
+}
+
+async function download(kind, height){
+  showStatus('<span class="spinner"></span>Downloading & preparing file… (large videos take a bit)');
+  optsEl.querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{
+    const r = await fetch(API_BASE + '/api/download', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url: current.url, kind, height})
+    });
+    if(!r.ok){
+      let detail='Download failed.';
+      try{ detail = errorMessage((await r.json()).detail, detail); }catch{}
+      throw new Error(detail);
+    }
+    const blob = await r.blob();
+    const cd = r.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+    const name = m ? decodeURIComponent(m[1]) : 'download';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    showStatus('✓ Saved.');
+    setTimeout(clearStatus, 3000);
+  }catch(e){
+    showStatus(e.message, true);
+  }finally{
+    optsEl.querySelectorAll('button').forEach(b=>b.disabled=false);
+  }
+}
+
+goEl.addEventListener('click', fetchInfo);
+urlEl.addEventListener('keydown', e=>{ if(e.key==='Enter') fetchInfo(); });
+// Support ?url= and #url= deep links like the page you analyzed.
+(function(){
+  const h = location.hash, q = new URLSearchParams(location.search);
+  const pre = (h.startsWith('#url=') ? decodeURIComponent(h.slice(5)) : q.get('url'));
+  if(pre){ urlEl.value = pre; fetchInfo(); }
+})();
+</script>
+</body>
+</html>

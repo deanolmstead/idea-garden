@@ -22,7 +22,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -84,6 +84,19 @@ BASE_YDL_OPTS: dict[str, Any] = {
 _FFMPEG = _ffmpeg_location()
 if _FFMPEG:
     BASE_YDL_OPTS["ffmpeg_location"] = _FFMPEG
+@app.middleware("http")
+async def _allow_private_network_preflight(request: Request, call_next):
+    """Support GitHub Pages -> local helper requests in Chrome.
+
+    Chrome sends Access-Control-Request-Private-Network for public HTTPS pages
+    that call 127.0.0.1. Starlette's CORS middleware does not add the matching
+    allow header yet, so add it explicitly for this local-helper use case.
+    """
+    response = await call_next(request)
+    if request.headers.get("access-control-request-private-network") == "true":
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
+
 
 _URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 

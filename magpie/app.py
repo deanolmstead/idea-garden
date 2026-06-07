@@ -15,6 +15,7 @@ Then open http://127.0.0.1:8000
 from __future__ import annotations
 
 import asyncio
+import inspect
 import re
 import shutil
 import tempfile
@@ -38,18 +39,21 @@ except Exception:  # noqa: BLE001 - optional fallback when system ffmpeg is inst
 
 app = FastAPI(title="magpie", description="A tiny video downloader")
 
-# Allow the GitHub Pages-hosted UI to talk to a local helper at 127.0.0.1:8000.
+# Allow the GitHub Pages-hosted UI to talk to a local helper.
 # GitHub Pages can host the interface, but yt-dlp + ffmpeg must run server-side
 # on the Mac because Pages cannot run Python processes.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://deanolmstead.github.io"],
-    allow_origin_regex=r"^http://(127\.0\.0\.1|localhost):\d+$",
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
-)
+cors_options: dict[str, Any] = {
+    "allow_origins": ["https://deanolmstead.github.io"],
+    "allow_origin_regex": r"^http://(127\.0\.0\.1|localhost):\d+$",
+    "allow_credentials": False,
+    "allow_methods": ["GET", "POST", "OPTIONS"],
+    "allow_headers": ["*"],
+    "expose_headers": ["Content-Disposition"],
+}
+if "allow_private_network" in inspect.signature(CORSMiddleware.__init__).parameters:
+    cors_options["allow_private_network"] = True
+
+app.add_middleware(CORSMiddleware, **cors_options)
 
 STATIC_DIR = Path(__file__).parent / "static"
 

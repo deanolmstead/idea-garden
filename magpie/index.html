@@ -83,7 +83,7 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
   <p class="tag">Paste a video link. magpie fetches it through your local yt-dlp helper.</p>
 
   <div id="pagesBanner" class="banner" hidden>
-    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --reload</code>. This page will call <code>http://localhost:8000</code> for yt-dlp downloads.
+    <strong>GitHub Pages mode:</strong> start the Mac helper first: <code>cd ~/idea-garden/magpie && source .venv/bin/activate && python3 -m uvicorn app:app --host 127.0.0.1 --port 8000 --reload</code>. If port 8000 is busy, use <code>--port 8010</code>; this page will try both. Current helper: <code id="helperBase">detecting</code>.
   </div>
 
   <div class="card">
@@ -122,8 +122,11 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 
 <script>
 const $ = s => document.querySelector(s);
-const API_BASE = location.hostname.endsWith('github.io') || location.hostname === '127.0.0.1' && location.port === '8081' ? 'http://localhost:8000' : '';
-if (API_BASE) $('#pagesBanner').hidden = false;
+const IS_PAGES_MODE = location.hostname.endsWith('github.io') || location.hostname === '127.0.0.1' && location.port === '8081';
+const HELPER_BASES = ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:8010', 'http://127.0.0.1:8010'];
+let apiBase = '';
+let apiBasePromise = null;
+if (IS_PAGES_MODE) $('#pagesBanner').hidden = false;
 const urlEl = $('#url'), goEl = $('#go'), statusEl = $('#status'),
       resultEl = $('#result'), optsEl = $('#opts');
 let current = null;
@@ -146,6 +149,78 @@ function errorMessage(detail, fallback='Something went wrong.'){
   if(detail && typeof detail === 'object') return detail.msg || JSON.stringify(detail);
   return fallback;
 }
+function storedHelperBase(){
+  try{ return localStorage.getItem('magpieHelperBase') || ''; }
+  catch{ return ''; }
+}
+function rememberHelperBase(base){
+  try{ localStorage.setItem('magpieHelperBase', base); }
+  catch{}
+}
+function helperOverride(){
+  const params = new URLSearchParams(location.search);
+  const raw = params.get('helper') || storedHelperBase();
+  if(!raw) return '';
+  try{
+    const u = new URL(raw);
+    return u.protocol === 'http:' ? u.origin : '';
+  }catch{
+    return '';
+  }
+}
+function showHelperBase(base){
+  const el = $('#helperBase');
+  if(el) el.textContent = base || 'same origin';
+}
+function setHelperBase(base){
+  apiBase = base;
+  showHelperBase(base);
+}
+async function helperIsMagpie(base){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1600);
+  try{
+    const r = await fetch(base + '/api/info', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url:'magpie-probe'}),
+      signal: controller.signal
+    });
+    const data = await r.json().catch(() => null);
+    return r.status === 422 && errorMessage(data && data.detail, '').includes('URL must start');
+  }catch{
+    return false;
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+async function getApiBase(){
+  if(!IS_PAGES_MODE) return '';
+  if(apiBase) return apiBase;
+  if(apiBasePromise) return apiBasePromise;
+
+  apiBasePromise = (async () => {
+    const preferred = helperOverride();
+    const candidates = preferred ? [preferred, ...HELPER_BASES.filter(base => base !== preferred)] : HELPER_BASES;
+    for(const base of candidates){
+      showHelperBase(base);
+      if(await helperIsMagpie(base)){
+        return base;
+      }
+    }
+    showHelperBase('not found');
+    throw new Error('Could not reach the Magpie helper. Start it on port 8000 or 8010, then try again.');
+  })();
+
+  try{
+    const base = await apiBasePromise;
+    setHelperBase(base);
+    rememberHelperBase(base);
+    return base;
+  }finally{
+    apiBasePromise = null;
+  }
+}
 function clearStatus(){ statusEl.className = 'status'; statusEl.innerHTML=''; }
 function fmtDur(s){
   if(!s) return '';
@@ -159,9 +234,11 @@ async function fetchInfo(){
   if(!url){ urlEl.focus(); return; }
   resultEl.className='result'; optsEl.innerHTML='';
   goEl.disabled = true;
-  showStatus('<span class="spinner"></span>Probing link…');
+  showStatus(IS_PAGES_MODE ? '<span class="spinner"></span>Finding local helper…' : '<span class="spinner"></span>Probing link…');
   try{
-    const r = await fetch(API_BASE + '/api/info', {
+    const base = await getApiBase();
+    showStatus('<span class="spinner"></span>Probing link…');
+    const r = await fetch(base + '/api/info', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({url})
     });
@@ -214,7 +291,8 @@ async function download(kind, height){
   showStatus('<span class="spinner"></span>Downloading & preparing file… (large videos take a bit)');
   optsEl.querySelectorAll('button').forEach(b=>b.disabled=true);
   try{
-    const r = await fetch(API_BASE + '/api/download', {
+    const base = await getApiBase();
+    const r = await fetch(base + '/api/download', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({url: current.url, kind, height})
     });

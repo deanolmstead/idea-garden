@@ -85,16 +85,15 @@ _FFMPEG = _ffmpeg_location()
 if _FFMPEG:
     BASE_YDL_OPTS["ffmpeg_location"] = _FFMPEG
 @app.middleware("http")
-async def _allow_private_network_preflight(request: Request, call_next):
+async def _allow_private_network(request: Request, call_next):
     """Support GitHub Pages -> local helper requests in Chrome.
 
-    Chrome sends Access-Control-Request-Private-Network for public HTTPS pages
-    that call 127.0.0.1. Starlette's CORS middleware does not add the matching
-    allow header yet, so add it explicitly for this local-helper use case.
+    Chrome may require Access-Control-Allow-Private-Network when a public HTTPS
+    page calls a local helper. Add it on all responses so both preflight and
+    non-preflight requests are accepted.
     """
     response = await call_next(request)
-    if request.headers.get("access-control-request-private-network") == "true":
-        response.headers["Access-Control-Allow-Private-Network"] = "true"
+    response.headers["Access-Control-Allow-Private-Network"] = "true"
     return response
 
 

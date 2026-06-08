@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import os
 import re
 import shutil
 import tempfile
@@ -26,10 +27,9 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
-from starlette.background import BackgroundTask
 
 import yt_dlp
 
@@ -57,6 +57,13 @@ if "allow_private_network" in inspect.signature(CORSMiddleware.__init__).paramet
 app.add_middleware(CORSMiddleware, **cors_options)
 
 STATIC_DIR = Path(__file__).parent / "static"
+
+# Where finished downloads are saved. Because the helper runs locally, it writes
+# the file straight to disk instead of streaming it through the browser. Default
+# is <home>/Downloads/pmv; override with the MAGPIE_OUTPUT_DIR env var.
+OUTPUT_DIR = Path(
+    os.environ.get("MAGPIE_OUTPUT_DIR") or (Path.home() / "Downloads" / "pmv")
+).expanduser()
 
 # yt-dlp is the workhorse. These options keep it quiet and predictable.
 def _ffmpeg_location() -> Optional[str]:
@@ -177,6 +184,19 @@ def _safe_name(name: str) -> str:
     return (name or "video")[:120]
 
 
+def _unique_dest(directory: Path, filename: str) -> Path:
+    """Pick a path in `directory` for `filename`, adding ' (n)' on collision."""
+    dest = directory / filename
+    if not dest.exists():
+        return dest
+    stem, suffix = dest.stem, dest.suffix
+    for n in range(1, 1000):
+        candidate = directory / f"{stem} ({n}){suffix}"
+        if not candidate.exists():
+            return candidate
+    return directory / f"{stem} ({uuid.uuid4().hex[:8]}){suffix}"
+
+
 def _do_download(req: DownloadRequest, workdir: Path) -> Path:
     """Download to a temp dir and return the resulting file path."""
     outtmpl = str(workdir / "%(title).100s.%(ext)s")
@@ -220,7 +240,7 @@ def _do_download(req: DownloadRequest, workdir: Path) -> Path:
 
 
 @app.post("/api/download")
-async def api_download(req: DownloadRequest) -> FileResponse:
+async def api_download(req: DownloadRequest) -> dict[str, Any]:
     workdir = Path(tempfile.mkdtemp(prefix=f"magpie_{uuid.uuid4().hex[:8]}_"))
     try:
         path = await asyncio.to_thread(_do_download, req, workdir)
@@ -231,15 +251,18 @@ async def api_download(req: DownloadRequest) -> FileResponse:
         shutil.rmtree(workdir, ignore_errors=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-    filename = _safe_name(path.name)
-    # Clean up the temp dir only after the response has been sent.
-    cleanup = BackgroundTask(shutil.rmtree, workdir, ignore_errors=True)
-    return FileResponse(
-        path,
-        filename=filename,
-        media_type="application/octet-stream",
-        background=cleanup,
-    )
+    # Save straight into the output folder on this machine rather than streaming
+    # it back to the browser (which would land in the browser's Downloads).
+    try:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        dest = _unique_dest(OUTPUT_DIR, _safe_name(path.name))
+        shutil.move(str(path), str(dest))
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Could not save file: {e}")
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+    return {"saved": True, "filename": dest.name, "path": str(dest), "folder": str(OUTPUT_DIR)}
 
 
 def _clean_err(msg: str) -> str:

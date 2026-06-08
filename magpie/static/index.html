@@ -58,7 +58,6 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 }
 .result.show{display:block}
 .meta{display:flex;gap:16px;padding:16px}
-.thumb{width:160px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#000;flex:none}
 .meta .info{min-width:0}
 .meta h3{font-size:16px;line-height:1.35;margin-bottom:6px;word-break:break-word}
 .meta .sub{color:var(--ink-dim);font-size:13px;display:flex;gap:10px;flex-wrap:wrap}
@@ -99,7 +98,6 @@ button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 
     <div id="result" class="result">
       <div class="meta">
-        <img id="thumb" class="thumb" alt="">
         <div class="info">
           <h3 id="title"></h3>
           <div class="sub">
@@ -273,9 +271,6 @@ function renderResult(d){
   $('#duration').style.display = d.duration ? '' : 'none';
   $('#site').textContent = d.extractor || '';
   $('#site').style.display = d.extractor ? '' : 'none';
-  const t = $('#thumb');
-  if(d.thumbnail){ t.src = d.thumbnail; t.style.display=''; }
-  else t.style.display='none';
 
   optsEl.innerHTML='';
   const heights = (d.heights || []).slice(0, 6);
@@ -313,16 +308,9 @@ async function download(kind, height){
       try{ detail = errorMessage((await r.json()).detail, detail); }catch{}
       throw new Error(detail);
     }
-    const blob = await r.blob();
-    const cd = r.headers.get('Content-Disposition') || '';
-    const m = cd.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
-    const name = m ? decodeURIComponent(m[1]) : 'download';
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-    showStatus('✓ Saved.');
-    setTimeout(clearStatus, 3000);
+    const data = await r.json();
+    showStatus('✓ Saved to ' + escapeHtml(data.path || data.folder || 'the output folder'));
+    setTimeout(clearStatus, 6000);
   }catch(e){
     showStatus(e.message, true);
   }finally{

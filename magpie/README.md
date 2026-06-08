@@ -82,14 +82,34 @@ helper, use the page's **Open local helper** link instead. That opens the same
 UI from FastAPI itself and avoids cross-origin/private-network browser policy
 entirely.
 
+## Where files are saved
+
+Because the helper runs on your own machine, magpie saves finished downloads
+**straight to a folder on disk** rather than streaming them through the browser
+(so they don't land in the browser's Downloads). The default folder is:
+
+```
+<your home>/Downloads/pmv
+```
+
+The folder is created automatically if it doesn't exist, and name collisions get
+a ` (1)`, ` (2)`, … suffix. To save somewhere else, set the `MAGPIE_OUTPUT_DIR`
+environment variable before starting the helper, e.g. on Windows:
+
+```powershell
+$env:MAGPIE_OUTPUT_DIR = "D:\videos"
+python app.py
+```
+
 ## Notes & limits
 
 - Works with the ~1800 sites yt-dlp supports. If a site changes, run
   `pip install -U yt-dlp`.
 - Without `ffmpeg`, HD that needs separate video+audio streams and mp3
   extraction won't work; it falls back to the best single progressive file.
-- This downloads server-side to a temp dir then streams the file — fine for a
-  personal/local tool, not tuned for many concurrent large downloads.
+- This downloads server-side to a temp dir, then moves the finished file into
+  the output folder — fine for a personal/local tool, not tuned for many
+  concurrent large downloads.
 
 ## Use responsibly
 
